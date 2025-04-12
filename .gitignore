@@ -1,0 +1,36 @@
+# Node
+node_modules/
+npm-debug.log*
+pnpm-lock.yaml
+yarn.lock
+
+# Build / output
+.svelte-kit/
+.build/
+dist/
+build/
+functions/.wrangler/
+
+# Cloudflare
+.wrangler/
+wrangler.toml.local
+
+# IDE
+.vscode/
+.idea/
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Env
+.env
+.env.local
+.env.*
+
+# Optional: lock files if tu préfères pas les versionner
+package-lock.json
