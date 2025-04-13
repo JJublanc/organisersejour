@@ -132,6 +132,50 @@ Set up your D1 database binding in the Pages project settings
 
 After pushing to main or production, your app will be deployed automatically 🎉
 
+## Debug
+
+Connect to the log of the application
+
+```bash
+wrangler pages deployment tail
+```
+## Migration
+Create a new migration
+```
+npx wrangler d1 migrations create <db_name> <migration_name> 
+```
+
+Write the logic fo the migration in the new file `./migrations/<migration_id>_<migration_name>.sql`
+Exemple :
+
+```sql
+-- Migration number: 0003 	 2025-04-13T07:17:41.951Z
+-- Si la table existe déjà, la supprimer
+DROP TABLE IF EXISTS messages;
+
+-- Créer la table "messages" sans contrainte NOT NULL sur la colonne content
+CREATE TABLE IF NOT EXISTS messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  text TEXT
+);
+
+-- Insérer des données par défaut dans la table "messages"
+INSERT INTO messages (text) VALUES ('Hello from D1 🎉');
+```
+
+Apply the migration locally
+
+```bash
+npx wrangler d1 migrations apply <db_name> 
+```
+
+Apply the migration remotely
+
+```bash
+npx wrangler d1 migrations apply <db_name> --remote
+```
+
+
 📊 Monitoring
 
 Cloudflare Pages integrates with Cloudflare Analytics by default.
