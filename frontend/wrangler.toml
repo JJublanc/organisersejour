@@ -2,3 +2,8 @@ name = "mon-app-repas"
 compatibility_date = "2024-04-12"
 
 pages_build_output_dir = "./build"
+
+[[d1_databases]]
+binding = "DB"               # Le nom utilisé dans le code
+database_name = "hello-db"   # Le nom que tu as donné
+database_id = "96804f33-7c7f-4bfd-a532-a1e7c743728e"  # Tu peux obtenir l'ID avec: `npx wrangler d1 list`
