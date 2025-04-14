@@ -139,7 +139,15 @@ Connect to the log of the application
 ```bash
 wrangler pages deployment tail
 ```
+# Database
+
+Create a new database
+```bash
+wrangler d1 create <db_name>
+```
+
 ## Migration
+
 Create a new migration
 ```
 npx wrangler d1 migrations create <db_name> <migration_name> 
@@ -174,7 +182,6 @@ Apply the migration remotely
 ```bash
 npx wrangler d1 migrations apply <db_name> --remote
 ```
-
 
 📊 Monitoring
 

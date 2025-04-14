@@ -7,3 +7,11 @@ pages_build_output_dir = "./build"
 binding = "DB"               # Le nom utilisé dans le code
 database_name = "hello-db"   # Le nom que tu as donné
 database_id = "96804f33-7c7f-4bfd-a532-a1e7c743728e"  # Tu peux obtenir l'ID avec: `npx wrangler d1 list`
+
+
+[env.preview]  # ⚠️ correspond aux déploiements de préprod
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "hello-db-preprod"
+database_id = "68a63f61-c3d3-46c1-a2f7-a907e6c5472c"
+
