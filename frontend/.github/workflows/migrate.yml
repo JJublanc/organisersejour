@@ -1,0 +1,39 @@
+name: Migrate D1 Database
+
+on:
+  push:
+    branches:
+      - preprod
+      - main
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    name: Apply D1 Migrations
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Wrangler
+        run: npm install -g wrangler
+
+      - name: Apply migrations to preprod DB
+        if: github.ref == 'refs/heads/preprod'
+        run: wrangler d1 migrations apply hello-db-preprod --env=preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Apply migrations to prod DB
+        if: github.ref == 'refs/heads/main'
+        run: wrangler d1 migrations apply hello-db --env=production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
