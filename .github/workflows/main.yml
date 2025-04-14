@@ -28,16 +28,22 @@ jobs:
       - name: Install Wrangler
         run: npm install -g wrangler
 
+      - uses: actions/checkout@v4
       - name: Apply migrations to preprod DB
+        uses: cloudflare/wrangler-action@v3
         if: github.ref == 'refs/heads/dev'
-        run: wrangler d1 migrations apply hello-db-preprod --remote
-        working-directory: frontend
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: frontend
+          command: d1 migrations apply hello-db-preprod --remote
 
+      - uses: actions/checkout@v4
       - name: Apply migrations to prod DB
-        if: github.ref == 'refs/heads/main'
-        run: wrangler d1 migrations apply hello-db --remote
-        working-directory: frontend
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        uses: cloudflare/wrangler-action@v3
+        if: github.ref == 'refs/heads/dev'
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: frontend
+          command: d1 migrations apply hello-db --remote
