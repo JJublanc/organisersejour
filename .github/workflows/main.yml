@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Apply migrations to prod DB
         uses: cloudflare/wrangler-action@v3
-        if: github.ref == 'refs/heads/dev'
+        if: github.ref == 'refs/heads/main'
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
