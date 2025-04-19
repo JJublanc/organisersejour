@@ -1,15 +1,16 @@
-<script>
-	let message = "Clique sur le bouton pour tester /api/hello";
-
-	async function pingHello() {
-		const res = await fetch('/api/hello');
-		const data = await res.json();
-		message = data.message;
-	}
+<script lang="ts">
+  // Data is now loaded by +page.server.ts and passed in automatically
+  export let data;
 </script>
 
 <main>
-	<h1>Bienvenue !</h1>
-	<p>{message}</p>
-	<button on:click={pingHello}>Appeler /api/hello</button>
+  <h1>Bienvenue !</h1>
+  
+  {#if data.message}
+    <p>Message from DB: {data.message}</p>
+  {:else}
+    <p>Loading message...</p>
+  {/if}
+  
+  <p>This message is now loaded on the server.</p>
 </main>
