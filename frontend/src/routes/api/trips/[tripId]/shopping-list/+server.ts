@@ -1,18 +1,22 @@
 import { json, error, type RequestHandler } from '@sveltejs/kit';
-import type { Trip } from '$lib/types'; // Import Trip from $lib/types
+import type { Trip, ShoppingListItem } from '$lib/types'; // Import shared types
 
 // Define structure for recipe ingredients needed for calculation
 interface RecipeIngredientInfo {
-    recipe_id: number;
     ingredient_id: number;
     ingredient_name: string;
     ingredient_unit: string;
-    quantity: number; // Quantity per base serving
+    quantity: number; // Quantity per base serving of the recipe
     recipe_servings: number; // Base servings for the recipe
 }
 
-// ShoppingListItem is now defined in $lib/types.ts
-import type { ShoppingListItem } from '$lib/types'; // Import it
+// Define structure for direct ingredients from meal_components
+interface DirectIngredientInfo {
+     ingredient_id: number;
+     ingredient_name: string;
+     ingredient_unit: string;
+     quantity: number; // Quantity specified directly in meal_components (assumed for whole group)
+}
 
 export const GET: RequestHandler = async ({ params, locals, platform }) => {
     const { tripId } = params;
@@ -54,11 +58,12 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
         const numPeople = tripInfo.num_people;
         console.log(`[API ShoppingList GET] Trip found. Attendees: ${numPeople}`);
 
-        // 2. Fetch all ingredients linked to recipes used in meals for this trip
-        // This complex query joins trips -> trip_days -> meals -> meal_recipes -> recipes -> recipe_ingredients -> ingredients
-        const ingredientsQuery = `
+        // --- Aggregation Map ---
+        const aggregatedList: Map<number, ShoppingListItem> = new Map();
+
+        // 2. Fetch ingredients from RECIPES linked via meal_components
+        const recipeIngredientsQuery = `
             SELECT
-                ri.recipe_id,
                 ri.ingredient_id,
                 i.name AS ingredient_name,
                 i.unit AS ingredient_unit,
@@ -67,63 +72,96 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
             FROM trips t
             JOIN trip_days td ON t.id = td.trip_id
             JOIN meals m ON td.id = m.trip_day_id
-            JOIN meal_recipes mr ON m.id = mr.meal_id
-            JOIN recipes r ON mr.recipe_id = r.id
-            JOIN recipe_ingredients ri ON r.id = ri.recipe_id
-            JOIN ingredients i ON ri.ingredient_id = i.id
-            WHERE t.id = ? AND t.organiser_id = ?
+            JOIN meal_components mc ON m.id = mc.meal_id
+            JOIN recipes r ON mc.recipe_id = r.id             -- Join recipes
+            JOIN recipe_ingredients ri ON r.id = ri.recipe_id -- Join recipe ingredients
+            JOIN ingredients i ON ri.ingredient_id = i.id     -- Join ingredients table
+            WHERE t.id = ? AND t.organiser_id = ? AND mc.recipe_id IS NOT NULL
         `;
-        const ingredientsStmt = db.prepare(ingredientsQuery);
-        const { results: allIngredients } = await ingredientsStmt.bind(tripIdNum, userId).all<RecipeIngredientInfo>();
+        const recipeIngredientsStmt = db.prepare(recipeIngredientsQuery);
+        const { results: recipeIngredients } = await recipeIngredientsStmt.bind(tripIdNum, userId).all<RecipeIngredientInfo>();
 
-        if (!allIngredients || allIngredients.length === 0) {
-            console.log(`[API ShoppingList GET] No ingredients found for trip ${tripIdNum}.`);
-            return json({ shoppingList: [] });
-        }
-        console.log(`[API ShoppingList GET] Found ${allIngredients.length} ingredient instances across all meals.`);
+        if (recipeIngredients) {
+            console.log(`[API ShoppingList GET] Found ${recipeIngredients.length} ingredient instances from recipes.`);
+            for (const item of recipeIngredients) {
+                // Calculate scaling factor
+                const servings = item.recipe_servings > 0 ? item.recipe_servings : 1;
+                const scaleFactor = numPeople / servings;
+                const requiredQuantity = item.quantity * scaleFactor;
 
-        // 3. Calculate scaled quantities and aggregate
-        const aggregatedList: Map<number, ShoppingListItem> = new Map(); // Use imported type
-
-        for (const item of allIngredients) {
-            // Calculate scaling factor (avoid division by zero or invalid servings)
-            const servings = item.recipe_servings > 0 ? item.recipe_servings : 1;
-            const scaleFactor = numPeople / servings;
-            const requiredQuantity = item.quantity * scaleFactor;
-
-            const existingItem = aggregatedList.get(item.ingredient_id);
-
-            if (existingItem) {
-                // TODO: Add unit conversion logic if units differ for the same ingredient ID?
-                // For now, assume units are consistent per ingredient ID.
-                if (existingItem.unit !== item.ingredient_unit) {
-                     console.warn(`[API ShoppingList GET] Mismatched units for ingredient ID ${item.ingredient_id}: '${existingItem.unit}' vs '${item.ingredient_unit}'. Aggregating anyway.`);
+                const existingItem = aggregatedList.get(item.ingredient_id);
+                if (existingItem) {
+                    if (existingItem.unit !== item.ingredient_unit) console.warn(`Unit mismatch for ingredient ID ${item.ingredient_id}`);
+                    existingItem.total_quantity += requiredQuantity;
+                } else {
+                    aggregatedList.set(item.ingredient_id, {
+                        ingredient_id: item.ingredient_id,
+                        name: item.ingredient_name,
+                        unit: item.ingredient_unit,
+                        total_quantity: requiredQuantity,
+                    });
                 }
-                existingItem.total_quantity += requiredQuantity;
-            } else {
-                aggregatedList.set(item.ingredient_id, {
-                    ingredient_id: item.ingredient_id,
-                    name: item.ingredient_name,
-                    unit: item.ingredient_unit,
-                    total_quantity: requiredQuantity,
-                });
             }
         }
 
-        // Convert Map values to array for the response
+        // 3. Fetch DIRECT ingredients linked via meal_components
+        const directIngredientsQuery = `
+            SELECT
+                mc.ingredient_id,
+                i.name AS ingredient_name,
+                i.unit AS ingredient_unit,
+                mc.quantity -- Direct quantity from meal_components
+            FROM trips t
+            JOIN trip_days td ON t.id = td.trip_id
+            JOIN meals m ON td.id = m.trip_day_id
+            JOIN meal_components mc ON m.id = mc.meal_id
+            JOIN ingredients i ON mc.ingredient_id = i.id -- Join ingredients table
+            WHERE t.id = ? AND t.organiser_id = ? AND mc.ingredient_id IS NOT NULL
+        `;
+        const directIngredientsStmt = db.prepare(directIngredientsQuery);
+        const { results: directIngredients } = await directIngredientsStmt.bind(tripIdNum, userId).all<DirectIngredientInfo>();
+
+        if (directIngredients) {
+             console.log(`[API ShoppingList GET] Found ${directIngredients.length} direct ingredient instances.`);
+             for (const item of directIngredients) {
+                 const existingItem = aggregatedList.get(item.ingredient_id);
+                 if (existingItem) {
+                     if (existingItem.unit !== item.ingredient_unit) console.warn(`Unit mismatch for ingredient ID ${item.ingredient_id}`);
+                     // Add the quantity directly (it's assumed to be for the whole group already)
+                     existingItem.total_quantity += item.quantity;
+                 } else {
+                     aggregatedList.set(item.ingredient_id, {
+                         ingredient_id: item.ingredient_id,
+                         name: item.ingredient_name,
+                         unit: item.ingredient_unit,
+                         total_quantity: item.quantity, // Use direct quantity
+                     });
+                 }
+             }
+        }
+
+        // 4. Final Processing
+        if (aggregatedList.size === 0) {
+            console.log(`[API ShoppingList GET] No ingredients found for trip ${tripIdNum}.`);
+            return json({ shoppingList: [] });
+        }
+
+        // Convert Map values to array
         const shoppingList = Array.from(aggregatedList.values());
 
-        // Optional: Round quantities for display?
+        // Optional: Round quantities
         shoppingList.forEach(item => {
-            // Example: Round to 2 decimal places, adjust as needed
             item.total_quantity = Math.round(item.total_quantity * 100) / 100;
         });
+
+        // Optional: Sort list alphabetically
+        shoppingList.sort((a, b) => a.name.localeCompare(b.name));
 
         console.log(`[API ShoppingList GET] Aggregated list contains ${shoppingList.length} unique ingredients.`);
         return json({ shoppingList });
 
     } catch (e: any) {
-        if (e.status === 404 || e.status === 403 || e.status === 401 || e.status === 400) {
+        if (e.status >= 400 && e.status < 500) {
             throw e;
         }
         console.error(`[API ShoppingList GET] Error generating shopping list for trip ID ${tripIdNum}:`, e);

@@ -28,5 +28,22 @@ export interface ShoppingListItem {
     unit: string;
     total_quantity: number;
 }
+// Structure for submitting meal component updates
+export interface MealComponentPayload {
+    course_type: 'starter' | 'main' | 'dessert' | 'side' | 'extra' | 'breakfast_item';
+    recipe_id?: number | null;
+    ingredient_id?: number | null;
+    quantity?: number | null; // Only for direct ingredients
+    notes?: string | null;
+    display_order?: number;
+}
+
+// Structure for the PUT request body to update a meal
+export interface UpdateMealRequestBody {
+    components: MealComponentPayload[];
+    drinks?: string | null;
+    bread?: boolean;
+}
 
 // We can add more shared types here as needed, like Recipe, Meal, etc.
+

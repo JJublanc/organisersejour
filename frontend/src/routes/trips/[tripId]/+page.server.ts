@@ -1,41 +1,43 @@
-import { error, redirect, type ServerLoad, type ServerLoadEvent } from '@sveltejs/kit'; // Consolidate and use correct types
-import type { Trip, Ingredient, KitchenTool } from '$lib/types'; // Import Trip from $lib/types
+import { error, redirect, type ServerLoad, type ServerLoadEvent } from '@sveltejs/kit';
+import type { Trip, Ingredient, KitchenTool, ShoppingListItem } from '$lib/types'; // Import shared types
 
 // --- Define data structures for this page ---
 
-// Structure for a Recipe within a Meal context
-export interface MealRecipe extends RecipeCore { // Exported
-    // We might add more recipe details later if needed directly in the meal view
+// Structure for a component within a meal (recipe or ingredient)
+export interface MealComponent {
+    id: number; // meal_components.id
+    course_type: 'starter' | 'main' | 'dessert' | 'side' | 'extra' | 'breakfast_item';
+    recipe_id: number | null;
+    ingredient_id: number | null;
+    quantity: number | null; // Only for direct ingredients
+    notes: string | null;
+    display_order: number;
+    // Include names for display
+    recipe_name?: string | null;
+    ingredient_name?: string | null;
+    ingredient_unit?: string | null;
 }
 
-// Structure for Recipe Ingredients (as fetched for recipes within meals)
-export interface MealRecipeIngredient { // Exported
-    name: string;
-    unit: string;
-    quantity: number;
-}
-
-// Core Recipe details needed for MealRecipe
-export interface RecipeCore { // Exported
+// Structure for a Meal, now containing components grouped by course
+export interface Meal {
     id: number;
-    name: string;
-    servings: number;
-    // Add other core fields if needed for display (e.g., description)
-    // description: string | null;
-}
-
-
-// Structure for a Meal
-export interface Meal { // Exported
-    id: number;
-    type: 'breakfast' | 'lunch' | 'dinner';
+    type: 'breakfast' | 'lunch' | 'dinner'; // breakfast, lunch, dinner
     drinks: string | null;
     bread: boolean;
-    recipes: MealRecipe[]; // Recipes assigned to this meal
+    // Components grouped by course type for easier rendering
+    components: {
+        starter?: MealComponent[];
+        main?: MealComponent[];
+        dessert?: MealComponent[];
+        side?: MealComponent[];
+        extra?: MealComponent[];
+        breakfast_item?: MealComponent[];
+        // Add other course types if needed
+    };
 }
 
 // Structure for a Trip Day
-export interface TripDay { // Exported
+export interface TripDay {
     id: number;
     date: string; // YYYY-MM-DD
     meals: Meal[]; // Meals for this day (breakfast, lunch, dinner)
@@ -49,32 +51,27 @@ export interface TripDetailPageData {
 
 // --- Load Function ---
 
-// Use ServerLoad and ServerLoadEvent
 export const load: ServerLoad = async (event: ServerLoadEvent): Promise<TripDetailPageData> => {
-    const { params, locals, platform } = event; // Destructure here
+    const { params, locals, platform } = event;
     const { tripId } = params;
     const db = platform?.env?.DB;
 
-    // --- Authentication Check (similar to /trips/+page.server.ts) ---
+    // --- Authentication Check ---
     let user = locals.user;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
     if (!authEnabled && !user) {
-        console.log("[Trip Detail Load] Auth disabled, creating mock user.");
         user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
     }
     if (!user?.authenticated || !user.id) {
-        console.error("[Trip Detail Load] User not authenticated.");
-        throw redirect(302, '/trips'); // Redirect to trips list if not logged in
+        throw redirect(302, '/trips');
     }
     const userId = user.id;
     // --- End Authentication Check ---
 
     if (!db) {
-        console.error("[Trip Detail Load] Database binding 'DB' not found.");
         throw error(500, "Database binding not found.");
     }
     if (!tripId || isNaN(parseInt(tripId))) {
-         console.error(`[Trip Detail Load] Invalid tripId parameter: ${tripId}`);
          throw error(400, "Invalid Trip ID parameter.");
     }
     const tripIdNum = parseInt(tripId);
@@ -87,7 +84,6 @@ export const load: ServerLoad = async (event: ServerLoadEvent): Promise<TripDeta
         const tripResult = await tripStmt.bind(tripIdNum, userId).first<Trip>();
 
         if (!tripResult) {
-            console.warn(`[Trip Detail Load] Trip ID ${tripIdNum} not found for user ${userId}.`);
             throw error(404, 'Trip not found');
         }
 
@@ -97,30 +93,47 @@ export const load: ServerLoad = async (event: ServerLoadEvent): Promise<TripDeta
 
         const daysData: TripDay[] = [];
         if (daysList) {
-            // Prepare statements outside the loop for efficiency
+            // Prepare statements outside the loop
             const mealsStmt = db.prepare('SELECT id, type, drinks, bread FROM meals WHERE trip_day_id = ? ORDER BY CASE type WHEN \'breakfast\' THEN 1 WHEN \'lunch\' THEN 2 WHEN \'dinner\' THEN 3 ELSE 4 END');
-            const mealRecipesStmt = db.prepare(`
-                SELECT r.id, r.name, r.servings
-                FROM meal_recipes mr
-                JOIN recipes r ON mr.recipe_id = r.id
-                WHERE mr.meal_id = ?
+            // Fetch all components for a meal, joining recipe/ingredient names
+            const componentsStmt = db.prepare(`
+                SELECT
+                    mc.id, mc.course_type, mc.recipe_id, mc.ingredient_id, mc.quantity, mc.notes, mc.display_order,
+                    r.name AS recipe_name,
+                    i.name AS ingredient_name, i.unit AS ingredient_unit
+                FROM meal_components mc
+                LEFT JOIN recipes r ON mc.recipe_id = r.id
+                LEFT JOIN ingredients i ON mc.ingredient_id = i.id
+                WHERE mc.meal_id = ?
+                ORDER BY mc.display_order ASC, mc.id ASC
             `);
 
             for (const day of daysList) {
                 // 3. Fetch meals for the current day
-                const { results: mealsList } = await mealsStmt.bind(day.id).all<Omit<Meal, 'recipes'>>();
+                const { results: mealsList } = await mealsStmt.bind(day.id).all<Omit<Meal, 'components'>>();
 
                 const mealsData: Meal[] = [];
                 if (mealsList) {
                     for (const meal of mealsList) {
-                        // 4. Fetch recipes associated with the current meal
-                        const { results: recipesList } = await mealRecipesStmt.bind(meal.id).all<MealRecipe>();
+                        // 4. Fetch components for the current meal
+                        const { results: componentsList } = await componentsStmt.bind(meal.id).all<MealComponent>();
+
+                        // Group components by course_type
+                        const groupedComponents: Meal['components'] = {};
+                        if (componentsList) {
+                            for (const comp of componentsList) {
+                                const course = comp.course_type as keyof Meal['components']; // Type assertion
+                                if (!groupedComponents[course]) {
+                                    groupedComponents[course] = [];
+                                }
+                                groupedComponents[course]!.push(comp); // Add to the group
+                            }
+                        }
 
                         mealsData.push({
                             ...meal,
-                            // Ensure bread is boolean (D1 returns 0 or 1)
                             bread: Boolean(meal.bread),
-                            recipes: recipesList || []
+                            components: groupedComponents // Assign the grouped components
                         });
                     }
                 }
@@ -139,9 +152,8 @@ export const load: ServerLoad = async (event: ServerLoadEvent): Promise<TripDeta
         };
 
     } catch (e: any) {
-         // Handle specific errors like 404 or re-throw others
-         if (e.status === 404) {
-             throw e; // Re-throw the 404 error from SvelteKit
+         if (e.status === 404 || e.status === 403 || e.status === 401 || e.status === 400) {
+             throw e;
          }
         console.error(`[Trip Detail Load] Error fetching trip details for ID ${tripIdNum}:`, e);
         throw error(500, `Failed to load trip details: ${e.message || 'Unknown error'}`);

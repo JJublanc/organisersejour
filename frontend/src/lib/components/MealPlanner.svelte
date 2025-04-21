@@ -1,14 +1,14 @@
 <script lang="ts">
-  import type { TripDay, Meal } from '../../routes/trips/[tripId]/+page.server'; // Import Meal type as well
-  import MealEditModal from './MealEditModal.svelte'; // Import the modal
+  import type { TripDay, Meal, MealComponent } from '../../routes/trips/[tripId]/+page.server';
+  import MealEditModal from './MealEditModal.svelte';
   import { invalidateAll } from '$app/navigation'; // Import invalidateAll for data refresh
 
   export let days: TripDay[];
 
   let showEditModal = false;
-  let selectedMealData: Meal | null = null; // Use the imported Meal type
+  let selectedMealData: Meal | null = null;
 
-  function openEditModal(meal: Meal) { // Use Meal type
+  function openEditModal(meal: Meal) {
       console.log("Opening edit modal for meal:", meal);
       selectedMealData = meal;
       showEditModal = true;
@@ -21,17 +21,15 @@
 
   function handleMealUpdated() {
       console.log("Meal updated, refreshing data...");
-      // Invalidate all data on the page to refresh the meal list
       invalidateAll();
-      // Modal closes itself on successful save, but ensure state is reset here too
       closeEditModal();
   }
 
-  // Helper to format date (could be moved to a shared utility)
+  // Helper to format date
   function formatDisplayDate(dateString: string): string {
     try {
       return new Date(dateString).toLocaleDateString(undefined, {
-        weekday: 'long', // e.g., Monday
+        weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -46,6 +44,41 @@
       if (!str) return str;
       return str.charAt(0).toUpperCase() + str.slice(1);
   }
+
+  // Helper to get course label
+  function getCourseLabel(courseType: string): string {
+      const labels: Record<string, string> = {
+          'starter': 'Entrée',
+          'main': 'Plat Principal',
+          'dessert': 'Dessert',
+          'side': 'Accompagnement',
+          'extra': 'Extra / Divers',
+          'breakfast_item': 'Petit Déjeuner'
+      };
+      return labels[courseType] || courseType;
+  }
+
+  // Define valid course types
+  type CourseType = 'starter' | 'main' | 'dessert' | 'side' | 'extra' | 'breakfast_item';
+  
+  // Helper to get courses for a meal type
+  function getCoursesForMealType(mealType: string): CourseType[] {
+      if (mealType === 'breakfast') {
+          return ['breakfast_item'];
+      } else {
+          return ['starter', 'main', 'dessert', 'side', 'extra'];
+      }
+  }
+
+  // Helper to check if a meal has any components
+  function hasMealComponents(meal: Meal): boolean {
+      return Object.values(meal.components).some(components => components && components.length > 0);
+  }
+
+  // Helper to safely get components for a course type
+  function getComponentsForCourse(meal: Meal, courseType: CourseType): MealComponent[] {
+      return meal.components[courseType] || [];
+  }
 </script>
 
 <div class="meal-planner">
@@ -55,16 +88,47 @@
       <div class="meals-grid">
         {#each day.meals as meal (meal.id)}
           <div class="meal-slot">
-            <h4>{capitalize(meal.type)}</h4>
+            <div class="meal-header">
+              <h4>{capitalize(meal.type)}</h4>
+              <button class="edit-meal-button" on:click={() => openEditModal(meal)}>
+                Modifier
+              </button>
+            </div>
+            
             <div class="meal-content">
-              {#if meal.recipes.length > 0}
-                <ul>
-                  {#each meal.recipes as recipe (recipe.id)}
-                    <li>{recipe.name} (Serves {recipe.servings})</li>
-                  {/each}
-                </ul>
+              {#if hasMealComponents(meal)}
+                {#each getCoursesForMealType(meal.type) as courseType}
+                  <!-- Only show course section if it has components -->
+                  {@const components = getComponentsForCourse(meal, courseType)}
+                  {#if components.length > 0}
+                    <div class="course-section">
+                      {#if meal.type !== 'breakfast'}
+                        <h5>{getCourseLabel(courseType)}</h5>
+                      {/if}
+                      <ul>
+                        {#each components as component (component.id)}
+                          <li>
+                            {#if component.recipe_id}
+                              <!-- Recipe component -->
+                              <span class="component-name">{component.recipe_name}</span>
+                              {#if component.notes}
+                                <span class="component-notes">({component.notes})</span>
+                              {/if}
+                            {:else if component.ingredient_id}
+                              <!-- Direct ingredient component -->
+                              <span class="component-name">{component.quantity} {component.ingredient_unit} {component.ingredient_name}</span>
+                              {#if component.notes}
+                                <span class="component-notes">({component.notes})</span>
+                              {/if}
+                            {/if}
+                          </li>
+                        {/each}
+                      </ul>
+                    </div>
+                  {/if}
+                {/each}
               {:else}
-                <p class="no-recipe"><i>Aucune recette assignée</i></p>
+                <p class="no-components"><i>Aucun élément planifié</i></p>
               {/if}
 
               {#if meal.drinks}
@@ -75,9 +139,6 @@
                 <p class="meal-extra"><strong>Pain inclus</strong></p>
               {/if}
             </div>
-            <button class="edit-meal-button" on:click={() => openEditModal(meal)}>
-              Modifier
-            </button>
           </div>
         {/each}
       </div>
@@ -112,7 +173,7 @@
 
   .meals-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Responsive grid */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Wider slots for more content */
     gap: 1rem;
   }
 
@@ -125,32 +186,60 @@
     flex-direction: column;
   }
 
-  .meal-slot h4 {
-    margin-top: 0;
+  .meal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 0.75rem;
-    color: #555;
-    text-align: center;
     border-bottom: 1px dashed #eee;
     padding-bottom: 0.5rem;
   }
 
-  .meal-content {
-      flex-grow: 1; /* Pushes button to the bottom */
-      margin-bottom: 1rem;
+  .meal-header h4 {
+    margin: 0;
+    color: #555;
   }
 
-  .meal-content ul {
+  .meal-content {
+    flex-grow: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .course-section {
+    margin-bottom: 1rem;
+  }
+
+  .course-section h5 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #666;
+    font-size: 0.95rem;
+    border-bottom: 1px dotted #eee;
+    padding-bottom: 0.2rem;
+  }
+
+  .course-section ul {
     list-style: disc;
     padding-left: 20px;
     margin: 0 0 0.5rem 0;
     font-size: 0.95rem;
   }
 
-   .meal-content li {
-       margin-bottom: 0.3rem;
-   }
+  .course-section li {
+    margin-bottom: 0.3rem;
+  }
 
-  .no-recipe {
+  .component-name {
+    font-weight: normal;
+  }
+
+  .component-notes {
+    font-style: italic;
+    color: #777;
+    font-size: 0.9em;
+  }
+
+  .no-components {
     font-style: italic;
     color: #888;
     font-size: 0.9rem;
@@ -158,22 +247,20 @@
   }
 
   .meal-extra {
-      font-size: 0.9rem;
-      color: #666;
-      margin-top: 0.5rem;
-      margin-bottom: 0;
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.5rem;
+    margin-bottom: 0;
   }
 
   .edit-meal-button {
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.8rem;
     background-color: #007bff;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.9rem;
-    align-self: center; /* Center button horizontally */
-    margin-top: auto; /* Pushes button to bottom */
+    font-size: 0.85rem;
   }
 
   .edit-meal-button:hover {

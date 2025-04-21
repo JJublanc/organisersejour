@@ -164,10 +164,15 @@ erDiagram
 - ajouter la possibilité de créer une recette -> OK
 - ajouter la possibilité de créer un ingrédient
 - ajouter la possibilité de créer un unstensile de cuisine
-- changer les listes en recherche intelligentes
+
+
 - ajouter la possibilité d'ajouter plusieurs recettes pour un repas
 - les recettes doivent contenir le type entrée / plat / dessert / autre
+
 - les boissons et le pain doivent être des ingrédients
 - on doit pouvoir ajouter des ingrédients pour un repas (exemple pain, boisson, confiture)
-- l'utilisateur doit pouvoir consulter ses recettes
+
 - pour choisir une recette l'utilisateur doit pouvoir filtrer en fonction du type de cette (entrée / plat / dessert / autre), des instruments de cuisine nécessaires, de la saison de la recette (printemps / été / automne / hiver / toutes saisons)
+- changer les listes en recherche intelligentes
+
+- l'utilisateur doit pouvoir consulter ses recettes

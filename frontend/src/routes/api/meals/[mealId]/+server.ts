@@ -1,11 +1,21 @@
 import { json, error, type RequestHandler } from '@sveltejs/kit';
-import type { D1PreparedStatement } from '@cloudflare/workers-types'; // Import D1 type
+import type { D1PreparedStatement } from '@cloudflare/workers-types';
+
+// Define the expected structure for a component in the request body
+interface MealComponentPayload {
+    course_type: 'starter' | 'main' | 'dessert' | 'side' | 'extra' | 'breakfast_item';
+    recipe_id?: number | null;
+    ingredient_id?: number | null;
+    quantity?: number | null; // Only for direct ingredients
+    notes?: string | null;
+    display_order?: number;
+}
 
 // Define the expected structure of the request body for updating a meal
 interface UpdateMealRequestBody {
-    recipeIds?: number[]; // Optional: Array of recipe IDs to associate with the meal
-    drinks?: string | null; // Optional: Description of drinks
-    bread?: boolean; // Optional: Whether bread is included
+    components: MealComponentPayload[]; // Array of components for the meal
+    drinks?: string | null;
+    bread?: boolean;
 }
 
 export const PUT: RequestHandler = async ({ params, request, locals, platform }) => {
@@ -16,22 +26,18 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
     let user = locals.user;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
     if (!authEnabled && !user) {
-        console.log("[API /api/meals PUT] Auth disabled, creating mock user.");
         user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
     }
     if (!user?.authenticated || !user.id) {
-        console.error("[API /api/meals PUT] User not authenticated.");
         throw error(401, 'User not authenticated');
     }
     const userId = user.id;
     // --- End Authentication Check ---
 
     if (!db) {
-        console.error("[API /api/meals PUT] Database binding 'DB' not found.");
         throw error(500, "Database binding not found.");
     }
     if (!mealId || isNaN(parseInt(mealId))) {
-        console.error(`[API /api/meals PUT] Invalid mealId parameter: ${mealId}`);
         throw error(400, "Invalid Meal ID parameter.");
     }
     const mealIdNum = parseInt(mealId);
@@ -39,6 +45,23 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
     try {
         const body: UpdateMealRequestBody = await request.json();
         console.log(`[API /api/meals PUT] Received update request for meal ID: ${mealIdNum}`, body);
+
+        // --- Validation ---
+        if (!Array.isArray(body.components)) {
+             throw error(400, 'Invalid request body: "components" array is required.');
+        }
+        // Add more validation for each component if needed (e.g., check course_type, ensure recipe XOR ingredient)
+        for (const comp of body.components) {
+             if (!comp.course_type) throw error(400, 'Invalid component: course_type is required.');
+             const isRecipe = comp.recipe_id != null && comp.recipe_id > 0;
+             const isIngredient = comp.ingredient_id != null && comp.ingredient_id > 0;
+             if (isRecipe && isIngredient) throw error(400, 'Invalid component: Cannot have both recipe_id and ingredient_id.');
+             if (!isRecipe && !isIngredient) throw error(400, 'Invalid component: Must have either recipe_id or ingredient_id.');
+             if (isIngredient && (comp.quantity == null || comp.quantity <= 0)) throw error(400, 'Invalid component: Direct ingredient requires a positive quantity.');
+             if (isRecipe && comp.quantity != null) throw error(400, 'Invalid component: Quantity should not be set for a recipe component.');
+        }
+        // --- End Validation ---
+
 
         // --- Authorization Check: Verify the meal belongs to the authenticated user ---
         const authCheckStmt = db.prepare(`
@@ -51,56 +74,59 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
         const authResult = await authCheckStmt.bind(mealIdNum).first<{ organiser_id: string }>();
 
         if (!authResult || authResult.organiser_id !== userId) {
-            console.warn(`[API /api/meals PUT] Authorization failed: User ${userId} cannot modify meal ${mealIdNum}.`);
             throw error(403, 'Forbidden: You do not have permission to modify this meal.');
         }
         console.log(`[API /api/meals PUT] Authorization successful for user ${userId} on meal ${mealIdNum}.`);
         // --- End Authorization Check ---
 
-        // --- Prepare updates ---
-        const updates: string[] = [];
-        const bindings: (string | number | boolean | null)[] = [];
-
-        if (body.drinks !== undefined) {
-            updates.push('drinks = ?');
-            bindings.push(body.drinks);
-        }
-        if (body.bread !== undefined) {
-            updates.push('bread = ?');
-            // D1 expects 0 or 1 for BOOLEAN
-            bindings.push(body.bread ? 1 : 0);
-        }
-
-        // --- Begin Transaction ---
+        // --- Prepare updates within a transaction ---
         const batchActions: D1PreparedStatement[] = [];
 
-        // 1. Update the meals table if there are changes
-        if (updates.length > 0) {
-            bindings.push(mealIdNum); // Add mealId for the WHERE clause
-            const updateMealStmt = db.prepare(`UPDATE meals SET ${updates.join(', ')} WHERE id = ?`);
-            batchActions.push(updateMealStmt.bind(...bindings));
-            console.log(`[API /api/meals PUT] Prepared update for meals table: SET ${updates.join(', ')} WHERE id = ${mealIdNum}`);
+        // 1. Delete existing components for this meal
+        const deleteComponentsStmt = db.prepare('DELETE FROM meal_components WHERE meal_id = ?');
+        batchActions.push(deleteComponentsStmt.bind(mealIdNum));
+        console.log(`[API /api/meals PUT] Prepared delete for existing meal_components for meal ID: ${mealIdNum}`);
+
+        // 2. Insert new components
+        const insertComponentStmt = db.prepare(`
+            INSERT INTO meal_components
+                (meal_id, course_type, recipe_id, ingredient_id, quantity, notes, display_order)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+        body.components.forEach((comp, index) => {
+            batchActions.push(insertComponentStmt.bind(
+                mealIdNum,
+                comp.course_type,
+                comp.recipe_id ?? null,
+                comp.ingredient_id ?? null,
+                comp.quantity ?? null, // Will be null for recipes due to validation/check constraint
+                comp.notes ?? null,
+                comp.display_order ?? index // Use provided order or array index
+            ));
+        });
+        console.log(`[API /api/meals PUT] Prepared insert for ${body.components.length} new meal_components for meal ID: ${mealIdNum}`);
+
+        // 3. Update meals table for drinks/bread (if changed)
+        const mealUpdates: string[] = [];
+        const mealBindings: (string | number | boolean | null)[] = [];
+        let mealNeedsUpdate = false;
+
+        if (body.drinks !== undefined) {
+            mealUpdates.push('drinks = ?');
+            mealBindings.push(body.drinks);
+            mealNeedsUpdate = true;
+        }
+        if (body.bread !== undefined) {
+            mealUpdates.push('bread = ?');
+            mealBindings.push(body.bread ? 1 : 0); // D1 expects 0 or 1
+            mealNeedsUpdate = true;
         }
 
-        // 2. Update meal_recipes if recipeIds are provided
-        if (body.recipeIds !== undefined) {
-            // a. Delete existing associations
-            const deleteRecipesStmt = db.prepare('DELETE FROM meal_recipes WHERE meal_id = ?');
-            batchActions.push(deleteRecipesStmt.bind(mealIdNum));
-            console.log(`[API /api/meals PUT] Prepared delete for existing meal_recipes for meal ID: ${mealIdNum}`);
-
-            // b. Insert new associations
-            if (body.recipeIds.length > 0) {
-                 const insertRecipeStmt = db.prepare('INSERT INTO meal_recipes (meal_id, recipe_id) VALUES (?, ?)');
-                 body.recipeIds.forEach(recipeId => {
-                     if (typeof recipeId === 'number' && !isNaN(recipeId)) {
-                         batchActions.push(insertRecipeStmt.bind(mealIdNum, recipeId));
-                     } else {
-                          console.warn(`[API /api/meals PUT] Invalid recipeId skipped: ${recipeId}`);
-                     }
-                 });
-                 console.log(`[API /api/meals PUT] Prepared insert for ${body.recipeIds.length} new meal_recipes for meal ID: ${mealIdNum}`);
-            }
+        if (mealNeedsUpdate) {
+            mealBindings.push(mealIdNum); // Add mealId for the WHERE clause
+            const updateMealStmt = db.prepare(`UPDATE meals SET ${mealUpdates.join(', ')} WHERE id = ?`);
+            batchActions.push(updateMealStmt.bind(...mealBindings));
+            console.log(`[API /api/meals PUT] Prepared update for meals table: SET ${mealUpdates.join(', ')} WHERE id = ${mealIdNum}`);
         }
 
         // --- Execute Transaction ---
@@ -109,18 +135,17 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
              await db.batch(batchActions);
              console.log(`[API /api/meals PUT] Batch execution successful for meal ID: ${mealIdNum}`);
         } else {
-             console.log(`[API /api/meals PUT] No updates to execute for meal ID: ${mealIdNum}`);
+             console.log(`[API /api/meals PUT] No database actions to execute for meal ID: ${mealIdNum}`);
         }
 
         return json({ message: 'Meal updated successfully' }, { status: 200 });
 
     } catch (e: any) {
         // Handle specific errors like 403 or re-throw others
-        if (e.status === 403 || e.status === 401 || e.status === 400) {
+        if (e.status >= 400 && e.status < 500) {
             throw e;
         }
         console.error(`[API /api/meals PUT] Error updating meal ID ${mealIdNum}:`, e);
-        // Check for JSON parsing errors specifically
         if (e instanceof SyntaxError) {
              throw error(400, 'Invalid request body: Malformed JSON.');
         }

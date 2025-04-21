@@ -1,89 +1,191 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from 'svelte';
-  import type { Meal, MealRecipe } from '../../routes/trips/[tripId]/+page.server'; // Import Meal structure
-  import type { Recipe as FullRecipe } from '../../routes/api/recipes/+server'; // Import full Recipe structure for available recipes
-  import RecipeCreateModal from './RecipeCreateModal.svelte'; // Import the new modal
+  import { createEventDispatcher, onMount, tick } from 'svelte';
+  import type { Meal, MealComponent } from '../../routes/trips/[tripId]/+page.server'; // Types defining fetched data structure
+  import type { Recipe as FullRecipe } from '../../routes/api/recipes/+server'; // Type for full recipe details
+  import type { Ingredient, UpdateMealRequestBody } from '$lib/types'; // Import shared types including the request body
+  import RecipeCreateModal from './RecipeCreateModal.svelte';
 
+  // --- Props & Dispatch ---
   export let showModal: boolean = false;
-  export let mealData: Meal | null = null; // The meal being edited
+  export let mealData: Meal | null = null; // The meal being edited (contains grouped components)
+  const dispatch = createEventDispatcher();
 
-  let availableRecipes: FullRecipe[] = []; // All recipes fetched from API
-  let selectedRecipeIds: Set<number> = new Set();
+  // --- State ---
+  let availableRecipes: FullRecipe[] = [];
+  let availableIngredients: Ingredient[] = [];
+  let editedComponents: MealComponent[] = []; // Flat list for easier editing
   let drinks: string = '';
   let bread: boolean = false;
-  let isLoadingRecipes = false;
-  let errorLoadingRecipes: string | null = null;
+
+  let isLoadingPrereqs = false;
+  let loadingError: string | null = null;
   let isSaving = false;
   let saveError: string | null = null;
 
-  // State for Recipe Create Modal
   let showRecipeCreateModal = false;
 
-  const dispatch = createEventDispatcher();
-
-  // Fetch available recipes when the component mounts or becomes visible
+  // --- Lifecycle & Watchers ---
   onMount(() => {
-      if (showModal) {
-          fetchAvailableRecipes();
-      }
+      if (showModal) fetchPrerequisites();
   });
 
-  // Watch for showModal changes to fetch recipes if needed
-  $: if (showModal && availableRecipes.length === 0 && !isLoadingRecipes) {
-      fetchAvailableRecipes();
+  $: if (showModal && availableRecipes.length === 0 && availableIngredients.length === 0 && !isLoadingPrereqs) {
+      fetchPrerequisites();
   }
 
-  // Update local state when mealData changes (when modal opens for a new meal)
-  $: if (mealData && showModal) {
-      selectedRecipeIds = new Set(mealData.recipes.map(r => r.id));
-      drinks = mealData.drinks || '';
-      bread = mealData.bread;
-      saveError = null; // Reset save error when opening
+  // Initialize/reset state when modal opens or closes, or mealData changes
+  $: if (showModal && mealData) {
+      initializeEditorState(mealData);
+      saveError = null; // Reset save error
   } else if (!showModal) {
-      // Reset when modal closes
-      selectedRecipeIds = new Set();
+      resetEditorState();
+  }
+
+  function initializeEditorState(currentMeal: Meal) {
+      drinks = currentMeal.drinks || '';
+      bread = currentMeal.bread;
+      // Flatten the grouped components into a single list for editing
+      editedComponents = Object.values(currentMeal.components).flat().sort((a, b) => a.display_order - b.display_order);
+  }
+
+  function resetEditorState() {
+      editedComponents = [];
       drinks = '';
       bread = false;
       saveError = null;
-      showRecipeCreateModal = false; // Ensure create modal is also closed
+      showRecipeCreateModal = false;
+      // Don't reset availableRecipes/Ingredients unless necessary
   }
 
-  async function fetchAvailableRecipes() {
-      isLoadingRecipes = true;
-      errorLoadingRecipes = null;
-      console.log("Fetching available recipes...");
+  // --- Data Fetching ---
+  async function fetchPrerequisites() {
+      isLoadingPrereqs = true;
+      loadingError = null;
+      console.log("Fetching recipes and ingredients...");
       try {
-          const response = await fetch('/api/recipes');
-          if (!response.ok) {
-              throw new Error(`Failed to fetch recipes: ${response.statusText}`);
-          }
-          const data = await response.json();
-          availableRecipes = data.recipes || [];
-          console.log(`Fetched ${availableRecipes.length} recipes.`);
+          const [recipeRes, ingredientRes] = await Promise.all([
+              fetch('/api/recipes'),
+              fetch('/api/ingredients')
+          ]);
+          if (!recipeRes.ok) throw new Error(`Failed to fetch recipes: ${recipeRes.statusText}`);
+          if (!ingredientRes.ok) throw new Error(`Failed to fetch ingredients: ${ingredientRes.statusText}`);
+
+          const recipeData = await recipeRes.json();
+          const ingredientData = await ingredientRes.json();
+
+          availableRecipes = recipeData.recipes || [];
+          availableIngredients = ingredientData.ingredients || [];
+          console.log(`Fetched ${availableRecipes.length} recipes and ${availableIngredients.length} ingredients.`);
       } catch (err: any) {
-          console.error("Error fetching recipes:", err);
-          errorLoadingRecipes = err.message || "Could not load recipes.";
+          console.error("Error fetching prerequisites:", err);
+          loadingError = err.message || "Could not load data.";
       } finally {
-          isLoadingRecipes = false;
+          isLoadingPrereqs = false;
       }
   }
 
-  function closeModal() {
-    dispatch('close');
+  // --- Component Logic ---
+  function addComponent(course: MealComponent['course_type']) {
+      // Add a placeholder component for the specified course
+      const newComponent: MealComponent = {
+          id: Date.now(), // Temporary ID for {#each} key, will be ignored by backend
+          course_type: course,
+          recipe_id: null,
+          ingredient_id: null,
+          quantity: null, // Will be set if ingredient is chosen
+          notes: null,
+          display_order: editedComponents.filter(c => c.course_type === course).length, // Basic ordering
+          recipe_name: null,
+          ingredient_name: null,
+          ingredient_unit: null,
+      };
+      editedComponents = [...editedComponents, newComponent];
   }
+
+  function removeComponent(tempId: number) {
+      editedComponents = editedComponents.filter(c => c.id !== tempId);
+      // Re-calculate display_order? Or handle on save? Let's handle on save for simplicity now.
+  }
+
+  function handleComponentTypeChange(event: Event, index: number) {
+      const type = (event.target as HTMLSelectElement).value;
+      // Reset related fields when type changes
+      editedComponents[index].recipe_id = null;
+      editedComponents[index].ingredient_id = null;
+      editedComponents[index].quantity = null;
+      editedComponents[index].recipe_name = null;
+      editedComponents[index].ingredient_name = null;
+      editedComponents[index].ingredient_unit = null;
+      editedComponents = editedComponents; // Trigger reactivity
+  }
+
+   function handleRecipeSelect(event: Event, index: number) {
+       const selectedId = parseInt((event.target as HTMLSelectElement).value);
+       const recipe = availableRecipes.find(r => r.id === selectedId);
+       if (recipe) {
+           editedComponents[index].recipe_id = selectedId;
+           editedComponents[index].recipe_name = recipe.name;
+           editedComponents[index].ingredient_id = null; // Ensure ingredient is null
+           editedComponents[index].quantity = null;
+           editedComponents[index].ingredient_name = null;
+           editedComponents[index].ingredient_unit = null;
+           editedComponents = editedComponents;
+       }
+   }
+
+   function handleIngredientSelect(event: Event, index: number) {
+       const selectedId = parseInt((event.target as HTMLSelectElement).value);
+       const ingredient = availableIngredients.find(i => i.id === selectedId);
+       if (ingredient) {
+           editedComponents[index].ingredient_id = selectedId;
+           editedComponents[index].ingredient_name = ingredient.name;
+           editedComponents[index].ingredient_unit = ingredient.unit;
+           editedComponents[index].recipe_id = null; // Ensure recipe is null
+           if (editedComponents[index].quantity === null) { // Set default quantity if not set
+               editedComponents[index].quantity = 1;
+           }
+           editedComponents = editedComponents;
+       }
+   }
+
+
+  // --- Recipe Creation Modal ---
+  function openRecipeCreateModal() { showRecipeCreateModal = true; }
+  function closeRecipeCreateModal() { showRecipeCreateModal = false; }
+  function handleRecipeCreated(event: CustomEvent<FullRecipe>) {
+      const newRecipe = event.detail;
+      availableRecipes = [...availableRecipes, newRecipe].sort((a,b) => a.name.localeCompare(b.name));
+      // Maybe add the new recipe automatically to the current course? Needs context.
+      closeRecipeCreateModal();
+  }
+
+  // --- Save & Close ---
+  function closeModal() { dispatch('close'); }
 
   async function saveChanges() {
       if (!mealData) return;
-
       isSaving = true;
       saveError = null;
-      console.log(`Saving changes for meal ID: ${mealData.id}`);
 
-      const payload = {
-          recipeIds: Array.from(selectedRecipeIds),
-          drinks: drinks || null, // Send null if empty
+      // Filter out invalid components and prepare payload
+      const validComponents = editedComponents
+          .filter(comp => (comp.recipe_id != null || (comp.ingredient_id != null && comp.quantity != null && comp.quantity > 0)))
+          .map((comp, index) => ({ // Assign final display order here
+              course_type: comp.course_type,
+              recipe_id: comp.recipe_id,
+              ingredient_id: comp.ingredient_id,
+              quantity: comp.ingredient_id ? comp.quantity : null, // Only send quantity for ingredients
+              notes: comp.notes,
+              display_order: index // Simple sequential order for now
+          }));
+
+      const payload: UpdateMealRequestBody = {
+          components: validComponents,
+          drinks: drinks || null,
           bread: bread
       };
+
+      console.log(`Saving changes for meal ID: ${mealData.id}`, payload);
 
       try {
           const response = await fetch(`/api/meals/${mealData.id}`, {
@@ -91,16 +193,13 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
           });
-
           if (!response.ok) {
-              const errorData = await response.json().catch(() => ({})); // Try to parse error
+              const errorData = await response.json().catch(() => ({}));
               throw new Error(errorData.error || `Failed to update meal: ${response.statusText}`);
           }
-
           console.log(`Meal ${mealData.id} updated successfully.`);
-          dispatch('mealUpdated'); // Notify parent to potentially refresh data
-          closeModal(); // Close modal on success
-
+          dispatch('mealUpdated');
+          closeModal();
       } catch (err: any) {
           console.error("Error saving meal:", err);
           saveError = err.message || "Could not save changes.";
@@ -109,283 +208,220 @@
       }
   }
 
-  // Handle checkbox changes for recipes
-  function handleRecipeToggle(recipeId: number, checked: boolean) {
-      if (checked) {
-          selectedRecipeIds.add(recipeId);
-      } else {
-          selectedRecipeIds.delete(recipeId);
-      }
-      selectedRecipeIds = selectedRecipeIds; // Trigger reactivity
+  // Helper to get components for a specific course
+  function getComponentsForCourse(course: MealComponent['course_type']): MealComponent[] {
+      return editedComponents.filter(c => c.course_type === course);
   }
 
-  // --- Recipe Creation Modal Logic ---
-  function openRecipeCreateModal() {
-      showRecipeCreateModal = true;
-  }
+  // Define courses based on meal type
+  let courses: MealComponent['course_type'][] = [];
+  $: courses = mealData?.type === 'breakfast'
+      ? ['breakfast_item']
+      : ['starter', 'main', 'dessert', 'side', 'extra']; // For lunch/dinner
 
-  function closeRecipeCreateModal() {
-      showRecipeCreateModal = false;
-  }
-
-  function handleRecipeCreated(event: CustomEvent<FullRecipe>) {
-      const newRecipe = event.detail;
-      console.log("New recipe created:", newRecipe);
-      // Add to available list
-      availableRecipes = [...availableRecipes, newRecipe];
-      // Optionally auto-select the new recipe
-      selectedRecipeIds.add(newRecipe.id);
-      selectedRecipeIds = selectedRecipeIds; // Trigger reactivity
-      closeRecipeCreateModal(); // Close the create modal
-  }
+  // Map course types to French labels
+  const courseLabels: Record<MealComponent['course_type'], string> = {
+      starter: 'Entrée',
+      main: 'Plat Principal',
+      dessert: 'Dessert',
+      side: 'Accompagnement',
+      extra: 'Extra / Divers',
+      breakfast_item: 'Éléments du Petit Déjeuner'
+  };
 
 </script>
 
 {#if showModal}
   <div class="modal-backdrop" on:click={closeModal}>
-    <div class="modal-content" on:click|stopPropagation>
+    <div class="modal-content meal-edit-modal" on:click|stopPropagation>
       {#if mealData}
-        <h3>Modifier le repas : {mealData.type}</h3>
+        <h3>Modifier le repas : {mealData.type} ({courseLabels[courses[0]]})</h3>
 
-        <div class="form-section">
-            <div class="recipe-header">
-                <h4>Recettes</h4>
-                <button type="button" class="create-recipe-btn" on:click={openRecipeCreateModal}>
-                    + Créer Recette
-                </button>
-            </div>
-            {#if isLoadingRecipes}
-                <p>Chargement des recettes...</p>
-            {:else if errorLoadingRecipes}
-                <p class="error">Erreur : {errorLoadingRecipes}</p>
-            {:else if availableRecipes.length === 0}
-                <p>Aucune recette disponible. <button type="button" class="link-button" on:click={openRecipeCreateModal}>Créer une recette ?</button></p>
-            {:else}
-                <ul class="recipe-list">
-                    {#each availableRecipes as recipe (recipe.id)}
-                        <li>
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    checked={selectedRecipeIds.has(recipe.id)}
-                                    on:change={(e) => handleRecipeToggle(recipe.id, e.currentTarget.checked)}
-                                />
-                                {recipe.name}
-                                {#if recipe.description}
-                                    <small>({recipe.description})</small>
+        {#if loadingError}
+            <p class="error">Erreur de chargement: {loadingError}</p>
+        {:else if isLoadingPrereqs}
+            <p>Chargement des recettes et ingrédients...</p>
+        {:else}
+            <div class="edit-form">
+                <!-- Course Sections -->
+                {#each courses as course (course)}
+                    <section class="course-section">
+                        <h4>{courseLabels[course]}</h4>
+                        {#each getComponentsForCourse(course) as component, i (component.id)}
+                            <div class="component-row">
+                                <select class="component-type-select" on:change={(e) => handleComponentTypeChange(e, editedComponents.findIndex(c => c.id === component.id))}>
+                                    <option value="recipe" selected={component.recipe_id != null}>Recette</option>
+                                    <option value="ingredient" selected={component.ingredient_id != null}>Ingrédient Direct</option>
+                                </select>
+
+                                {#if component.recipe_id != null || (component.ingredient_id == null)}
+                                    <!-- Recipe Selector -->
+                                    <select class="item-select" required={component.ingredient_id == null} bind:value={component.recipe_id} on:change={(e) => handleRecipeSelect(e, editedComponents.findIndex(c => c.id === component.id))}>
+                                        <option value={null} disabled={component.recipe_id != null}>-- Choisir Recette --</option>
+                                        {#each availableRecipes as r (r.id)}
+                                            <option value={r.id}>{r.name}</option>
+                                        {/each}
+                                    </select>
+                                    <button type="button" class="inline-create-btn" on:click={openRecipeCreateModal} title="Créer une nouvelle recette">+</button>
+                                {:else}
+                                    <!-- Ingredient Selector -->
+                                    <select class="item-select" required bind:value={component.ingredient_id} on:change={(e) => handleIngredientSelect(e, editedComponents.findIndex(c => c.id === component.id))}>
+                                        <option value={null} disabled>-- Choisir Ingrédient --</option>
+                                        {#each availableIngredients as ing (ing.id)}
+                                            <option value={ing.id}>{ing.name}</option>
+                                        {/each}
+                                    </select>
+                                    <input type="number" class="quantity-input" step="any" min="0.01" placeholder="Qté" bind:value={component.quantity} required />
+                                    <span class="unit-span">{component.ingredient_unit || 'Unité'}</span>
                                 {/if}
-                            </label>
-                        </li>
-                    {/each}
-                </ul>
+
+                                <input type="text" class="notes-input" placeholder="Notes (optionnel)" bind:value={component.notes} />
+                                <button type="button" class="remove-btn" on:click={() => removeComponent(component.id)} title="Supprimer cet élément">&times;</button>
+                            </div>
+                        {/each}
+                        <button type="button" class="add-btn" on:click={() => addComponent(course)}>+ Ajouter</button>
+                    </section>
+                {/each}
+
+                <!-- Drinks and Bread -->
+                 <section class="extras-section">
+                      <h4>Autres</h4>
+                      <div class="form-group">
+                          <label for="drinks">Boissons :</label>
+                          <input type="text" id="drinks" bind:value={drinks} placeholder="Ex: Eau, Jus d'orange" />
+                      </div>
+                      <div class="form-group">
+                          <label class="checkbox-label">
+                              <input type="checkbox" bind:checked={bread} />
+                              Pain inclus ?
+                          </label>
+                      </div>
+                 </section>
+
+            </div>
+
+            {#if saveError}
+                <p class="error save-error">Erreur: {saveError}</p>
             {/if}
-        </div>
 
-        <div class="form-section">
-            <label for="drinks">Boissons :</label>
-            <input type="text" id="drinks" bind:value={drinks} placeholder="Ex: Eau, Jus d'orange" />
-        </div>
-
-        <div class="form-section">
-            <label>
-                <input type="checkbox" bind:checked={bread} />
-                Pain inclus ?
-            </label>
-        </div>
-
-        {#if saveError}
-            <p class="error save-error">Erreur lors de la sauvegarde : {saveError}</p>
+            <div class="modal-actions">
+              <button type="button" on:click={closeModal} disabled={isSaving}>Annuler</button>
+              <button type="button" class="save-button" on:click={saveChanges} disabled={isSaving}>
+                {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+              </button>
+            </div>
         {/if}
-
-        <div class="modal-actions">
-          <button on:click={closeModal} disabled={isSaving}>Annuler</button>
-          <button class="save-button" on:click={saveChanges} disabled={isSaving}>
-            {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
-          </button>
-        </div>
 
       {:else}
         <p>Aucune donnée de repas à modifier.</p>
          <div class="modal-actions">
-             <button on:click={closeModal}>Fermer</button>
+             <button type="button" on:click={closeModal}>Fermer</button>
          </div>
       {/if}
     </div>
   </div>
 {/if}
 
-<!-- Render the Recipe Create Modal (controlled by showRecipeCreateModal) -->
+<!-- Render the Recipe Create Modal -->
 <RecipeCreateModal bind:showModal={showRecipeCreateModal} on:close={closeRecipeCreateModal} on:recipeCreated={handleRecipeCreated} />
 
 
 <style>
   .modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000; /* Ensure it's above main content */
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); display: flex;
+    justify-content: center; align-items: center; z-index: 1000;
   }
 
-  .modal-content {
-    background-color: white;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    width: 90%;
-    max-width: 600px; /* Limit max width */
-    max-height: 80vh; /* Limit max height */
-    overflow-y: auto; /* Allow scrolling if content overflows */
+  .meal-edit-modal {
+    background-color: white; padding: 1.5rem 2rem; border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); width: 90%;
+    max-width: 700px; max-height: 90vh; overflow-y: auto;
   }
 
-  h3 {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    color: #333;
-  }
+  h3 { margin-top: 0; margin-bottom: 1.5rem; color: #333; }
 
-  .form-section {
-      margin-bottom: 1.5rem;
-  }
-
-  .recipe-header {
+  .edit-form {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+      gap: 1.5rem;
+  }
+
+  .course-section {
+      border: 1px solid #eee;
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      background-color: #fdfdfd;
+  }
+  .course-section h4 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      color: #444;
+      border-bottom: 1px dashed #ddd;
+      padding-bottom: 0.5rem;
+  }
+
+  .component-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto auto auto; /* Type, ItemSelect, CreateBtn/Qty, Unit, Notes, Remove */
+      gap: 0.5rem;
       align-items: center;
       margin-bottom: 0.75rem;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 0.3rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #f0f0f0;
   }
-
-  .recipe-header h4 {
-      margin: 0;
-      color: #555;
-  }
-
-  .create-recipe-btn {
-      padding: 0.3rem 0.8rem;
-      font-size: 0.85em;
-      background-color: #6c757d;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-  }
-  .create-recipe-btn:hover {
-      background-color: #5a6268;
-  }
-
-  .link-button { /* Style like a link */
-      background: none;
-      border: none;
-      color: #007bff;
-      padding: 0;
-      cursor: pointer;
-      text-decoration: underline;
-  }
-  .link-button:hover {
-      color: #0056b3;
-  }
-
-
-  label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: bold;
-      color: #444;
-  }
-
-  input[type="text"] {
-      width: 100%;
-      padding: 0.6rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box; /* Include padding in width */
-  }
-
-  input[type="checkbox"] {
-      margin-right: 0.5rem;
-      vertical-align: middle;
-  }
-
-  /* Style for the recipe list */
-  .recipe-list {
-      list-style: none;
-      padding: 0;
-      max-height: 200px; /* Limit height and allow scroll */
-      overflow-y: auto;
-      border: 1px solid #eee;
-      border-radius: 4px;
-      padding: 0.5rem;
-  }
-
-  .recipe-list li {
-      padding: 0.3rem 0;
-  }
-   .recipe-list label {
-       font-weight: normal; /* Normal weight for list items */
-       display: flex; /* Align checkbox and text */
-       align-items: center;
+   .component-row:last-child {
+       border-bottom: none;
+       margin-bottom: 0;
    }
-   .recipe-list small {
-       margin-left: 0.5rem;
-       color: #777;
-       font-size: 0.85em;
+
+   select, input[type="text"], input[type="number"] {
+       padding: 0.5rem;
+       border: 1px solid #ccc;
+       border-radius: 4px;
+       font-size: 0.95em;
    }
+   .component-type-select { width: auto; }
+   .item-select { flex-grow: 1; }
+   .quantity-input { width: 70px; text-align: right; }
+   .unit-span { font-size: 0.9em; color: #666; white-space: nowrap; }
+   .notes-input { width: 150px; } /* Adjust width as needed */
+
+   .inline-create-btn {
+       padding: 0.3rem 0.5rem; font-size: 0.8em; margin-left: -0.3rem; /* Overlap slightly */
+   }
+
+   .add-btn, .remove-btn {
+       padding: 0.3rem 0.6rem; font-size: 0.9em; border-radius: 4px; cursor: pointer;
+   }
+   .add-btn { background-color: #e0e0e0; border: 1px solid #ccc; margin-top: 0.5rem; }
+   .remove-btn { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; font-weight: bold; line-height: 1; padding: 0.4rem 0.6rem; }
+
+   .extras-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; }
+   .extras-section .form-group { margin-bottom: 0.75rem; }
+   .checkbox-label { display: flex; align-items: center; font-weight: normal; }
+   .checkbox-label input { margin-right: 0.5rem; }
 
 
   .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 2rem;
-    border-top: 1px solid #eee;
-    padding-top: 1rem;
+    display: flex; justify-content: flex-end; gap: 1rem;
+    margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;
   }
 
-  button {
-    padding: 0.6rem 1.2rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    cursor: pointer;
-    background-color: #f0f0f0;
+  button { /* Base button styles */
+    padding: 0.6rem 1.2rem; border: 1px solid #ccc; border-radius: 4px;
+    cursor: pointer; background-color: #f0f0f0;
   }
-  button:hover {
-      background-color: #e0e0e0;
-  }
-  button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-  }
+  button:hover { background-color: #e0e0e0; }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-  .save-button {
-    background-color: #28a745;
-    color: white;
-    border-color: #28a745;
+  .save-button { /* Specific save button styles */
+    background-color: #28a745; color: white; border-color: #28a745;
   }
-  .save-button:hover {
-    background-color: #218838;
-    border-color: #1e7e34;
-  }
-   .save-button:disabled {
-       background-color: #5cb85c; /* Lighter green when disabled */
-       border-color: #5cb85c;
-   }
+  .save-button:hover { background-color: #218838; border-color: #1e7e34; }
+  .save-button:disabled { background-color: #5cb85c; border-color: #5cb85c; }
 
-  .error {
-      color: #dc3545; /* Red color for errors */
-      font-size: 0.9rem;
-      margin-top: 0.5rem;
-  }
-  .save-error {
-      text-align: right;
-      margin-top: -1rem; /* Position near buttons */
-      margin-bottom: 1rem;
-  }
+  .error { color: #dc3545; font-size: 0.9rem; margin-top: 0.5rem; }
+  .save-error { text-align: right; margin-top: -1rem; margin-bottom: 1rem; }
 
 </style>
