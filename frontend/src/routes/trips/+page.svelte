@@ -55,8 +55,9 @@
           <strong>Dates:</strong> {formatDate(trip.start_date)} - {formatDate(trip.end_date)}<br />
           <strong>Attendees:</strong> {trip.num_people}
         </p>
-        <!-- Add links for viewing details or planning meals later -->
-        <!-- <a href="/trips/{trip.id}">View Details</a> -->
+        <div class="trip-actions">
+            <a href="/trips/{trip.id}" class="details-link">Planifier les repas / Voir détails</a>
+        </div>
       </li>
     {/each}
   </ul>

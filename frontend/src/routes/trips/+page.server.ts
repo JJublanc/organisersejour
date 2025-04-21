@@ -1,21 +1,14 @@
 import { redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import type { User } from '$lib/auth'; // Import User type if needed elsewhere
+import type { User } from '$lib/auth';
+import type { D1PreparedStatement } from '@cloudflare/workers-types';
+import type { Trip } from '$lib/types'; // Import Trip from new location
 
-// Define the structure of a Trip object based on the database schema
-export interface Trip {
-    id: number;
-    name: string;
-    start_date: string;
-    end_date: string;
-    location: string | null;
-    organiser_id: string;
-    num_people: number;
-}
+// Trip interface is now defined in $lib/types.ts
 
 // Define the shape of the data loaded for the page
 export type TripsPageData = {
-    trips: Trip[];
+    trips: Trip[]; // Use imported Trip type
 };
 
 export const load: PageServerLoad = async ({ locals, platform }): Promise<TripsPageData> => {
@@ -58,7 +51,7 @@ export const load: PageServerLoad = async ({ locals, platform }): Promise<TripsP
         // Fetch trips belonging to the current user
         const stmt = db.prepare('SELECT * FROM trips WHERE organiser_id = ? ORDER BY start_date DESC');
         console.log(`[Trips Load] Fetching trips for organiser_id: ${userId}`); // Log user ID used in query
-        const { results } = await stmt.bind(userId).all<Trip>();
+        const { results } = await stmt.bind(userId).all<Trip>(); // Use imported Trip type
         console.log("[Trips Load] Fetched trips results:", results); // Log fetched results
 
         return {
@@ -78,7 +71,7 @@ export const load: PageServerLoad = async ({ locals, platform }): Promise<TripsP
 export const actions: Actions = {
     createTrip: async ({ request, locals, platform }) => {
         console.log("--- createTrip action started ---"); // Log start
-        
+
         // --- Workaround: Explicitly get/mock user at the start of the action ---
         let user = locals.user; // Try to get from locals first
         const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
@@ -142,15 +135,72 @@ export const actions: Actions = {
             const stmt = db.prepare(
                 'INSERT INTO trips (name, start_date, end_date, location, organiser_id, num_people) VALUES (?, ?, ?, ?, ?, ?)'
             );
-            const info = await stmt.bind(name, startDate, endDate, location, organiserId, numPeople).run();
-            console.log("[Action createTrip] DB Insert Result:", info); // Log DB insert result
+            const tripInsertInfo = await stmt.bind(name, startDate, endDate, location, organiserId, numPeople).run();
+            console.log("[Action createTrip] Trip Insert Result:", tripInsertInfo);
 
-            return { message: 'Séjour créé avec succès!' };
+            // --- Start: Add Trip Days and Meals ---
+            if (!tripInsertInfo.success || tripInsertInfo.meta?.last_row_id === undefined) {
+                console.error("[Action createTrip] Failed to insert trip or get last_row_id.", tripInsertInfo);
+                return fail(500, { error: 'Failed to create trip record.' });
+            }
+            const newTripId = tripInsertInfo.meta.last_row_id;
+            console.log(`[Action createTrip] Trip created with ID: ${newTripId}. Now adding days and meals.`);
 
-        } catch (error: any) {
-            console.error('[Action createTrip] Error creating trip:', error);
+            try {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const insertDayStmt = db.prepare('INSERT INTO trip_days (trip_id, date) VALUES (?, ?)');
+                const insertMealStmt = db.prepare('INSERT INTO meals (trip_day_id, type) VALUES (?, ?)');
+
+                // Loop through each day of the trip
+                let currentDate = new Date(start);
+                // Ensure loop includes the end date
+                while (currentDate <= end) {
+                    const dateString = currentDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+                    console.log(`[Action createTrip] Processing date: ${dateString} for trip ${newTripId}`);
+
+                    // Insert Trip Day
+                    const dayInsertInfo = await insertDayStmt.bind(newTripId, dateString).run();
+                    if (!dayInsertInfo.success || dayInsertInfo.meta?.last_row_id === undefined) {
+                        console.error(`[Action createTrip] Failed to insert trip_day for date ${dateString}, tripId ${newTripId}. Skipping meals for this day.`, dayInsertInfo);
+                    } else {
+                        const newTripDayId = dayInsertInfo.meta.last_row_id;
+                        console.log(`[Action createTrip] Inserted trip_day ID: ${newTripDayId} for date ${dateString}`);
+
+                        // Insert Meals for the Trip Day (using batch for meals of a single day is efficient)
+                        const mealTypes = ['breakfast', 'lunch', 'dinner'];
+                        const mealInserts: D1PreparedStatement[] = mealTypes.map(type =>
+                            insertMealStmt.bind(newTripDayId, type)
+                        );
+                        try {
+                             await db.batch(mealInserts);
+                             console.log(`[Action createTrip] Successfully added default meals for day ${dateString} (Day ID: ${newTripDayId}).`);
+                        } catch (mealBatchError: any) {
+                             console.error(`[Action createTrip] Failed to batch insert meals for day ${dateString} (Day ID: ${newTripDayId}):`, mealBatchError);
+                             // Decide if this is critical enough to fail the whole operation
+                        }
+                    }
+
+                    // Move to the next day
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                console.log(`[Action createTrip] Finished processing days/meals for trip ${newTripId}.`);
+
+            } catch (dayMealError: any) {
+                 // Log the error, but the trip itself was created.
+                 // Consider more robust error handling / rollback if needed.
+                 console.error(`[Action createTrip] Error creating trip days/meals for trip ${newTripId}:`, dayMealError);
+                 // Return success for the trip creation, but maybe add a warning?
+                 // For now, just log and proceed to return success for trip creation.
+            }
+            // --- End: Add Trip Days and Meals ---
+
+            return { success: true, message: 'Séjour créé avec succès!' }; // Indicate success explicitly
+
+        } catch (dbError: any) {
+            console.error('[Action createTrip] Error creating trip:', dbError);
             return fail(500, {
-                error: `Failed to create trip: ${error.message || 'Unknown error'}`
+                error: `Failed to create trip: ${dbError.message || 'Unknown error'}`
             });
         }
     }
