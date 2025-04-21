@@ -161,7 +161,10 @@ erDiagram
 3.  **UI/UX Polish:** Appearance and usability.
 4.  **Testing:** Backend logic (shopping list), API endpoints, frontend components/flows.
 
-- ajouter la possibilité de créer une recette
+- ajouter la possibilité de créer une recette -> OK
+- ajouter la possibilité de créer un ingrédient
+- ajouter la possibilité de créer un unstensile de cuisine
+- changer les listes en recherche intelligentes
 - ajouter la possibilité d'ajouter plusieurs recettes pour un repas
 - les recettes doivent contenir le type entrée / plat / dessert / autre
 - les boissons et le pain doivent être des ingrédients

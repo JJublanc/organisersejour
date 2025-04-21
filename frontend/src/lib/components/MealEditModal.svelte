@@ -2,6 +2,7 @@
   import { createEventDispatcher, onMount } from 'svelte';
   import type { Meal, MealRecipe } from '../../routes/trips/[tripId]/+page.server'; // Import Meal structure
   import type { Recipe as FullRecipe } from '../../routes/api/recipes/+server'; // Import full Recipe structure for available recipes
+  import RecipeCreateModal from './RecipeCreateModal.svelte'; // Import the new modal
 
   export let showModal: boolean = false;
   export let mealData: Meal | null = null; // The meal being edited
@@ -15,10 +16,12 @@
   let isSaving = false;
   let saveError: string | null = null;
 
+  // State for Recipe Create Modal
+  let showRecipeCreateModal = false;
+
   const dispatch = createEventDispatcher();
 
   // Fetch available recipes when the component mounts or becomes visible
-  // We could also pass availableRecipes as a prop if fetched higher up
   onMount(() => {
       if (showModal) {
           fetchAvailableRecipes();
@@ -42,6 +45,7 @@
       drinks = '';
       bread = false;
       saveError = null;
+      showRecipeCreateModal = false; // Ensure create modal is also closed
   }
 
   async function fetchAvailableRecipes() {
@@ -115,6 +119,26 @@
       selectedRecipeIds = selectedRecipeIds; // Trigger reactivity
   }
 
+  // --- Recipe Creation Modal Logic ---
+  function openRecipeCreateModal() {
+      showRecipeCreateModal = true;
+  }
+
+  function closeRecipeCreateModal() {
+      showRecipeCreateModal = false;
+  }
+
+  function handleRecipeCreated(event: CustomEvent<FullRecipe>) {
+      const newRecipe = event.detail;
+      console.log("New recipe created:", newRecipe);
+      // Add to available list
+      availableRecipes = [...availableRecipes, newRecipe];
+      // Optionally auto-select the new recipe
+      selectedRecipeIds.add(newRecipe.id);
+      selectedRecipeIds = selectedRecipeIds; // Trigger reactivity
+      closeRecipeCreateModal(); // Close the create modal
+  }
+
 </script>
 
 {#if showModal}
@@ -124,13 +148,18 @@
         <h3>Modifier le repas : {mealData.type}</h3>
 
         <div class="form-section">
-            <h4>Recettes</h4>
+            <div class="recipe-header">
+                <h4>Recettes</h4>
+                <button type="button" class="create-recipe-btn" on:click={openRecipeCreateModal}>
+                    + Créer Recette
+                </button>
+            </div>
             {#if isLoadingRecipes}
                 <p>Chargement des recettes...</p>
             {:else if errorLoadingRecipes}
                 <p class="error">Erreur : {errorLoadingRecipes}</p>
             {:else if availableRecipes.length === 0}
-                <p>Aucune recette disponible.</p>
+                <p>Aucune recette disponible. <button type="button" class="link-button" on:click={openRecipeCreateModal}>Créer une recette ?</button></p>
             {:else}
                 <ul class="recipe-list">
                     {#each availableRecipes as recipe (recipe.id)}
@@ -185,6 +214,10 @@
   </div>
 {/if}
 
+<!-- Render the Recipe Create Modal (controlled by showRecipeCreateModal) -->
+<RecipeCreateModal bind:showModal={showRecipeCreateModal} on:close={closeRecipeCreateModal} on:recipeCreated={handleRecipeCreated} />
+
+
 <style>
   .modal-backdrop {
     position: fixed;
@@ -196,7 +229,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 1000; /* Ensure it's above main content */
   }
 
   .modal-content {
@@ -220,12 +253,45 @@
       margin-bottom: 1.5rem;
   }
 
-  .form-section h4 {
+  .recipe-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 0.75rem;
-      color: #555;
       border-bottom: 1px solid #eee;
       padding-bottom: 0.3rem;
   }
+
+  .recipe-header h4 {
+      margin: 0;
+      color: #555;
+  }
+
+  .create-recipe-btn {
+      padding: 0.3rem 0.8rem;
+      font-size: 0.85em;
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+  }
+  .create-recipe-btn:hover {
+      background-color: #5a6268;
+  }
+
+  .link-button { /* Style like a link */
+      background: none;
+      border: none;
+      color: #007bff;
+      padding: 0;
+      cursor: pointer;
+      text-decoration: underline;
+  }
+  .link-button:hover {
+      color: #0056b3;
+  }
+
 
   label {
       display: block;
