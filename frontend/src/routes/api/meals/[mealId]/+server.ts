@@ -3,12 +3,14 @@ import type { D1PreparedStatement } from '@cloudflare/workers-types';
 
 // Define the expected structure for a component in the request body
 interface MealComponentPayload {
-    course_type: 'starter' | 'main' | 'dessert' | 'side' | 'extra' | 'breakfast_item';
-    recipe_id?: number | null;
-    ingredient_id?: number | null;
-    quantity?: number | null; // Only for direct ingredients
-    notes?: string | null;
-    display_order?: number;
+	course_type: 'starter' | 'main' | 'dessert' | 'side' | 'extra' | 'breakfast_item';
+	recipe_id?: number | null;
+	ingredient_id?: number | null;
+	total_quantity?: number | null; // Optional: Can be used for pre-calculated totals or non-person based items
+	unit?: string | null; // Required for direct ingredients
+	quantity_per_person?: number | null; // Required for direct ingredients
+	notes?: string | null;
+	display_order?: number;
 }
 
 // Define the expected structure of the request body for updating a meal
@@ -51,15 +53,25 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
              throw error(400, 'Invalid request body: "components" array is required.');
         }
         // Add more validation for each component if needed (e.g., check course_type, ensure recipe XOR ingredient)
-        for (const comp of body.components) {
-             if (!comp.course_type) throw error(400, 'Invalid component: course_type is required.');
-             const isRecipe = comp.recipe_id != null && comp.recipe_id > 0;
-             const isIngredient = comp.ingredient_id != null && comp.ingredient_id > 0;
-             if (isRecipe && isIngredient) throw error(400, 'Invalid component: Cannot have both recipe_id and ingredient_id.');
-             if (!isRecipe && !isIngredient) throw error(400, 'Invalid component: Must have either recipe_id or ingredient_id.');
-             if (isIngredient && (comp.quantity == null || comp.quantity <= 0)) throw error(400, 'Invalid component: Direct ingredient requires a positive quantity.');
-             if (isRecipe && comp.quantity != null) throw error(400, 'Invalid component: Quantity should not be set for a recipe component.');
-        }
+  for (const comp of body.components) {
+   if (!comp.course_type) throw error(400, 'Invalid component: course_type is required.');
+   const isRecipe = comp.recipe_id != null && comp.recipe_id > 0;
+   const isIngredient = comp.ingredient_id != null && comp.ingredient_id > 0;
+   if (isRecipe && isIngredient) throw error(400, 'Invalid component: Cannot have both recipe_id and ingredient_id.');
+   if (!isRecipe && !isIngredient) throw error(400, 'Invalid component: Must have either recipe_id or ingredient_id.');
+   // Validation for direct ingredients
+   if (isIngredient) {
+    if (!comp.unit || comp.unit.trim() === '') throw error(400, 'Invalid component: Direct ingredient requires a unit.');
+    if (comp.quantity_per_person == null || comp.quantity_per_person <= 0) throw error(400, 'Invalid component: Direct ingredient requires a positive quantity_per_person.');
+    if (comp.total_quantity != null) throw error(400, 'Invalid component: total_quantity should not be set when quantity_per_person and unit are provided for a direct ingredient.');
+   }
+   // Validation for recipe components
+   if (isRecipe) {
+    if (comp.quantity_per_person != null) throw error(400, 'Invalid component: quantity_per_person should not be set for a recipe component.');
+    if (comp.unit != null) throw error(400, 'Invalid component: unit should not be set for a recipe component.');
+    if (comp.total_quantity != null) throw error(400, 'Invalid component: total_quantity should not be set for a recipe component.');
+   }
+  }
         // --- End Validation ---
 
 
@@ -89,21 +101,24 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
 
         // 2. Insert new components
         const insertComponentStmt = db.prepare(`
-            INSERT INTO meal_components
-                (meal_id, course_type, recipe_id, ingredient_id, quantity, notes, display_order)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `);
-        body.components.forEach((comp, index) => {
-            batchActions.push(insertComponentStmt.bind(
-                mealIdNum,
-                comp.course_type,
-                comp.recipe_id ?? null,
-                comp.ingredient_id ?? null,
-                comp.quantity ?? null, // Will be null for recipes due to validation/check constraint
-                comp.notes ?? null,
-                comp.display_order ?? index // Use provided order or array index
-            ));
-        });
+   INSERT INTO meal_components
+    (meal_id, course_type, recipe_id, ingredient_id, total_quantity, unit, quantity_per_person, notes, display_order)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  body.components.forEach((comp, index) => {
+   const isIngredient = comp.ingredient_id != null && comp.ingredient_id > 0;
+   batchActions.push(insertComponentStmt.bind(
+    mealIdNum,
+    comp.course_type,
+    comp.recipe_id ?? null,
+    comp.ingredient_id ?? null,
+    comp.total_quantity ?? null, // Keep total_quantity field, but it's usually null now
+    isIngredient ? comp.unit : null, // Only set unit for direct ingredients
+    isIngredient ? comp.quantity_per_person : null, // Only set quantity_per_person for direct ingredients
+    comp.notes ?? null,
+    comp.display_order ?? index // Use provided order or array index
+   ));
+  });
         console.log(`[API /api/meals PUT] Prepared insert for ${body.components.length} new meal_components for meal ID: ${mealIdNum}`);
 
         // 3. Update meals table for drinks/bread (if changed)

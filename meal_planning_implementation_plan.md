@@ -162,17 +162,20 @@ erDiagram
 4.  **Testing:** Backend logic (shopping list), API endpoints, frontend components/flows.
 
 - ajouter la possibilité de créer une recette -> OK
-- ajouter la possibilité de créer un ingrédient
-- ajouter la possibilité de créer un unstensile de cuisine
+- ajouter la possibilité de créer un ingrédient -> OK
+- ajouter la possibilité de créer un unstensile de cuisine -> OK
+- ajouter la possibilité d'ajouter plusieurs recettes pour un repas -> OK
+- les recettes doivent contenir le type entrée / plat / dessert / autre -> OK
+- les ingrédients rattachés directement au repas doivent s'enregistrer + ils doivent avoir une quantité et une unité par personne -> OK
+
+- ajouter une section boissons et pain dans les repas
+- permettre la suppresion d'ingrédients, de repas, de séjour etc.
 
 
-- ajouter la possibilité d'ajouter plusieurs recettes pour un repas
-- les recettes doivent contenir le type entrée / plat / dessert / autre
+- On doit pouvoir avoir un tag sur la saison pour les repas
 
-- les boissons et le pain doivent être des ingrédients
-- on doit pouvoir ajouter des ingrédients pour un repas (exemple pain, boisson, confiture)
+- Filtrer : pour choisir une recette l'utilisateur doit pouvoir filtrer en fonction du type de cette (entrée / plat / dessert / autre), des instruments de cuisine nécessaires, de la saison de la recette (printemps / été / automne / hiver / toutes saisons)
 
-- pour choisir une recette l'utilisateur doit pouvoir filtrer en fonction du type de cette (entrée / plat / dessert / autre), des instruments de cuisine nécessaires, de la saison de la recette (printemps / été / automne / hiver / toutes saisons)
 - changer les listes en recherche intelligentes
 
 - l'utilisateur doit pouvoir consulter ses recettes

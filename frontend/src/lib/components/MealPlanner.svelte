@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { TripDay, Meal, MealComponent } from '../../routes/trips/[tripId]/+page.server';
+  import type { TripDay, Meal, MealComponent } from '$lib/types';
   import MealEditModal from './MealEditModal.svelte';
   import { invalidateAll } from '$app/navigation'; // Import invalidateAll for data refresh
 
@@ -10,7 +10,23 @@
 
   function openEditModal(meal: Meal) {
       console.log("Opening edit modal for meal:", meal);
-      selectedMealData = meal;
+      
+      // Vérifier si les propriétés nécessaires existent
+      if (!meal.recipe_components) {
+          console.error("meal.recipe_components is undefined or null", meal);
+          meal.recipe_components = {};
+      }
+      
+      if (!meal.accompaniments) {
+          console.error("meal.accompaniments is undefined or null", meal);
+          meal.accompaniments = [];
+      }
+      
+      // Créer une copie profonde pour éviter les problèmes de référence
+      const mealCopy = JSON.parse(JSON.stringify(meal));
+      console.log("Deep copy of meal:", mealCopy);
+      
+      selectedMealData = mealCopy;
       showEditModal = true;
   }
 
@@ -70,14 +86,26 @@
       }
   }
 
-  // Helper to check if a meal has any components
+  // Helper to check if a meal has any components (recipes or accompaniments)
   function hasMealComponents(meal: Meal): boolean {
-      return Object.values(meal.components).some(components => components && components.length > 0);
+      // Only use the new structure
+      const hasRecipes = meal.recipe_components ?
+          Object.values(meal.recipe_components).some(components => components && components.length > 0) :
+          false;
+      const hasAccompaniments = meal.accompaniments && meal.accompaniments.length > 0;
+      return hasRecipes || hasAccompaniments;
   }
 
-  // Helper to safely get components for a course type
+  // Helper to safely get recipe components for a course type
   function getComponentsForCourse(meal: Meal, courseType: CourseType): MealComponent[] {
-      return meal.components[courseType] || [];
+      // Only use the new structure
+      return meal.recipe_components?.[courseType] || [];
+  }
+  
+  // Helper to get accompaniments
+  function getAccompaniments(meal: Meal): MealComponent[] {
+      // Only use the new structure
+      return meal.accompaniments || [];
   }
 </script>
 
@@ -97,6 +125,7 @@
             
             <div class="meal-content">
               {#if hasMealComponents(meal)}
+                <!-- Recipe Components by Course -->
                 {#each getCoursesForMealType(meal.type) as courseType}
                   <!-- Only show course section if it has components -->
                   {@const components = getComponentsForCourse(meal, courseType)}
@@ -108,18 +137,10 @@
                       <ul>
                         {#each components as component (component.id)}
                           <li>
-                            {#if component.recipe_id}
-                              <!-- Recipe component -->
-                              <span class="component-name">{component.recipe_name}</span>
-                              {#if component.notes}
-                                <span class="component-notes">({component.notes})</span>
-                              {/if}
-                            {:else if component.ingredient_id}
-                              <!-- Direct ingredient component -->
-                              <span class="component-name">{component.quantity} {component.ingredient_unit} {component.ingredient_name}</span>
-                              {#if component.notes}
-                                <span class="component-notes">({component.notes})</span>
-                              {/if}
+                            <!-- Recipe component -->
+                            <span class="component-name">{component.recipe_name}</span>
+                            {#if component.notes}
+                              <span class="component-notes">({component.notes})</span>
                             {/if}
                           </li>
                         {/each}
@@ -127,10 +148,32 @@
                     </div>
                   {/if}
                 {/each}
+                
+                <!-- Accompaniments Section -->
+                {@const accompaniments = getAccompaniments(meal)}
+                {#if accompaniments.length > 0}
+                  <div class="course-section accompaniments-section">
+                    <h5>Accompagnements</h5>
+                    <ul>
+                      {#each accompaniments as component (component.id)}
+                        <li>
+                          <!-- Direct ingredient component with quantity per person -->
+                          <span class="component-name">
+                            {component.quantity_per_person} {component.unit} {component.ingredient_name}/pers
+                          </span>
+                          {#if component.notes}
+                            <span class="component-notes">({component.notes})</span>
+                          {/if}
+                        </li>
+                      {/each}
+                    </ul>
+                  </div>
+                {/if}
               {:else}
                 <p class="no-components"><i>Aucun élément planifié</i></p>
               {/if}
 
+              <!-- Keep these for backward compatibility until fully migrated to accompaniments -->
               {#if meal.drinks}
                 <p class="meal-extra"><strong>Boissons :</strong> {meal.drinks}</p>
               {/if}
@@ -207,6 +250,12 @@
 
   .course-section {
     margin-bottom: 1rem;
+  }
+  
+  .accompaniments-section {
+    border-top: 1px dashed #eee;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
   }
 
   .course-section h5 {
