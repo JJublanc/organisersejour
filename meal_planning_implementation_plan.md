@@ -167,10 +167,14 @@ erDiagram
 - ajouter la possibilité d'ajouter plusieurs recettes pour un repas -> OK
 - les recettes doivent contenir le type entrée / plat / dessert / autre -> OK
 - les ingrédients rattachés directement au repas doivent s'enregistrer + ils doivent avoir une quantité et une unité par personne -> OK
+- ajouter une section boissons et pain dans les repas -> OK
 
-- ajouter une section boissons et pain dans les repas
+
+- Ajouter un type pour les ingrédients : boisson / pain / condiment / légume / fruit / viande / poisson / autre
+
+
+
 - permettre la suppresion d'ingrédients, de repas, de séjour etc.
-
 
 - On doit pouvoir avoir un tag sur la saison pour les repas
 

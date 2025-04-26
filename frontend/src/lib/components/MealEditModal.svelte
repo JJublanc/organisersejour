@@ -102,6 +102,7 @@
           // Map to the format expected by the API
           .map((comp, index) => {
             const isIngredient = comp.ingredient_id != null && comp.ingredient_id > 0;
+            
             return {
               course_type: comp.course_type,
               recipe_id: comp.recipe_id,
@@ -315,7 +316,7 @@
 
   // Define courses based on meal type
   $: courses = mealData?.type === 'breakfast'
-    ? ['breakfast_item'] as const
+    ? ['breakfast_item', 'extra'] as const
     : ['starter', 'main', 'dessert', 'side', 'extra'] as const;
 
   // Map course types to French labels
@@ -327,6 +328,50 @@
     extra: 'Extra / Divers',
     breakfast_item: 'Éléments du Petit Déjeuner'
   };
+  
+  // Function to add a drink component
+  function addDrink() {
+    const newId = Date.now();
+    const newComponent = {
+      id: newId,
+      course_type: 'extra' as MealComponent['course_type'],
+      recipe_id: null,
+      ingredient_id: null,
+      total_quantity: null,
+      unit: null,
+      quantity_per_person: null,
+      notes: 'Boisson',
+      display_order: editedComponents.length,
+      recipe_name: null,
+      ingredient_name: null,
+      ingredient_unit: null
+    };
+    
+    editedComponents = [...editedComponents, newComponent];
+    console.log(`Added new drink component with ID ${newId}`);
+  }
+  
+  // Function to add a bread component
+  function addBread() {
+    const newId = Date.now();
+    const newComponent = {
+      id: newId,
+      course_type: 'extra' as MealComponent['course_type'],
+      recipe_id: null,
+      ingredient_id: null,
+      total_quantity: null,
+      unit: null,
+      quantity_per_person: null,
+      notes: 'Pain',
+      display_order: editedComponents.length,
+      recipe_name: null,
+      ingredient_name: null,
+      ingredient_unit: null
+    };
+    
+    editedComponents = [...editedComponents, newComponent];
+    console.log(`Added new bread component with ID ${newId}`);
+  }
 </script>
 
 {#if showModal}
@@ -345,8 +390,15 @@
             <section class="course-section">
               <h4>{courseLabels[course]}</h4>
               
-              <!-- Recipe components for this course -->
-              {#each editedComponents.filter(c => c.course_type === course && c.recipe_id === null && c.ingredient_id === null) as component (component.id)}
+              <!-- Recipe components for this course (excluding drinks and bread in the 'extra' section) -->
+              {#each editedComponents.filter(c => {
+                // For the 'extra' course, exclude components with notes 'Boisson' or 'Pain'
+                if (course === 'extra' && (c.notes === 'Boisson' || c.notes === 'Pain')) {
+                  return false;
+                }
+                // Otherwise, include components for this course that don't have a recipe or ingredient selected yet
+                return c.course_type === course && c.recipe_id === null && c.ingredient_id === null;
+              }) as component (component.id)}
                 <div class="component-row">
                   <select
                     value={component.recipe_id || ''}
@@ -380,8 +432,15 @@
                 </div>
               {/each}
               
-              <!-- Show selected recipes for this course -->
-              {#each editedComponents.filter(c => c.course_type === course && c.recipe_id !== null) as component (component.id)}
+              <!-- Show selected recipes for this course (excluding drinks and bread in the 'extra' section) -->
+              {#each editedComponents.filter(c => {
+                // For the 'extra' course, exclude components with notes 'Boisson' or 'Pain'
+                if (course === 'extra' && (c.notes === 'Boisson' || c.notes === 'Pain')) {
+                  return false;
+                }
+                // Otherwise, include components for this course that have a recipe selected
+                return c.course_type === course && c.recipe_id !== null;
+              }) as component (component.id)}
                 <div class="component-row selected-recipe">
                   <span class="selected-item-name">{component.recipe_name}</span>
                   
@@ -409,8 +468,8 @@
           <section class="course-section ingredients-section">
             <h4>Ingrédients</h4>
             
-            <!-- Unselected ingredient components -->
-            {#each editedComponents.filter(c => c.ingredient_id === null && c.course_type === 'extra' && c.recipe_id === null) as component (component.id)}
+            <!-- Unselected ingredient components (excluding drinks and bread) -->
+            {#each editedComponents.filter(c => c.ingredient_id === null && c.course_type === 'extra' && c.recipe_id === null && c.notes !== 'Boisson' && c.notes !== 'Pain') as component (component.id)}
               <div class="component-row">
                 <select
                   value={component.ingredient_id || ''}
@@ -444,8 +503,8 @@
               </div>
             {/each}
             
-            <!-- Selected ingredient components -->
-            {#each editedComponents.filter(c => c.ingredient_id !== null) as component (component.id)}
+            <!-- Selected ingredient components (excluding drinks and bread) -->
+            {#each editedComponents.filter(c => c.ingredient_id !== null && c.notes !== 'Boisson' && c.notes !== 'Pain') as component (component.id)}
               <div class="component-row ingredient-row">
                 <span class="selected-item-name">{component.ingredient_name}</span>
                 
@@ -479,6 +538,132 @@
               on:click|preventDefault={() => addIngredient()}
             >
               + Ajouter Ingrédient
+            </button>
+          </section>
+          
+          <!-- Drinks Section -->
+          <section class="course-section drinks-section">
+            <h4>Boissons</h4>
+            
+            <!-- Unselected drink components -->
+            {#each editedComponents.filter(c => c.notes === 'Boisson' && c.recipe_id === null && c.ingredient_id === null) as component (component.id)}
+              <div class="component-row">
+                <select
+                  value={component.recipe_id || ''}
+                  on:change={(e) => {
+                    const target = e.target as HTMLSelectElement;
+                    selectRecipe(component.id, parseInt(target.value));
+                  }}
+                >
+                  <option value="" disabled>-- Choisir une boisson --</option>
+                  {#each availableRecipes as recipe}
+                    <option value={recipe.id}>{recipe.name}</option>
+                  {/each}
+                </select>
+                
+                <button
+                  type="button"
+                  class="create-btn"
+                  on:click|preventDefault={() => openRecipeCreateModal()}
+                  title="Créer une nouvelle boisson"
+                >
+                  +
+                </button>
+                
+                <button
+                  type="button"
+                  class="remove-btn"
+                  on:click|preventDefault={() => removeComponent(component.id)}
+                >
+                  &times;
+                </button>
+              </div>
+            {/each}
+            
+            <!-- Selected drink components -->
+            {#each editedComponents.filter(c => c.notes === 'Boisson' && c.recipe_id !== null) as component (component.id)}
+              <div class="component-row selected-recipe">
+                <span class="selected-item-name">{component.recipe_name}</span>
+                
+                <button
+                  type="button"
+                  class="remove-btn"
+                  on:click|preventDefault={() => removeComponent(component.id)}
+                >
+                  &times;
+                </button>
+              </div>
+            {/each}
+            
+            <button
+              type="button"
+              class="add-btn"
+              on:click|preventDefault={() => addDrink()}
+            >
+              + Ajouter Boisson
+            </button>
+          </section>
+          
+          <!-- Bread Section -->
+          <section class="course-section bread-section">
+            <h4>Pain</h4>
+            
+            <!-- Unselected bread components -->
+            {#each editedComponents.filter(c => c.notes === 'Pain' && c.recipe_id === null && c.ingredient_id === null) as component (component.id)}
+              <div class="component-row">
+                <select
+                  value={component.recipe_id || ''}
+                  on:change={(e) => {
+                    const target = e.target as HTMLSelectElement;
+                    selectRecipe(component.id, parseInt(target.value));
+                  }}
+                >
+                  <option value="" disabled>-- Choisir un pain --</option>
+                  {#each availableRecipes as recipe}
+                    <option value={recipe.id}>{recipe.name}</option>
+                  {/each}
+                </select>
+                
+                <button
+                  type="button"
+                  class="create-btn"
+                  on:click|preventDefault={() => openRecipeCreateModal()}
+                  title="Créer un nouveau pain"
+                >
+                  +
+                </button>
+                
+                <button
+                  type="button"
+                  class="remove-btn"
+                  on:click|preventDefault={() => removeComponent(component.id)}
+                >
+                  &times;
+                </button>
+              </div>
+            {/each}
+            
+            <!-- Selected bread components -->
+            {#each editedComponents.filter(c => c.notes === 'Pain' && c.recipe_id !== null) as component (component.id)}
+              <div class="component-row selected-recipe">
+                <span class="selected-item-name">{component.recipe_name}</span>
+                
+                <button
+                  type="button"
+                  class="remove-btn"
+                  on:click|preventDefault={() => removeComponent(component.id)}
+                >
+                  &times;
+                </button>
+              </div>
+            {/each}
+            
+            <button
+              type="button"
+              class="add-btn"
+              on:click|preventDefault={() => addBread()}
+            >
+              + Ajouter Pain
             </button>
           </section>
         </div>
@@ -608,6 +793,16 @@
   .ingredients-section {
     background-color: #f8fff8;
     border-color: #d1e7dd;
+  }
+  
+  .drinks-section {
+    background-color: #f0f8ff;
+    border-color: #b8daff;
+  }
+  
+  .bread-section {
+    background-color: #fff8f0;
+    border-color: #ffeeba;
   }
 
   .add-btn {
