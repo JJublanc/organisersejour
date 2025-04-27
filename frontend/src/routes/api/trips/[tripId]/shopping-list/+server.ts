@@ -67,6 +67,7 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
                 ri.ingredient_id,
                 i.name AS ingredient_name,
                 i.unit AS ingredient_unit,
+                i.type AS ingredient_type,
                 ri.quantity,
                 r.servings AS recipe_servings
             FROM trips t
@@ -99,6 +100,7 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
                         name: item.ingredient_name,
                         unit: item.ingredient_unit,
                         total_quantity: requiredQuantity,
+                        type: item.ingredient_type,
                     });
                 }
             }
@@ -110,6 +112,7 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
                 mc.ingredient_id,
                 i.name AS ingredient_name,
                 mc.unit AS ingredient_unit,
+                i.type AS ingredient_type,
                 mc.quantity_per_person * ? AS quantity -- Calculate total quantity based on number of people
             FROM trips t
             JOIN trip_days td ON t.id = td.trip_id
@@ -135,6 +138,7 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
                          name: item.ingredient_name,
                          unit: item.ingredient_unit,
                          total_quantity: item.quantity, // Use direct quantity
+                         type: item.ingredient_type,
                      });
                  }
              }
@@ -157,6 +161,15 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
         // Optional: Sort list alphabetically
         shoppingList.sort((a, b) => a.name.localeCompare(b.name));
 
+        // Log type distribution in shopping list for validation
+        if (shoppingList.length > 0) {
+            const typeDistribution = shoppingList.reduce((acc, item) => {
+                acc[item.type] = (acc[item.type] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+            console.log(`[API ShoppingList GET] Type distribution: ${JSON.stringify(typeDistribution)}`);
+        }
+        
         console.log(`[API ShoppingList GET] Aggregated list contains ${shoppingList.length} unique ingredients.`);
         return json({ shoppingList });
 

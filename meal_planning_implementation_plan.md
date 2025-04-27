@@ -154,6 +154,7 @@ erDiagram
     *   On click: Fetch from `/api/trips/[tripId]/shopping-list`.
     *   Display aggregated list.
 
+
 **Phase 5: Refinement & Testing**
 
 1.  **Error Handling:** Frontend and backend.
@@ -161,6 +162,7 @@ erDiagram
 3.  **UI/UX Polish:** Appearance and usability.
 4.  **Testing:** Backend logic (shopping list), API endpoints, frontend components/flows.
 
+Backlog
 - ajouter la possibilité de créer une recette -> OK
 - ajouter la possibilité de créer un ingrédient -> OK
 - ajouter la possibilité de créer un unstensile de cuisine -> OK
@@ -170,16 +172,26 @@ erDiagram
 - ajouter une section boissons et pain dans les repas -> OK
 
 
-- Ajouter un type pour les ingrédients : boisson / pain / condiment / légume / fruit / viande / poisson / autre
+- Ajouter un type pour les ingrédients : boisson / pain / condiment / légume / fruit / viande / poisson / autre --> ajouter le type dans le formulaire de création de l'ingrédient
 
+
+- Conception du multi tenant
 
 
 - permettre la suppresion d'ingrédients, de repas, de séjour etc.
-
 - On doit pouvoir avoir un tag sur la saison pour les repas
+- Il faut gérer les noms des recettes et nouveaux ingrédients pour interdire la création de doublons
+
+- l'utilisateur doit pouvoir consulter ses recettes et ses ingrédients
+
+- Amélioration du design
+--- Page d'accueil qui indique en quelques mots ce que fait l'application
+
+- Ajouter des photos aux séjours et recettes
+- Télécharger la liste au format PDF
 
 - Filtrer : pour choisir une recette l'utilisateur doit pouvoir filtrer en fonction du type de cette (entrée / plat / dessert / autre), des instruments de cuisine nécessaires, de la saison de la recette (printemps / été / automne / hiver / toutes saisons)
 
 - changer les listes en recherche intelligentes
 
-- l'utilisateur doit pouvoir consulter ses recettes
+- Features avancées : génération / duplication de recettes, génération de commande sur Carrefour ou autre, création de l'application mobile

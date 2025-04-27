@@ -13,8 +13,17 @@ export const GET: RequestHandler = async ({ platform }: { platform: App.Platform
     try {
         console.log("[API /api/ingredients GET] Fetching all ingredients...");
 
-        const stmt = db.prepare('SELECT id, name, unit FROM ingredients ORDER BY name ASC');
+        const stmt = db.prepare('SELECT id, name, unit, type FROM ingredients ORDER BY name ASC');
         const { results } = await stmt.all<Ingredient>();
+
+        // Log ingredient types distribution for validation
+        if (results && results.length > 0) {
+            const typeDistribution = results.reduce((acc, ing) => {
+                acc[ing.type] = (acc[ing.type] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+            console.log(`[API /api/ingredients GET] Type distribution: ${JSON.stringify(typeDistribution)}`);
+        }
 
         console.log(`[API /api/ingredients GET] Successfully fetched ${results?.length ?? 0} ingredients.`);
         return json({ ingredients: results || [] });
@@ -51,8 +60,15 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
         const body = await request.json();
         const name = body.name?.toString().trim();
         const unit = body.unit?.toString().trim();
+        const type = body.type?.toString().trim() || 'autre';
 
-        console.log("[API /api/ingredients POST] Received ingredient creation request:", { name, unit });
+        // Validate type is one of the allowed values
+        const validTypes = ['boisson', 'pain', 'condiment', 'légume', 'fruit', 'viande', 'poisson', 'autre'];
+        if (!validTypes.includes(type)) {
+            throw error(400, `Invalid ingredient type: ${type}. Must be one of: ${validTypes.join(', ')}`);
+        }
+
+        console.log("[API /api/ingredients POST] Received ingredient creation request:", { name, unit, type });
 
         // --- Validation ---
         if (!name || name === '') {
@@ -67,15 +83,15 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 
         // --- Database Insertion ---
         try {
-            const stmt = db.prepare('INSERT INTO ingredients (name, unit) VALUES (?, ?) RETURNING id, name, unit');
-            const newIngredient = await stmt.bind(name, unit).first<Ingredient>();
+            const stmt = db.prepare('INSERT INTO ingredients (name, unit, type) VALUES (?, ?, ?) RETURNING id, name, unit, type');
+            const newIngredient = await stmt.bind(name, unit, type).first<Ingredient>();
 
             if (!newIngredient) {
                  console.error("[API /api/ingredients POST] Failed to insert ingredient or retrieve result.");
                  throw error(500, "Failed to create ingredient record.");
             }
 
-            console.log(`[API /api/ingredients POST] Successfully created ingredient ID: ${newIngredient.id}`);
+            console.log(`[API /api/ingredients POST] Successfully created ingredient ID: ${newIngredient.id} with type: ${newIngredient.type}`);
             return json({ ingredient: newIngredient }, { status: 201 }); // 201 Created
 
         } catch (dbError: any) {

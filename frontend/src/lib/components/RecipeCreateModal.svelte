@@ -29,6 +29,7 @@
   let showNewIngredientForm = false;
   let newIngredientName = '';
   let newIngredientUnit = '';
+  let newIngredientType: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre' = 'autre';
   let isAddingIngredient = false;
   let addIngredientError: string | null = null;
 
@@ -144,7 +145,11 @@
           const response = await fetch('/api/ingredients', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name: newIngredientName.trim(), unit: newIngredientUnit.trim() })
+              body: JSON.stringify({
+                name: newIngredientName.trim(),
+                unit: newIngredientUnit.trim(),
+                type: newIngredientType
+              })
           });
           const data = await response.json();
           if (!response.ok) {
@@ -156,6 +161,7 @@
           // Reset form and hide
           newIngredientName = '';
           newIngredientUnit = '';
+          newIngredientType = 'autre';
           showNewIngredientForm = false;
       } catch (err: any) {
           console.error("Error adding ingredient:", err);
@@ -327,6 +333,16 @@
                           <div class="inline-form">
                               <input type="text" placeholder="Nom ingrédient" bind:value={newIngredientName} />
                               <input type="text" placeholder="Unité (g, ml, pcs...)" bind:value={newIngredientUnit} />
+                              <select bind:value={newIngredientType}>
+                                  <option value="boisson">Boisson</option>
+                                  <option value="pain">Pain</option>
+                                  <option value="condiment">Condiment</option>
+                                  <option value="légume">Légume</option>
+                                  <option value="fruit">Fruit</option>
+                                  <option value="viande">Viande</option>
+                                  <option value="poisson">Poisson</option>
+                                  <option value="autre">Autre</option>
+                              </select>
                               <button type="button" on:click={saveNewIngredient} disabled={isAddingIngredient}>
                                   {isAddingIngredient ? 'Ajout...' : 'Ajouter'}
                               </button>
@@ -461,7 +477,8 @@
        border-radius: 4px;
        align-items: center;
    }
-   .inline-form input {
+   .inline-form input,
+   .inline-form select {
        flex-grow: 1;
        padding: 0.4rem;
        font-size: 0.9em;

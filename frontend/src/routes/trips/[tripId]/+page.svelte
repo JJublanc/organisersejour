@@ -88,10 +88,29 @@
           <p class="error">{shoppingListError}</p>
       {:else if shoppingList.length > 0}
           <ul class="shopping-list">
-              {#each shoppingList as item (item.ingredient_id)}
-                  <li>
-                      <strong>{item.name} :</strong> {item.total_quantity} {item.unit}
-                  </li>
+              <!-- Group items by type -->
+              {#each ['légume', 'fruit', 'viande', 'poisson', 'pain', 'condiment', 'boisson', 'autre'] as type}
+                  {@const typeItems = shoppingList.filter(item => (item.type || 'autre') === type)}
+                  {#if typeItems.length > 0}
+                      <li class="type-header">
+                          <h4>
+                              {#if type === 'légume'}Légumes
+                              {:else if type === 'fruit'}Fruits
+                              {:else if type === 'viande'}Viandes
+                              {:else if type === 'poisson'}Poissons
+                              {:else if type === 'pain'}Pains
+                              {:else if type === 'condiment'}Condiments
+                              {:else if type === 'boisson'}Boissons
+                              {:else}Autres
+                              {/if}
+                          </h4>
+                      </li>
+                      {#each typeItems as item (item.ingredient_id)}
+                          <li>
+                              <strong>{item.name} :</strong> {item.total_quantity} {item.unit}
+                          </li>
+                      {/each}
+                  {/if}
               {/each}
           </ul>
       {/if}
@@ -167,6 +186,21 @@
    }
    .shopping-list li:last-child {
        border-bottom: none;
+   }
+   .shopping-list .type-header {
+       background-color: #f0f0f0;
+       margin-top: 1rem;
+       padding: 0.5rem;
+       border-radius: 4px;
+       border-bottom: none;
+   }
+   .shopping-list .type-header h4 {
+       margin: 0;
+       font-size: 1.1rem;
+       color: #333;
+   }
+   .shopping-list .type-header:first-child {
+       margin-top: 0;
    }
 
    .error {

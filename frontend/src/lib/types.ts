@@ -4,6 +4,7 @@ export interface Ingredient {
     id: number;
     name: string;
     unit: string; // e.g., 'g', 'kg', 'ml', 'l', 'pcs', 'unit', 'pincée', 'gousse', 'feuille'
+    type: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre';
 }
 
 export interface KitchenTool {
@@ -36,6 +37,7 @@ export interface ShoppingListItem {
     name: string;
     unit: string;
     total_quantity: number;
+    type: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre';
 }
 // Structure for submitting meal component updates
 export interface MealComponentPayload {

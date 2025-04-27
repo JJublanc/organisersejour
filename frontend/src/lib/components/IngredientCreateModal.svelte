@@ -9,6 +9,7 @@
   // --- State ---
   let ingredientName: string = '';
   let ingredientUnit: string = '';
+  let ingredientType: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre' = 'autre';
   let isSaving = false;
   let saveError: string | null = null;
 
@@ -21,6 +22,7 @@
   function resetForm() {
     ingredientName = '';
     ingredientUnit = '';
+    ingredientType = 'autre';
     saveError = null;
     isSaving = false;
   }
@@ -40,7 +42,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: ingredientName.trim(),
-          unit: ingredientUnit.trim()
+          unit: ingredientUnit.trim(),
+          type: ingredientType
         })
       });
 
@@ -85,6 +88,20 @@
           <input type="text" id="ingredient-unit" bind:value={ingredientUnit} placeholder="Ex: g, ml, pièce, unité" required disabled={isSaving} />
         </div>
 
+        <div class="form-group">
+          <label for="ingredient-type">Type d'ingrédient :</label>
+          <select id="ingredient-type" bind:value={ingredientType} disabled={isSaving}>
+            <option value="boisson">Boisson</option>
+            <option value="pain">Pain</option>
+            <option value="condiment">Condiment</option>
+            <option value="légume">Légume</option>
+            <option value="fruit">Fruit</option>
+            <option value="viande">Viande</option>
+            <option value="poisson">Poisson</option>
+            <option value="autre">Autre</option>
+          </select>
+        </div>
+
         {#if saveError}
           <p class="error save-error">Erreur: {saveError}</p>
         {/if}
@@ -125,7 +142,8 @@
     font-weight: bold;
     color: #555;
   }
-  .form-group input[type="text"] {
+  .form-group input[type="text"],
+  .form-group select {
     width: 100%;
     padding: 0.6rem;
     border: 1px solid #ccc;
