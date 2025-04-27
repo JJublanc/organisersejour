@@ -1,20 +1,36 @@
 import { json, error, type RequestHandler } from '@sveltejs/kit'; // Consolidate imports
 import type { Ingredient } from '$lib/types'; // Import the Ingredient type
 
-// --- GET Handler (Existing) ---
+// --- GET Handler (Updated) ---
 // Explicitly type platform using the global App namespace
-export const GET: RequestHandler = async ({ platform }: { platform: App.Platform | undefined }) => {
+export const GET: RequestHandler = async ({ platform, locals }) => {
     const db = platform?.env?.DB;
+    
+    // --- Authentication ---
+    let user = locals.user;
+    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
+    console.log(`[API /api/ingredients GET] Auth enabled: ${authEnabled}, user: ${user ? JSON.stringify(user) : 'undefined'}`);
+    
+    if (!authEnabled && !user) {
+        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+        console.log(`[API /api/ingredients GET] Created default user: ${JSON.stringify(user)}`);
+    }
+    if (!user?.authenticated) {
+        console.warn("[API /api/ingredients GET] Unauthenticated user attempted to fetch ingredients.");
+        throw error(401, 'Authentication required to access ingredients.');
+    }
+    // --- End Authentication ---
+    
     if (!db) {
         console.error("[API /api/ingredients GET] Database binding 'DB' not found.");
         throw error(500, "Database binding not found.");
     }
 
     try {
-        console.log("[API /api/ingredients GET] Fetching all ingredients...");
+        console.log(`[API /api/ingredients GET] Fetching ingredients for user: ${user.id}`);
 
-        const stmt = db.prepare('SELECT id, name, unit, type FROM ingredients ORDER BY name ASC');
-        const { results } = await stmt.all<Ingredient>();
+        const stmt = db.prepare('SELECT id, name, unit, type, user_id FROM ingredients WHERE user_id = ? ORDER BY type ASC, name ASC');
+        const { results } = await stmt.bind(user.id).all<Ingredient>();
 
         // Log ingredient types distribution for validation
         if (results && results.length > 0) {
@@ -41,8 +57,11 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
     // --- Authentication (Optional - decide if needed) ---
     let user = locals.user;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
+    console.log(`[API /api/ingredients POST] Auth enabled: ${authEnabled}, user: ${user ? JSON.stringify(user) : 'undefined'}`);
+    
     if (!authEnabled && !user) {
         user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+        console.log(`[API /api/ingredients POST] Created default user: ${JSON.stringify(user)}`);
     }
     // For now, let's allow authenticated users to add ingredients
     if (!user?.authenticated) {
@@ -83,15 +102,16 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 
         // --- Database Insertion ---
         try {
-            const stmt = db.prepare('INSERT INTO ingredients (name, unit, type) VALUES (?, ?, ?) RETURNING id, name, unit, type');
-            const newIngredient = await stmt.bind(name, unit, type).first<Ingredient>();
+            const stmt = db.prepare('INSERT INTO ingredients (name, unit, type, user_id) VALUES (?, ?, ?, ?) RETURNING id, name, unit, type, user_id');
+            const newIngredient = await stmt.bind(name, unit, type, user.id).first<Ingredient>();
 
             if (!newIngredient) {
                  console.error("[API /api/ingredients POST] Failed to insert ingredient or retrieve result.");
                  throw error(500, "Failed to create ingredient record.");
             }
 
-            console.log(`[API /api/ingredients POST] Successfully created ingredient ID: ${newIngredient.id} with type: ${newIngredient.type}`);
+            console.log(`[API /api/ingredients POST] Successfully created ingredient ID: ${newIngredient.id} with type: ${newIngredient.type} for user: ${user.id}`);
+            console.log(`[API /api/ingredients POST] Ingredient details: ${JSON.stringify(newIngredient)}`);
             return json({ ingredient: newIngredient }, { status: 201 }); // 201 Created
 
         } catch (dbError: any) {

@@ -170,23 +170,26 @@ Backlog
 - les recettes doivent contenir le type entrée / plat / dessert / autre -> OK
 - les ingrédients rattachés directement au repas doivent s'enregistrer + ils doivent avoir une quantité et une unité par personne -> OK
 - ajouter une section boissons et pain dans les repas -> OK
+- Ajouter un type pour les ingrédients : boisson / pain / condiment / légume / fruit / viande / poisson / autre --> OK
+- l'utilisateur doit pouvoir consulter ses recettes et ses ingrédients -> OK
 
+- Ajouter un utilisateur pour les recettes et les ingrédients et n'afficher que les recettes et ingrédients --> vérifier dans la preprod si ça fonctionne
 
-- Ajouter un type pour les ingrédients : boisson / pain / condiment / légume / fruit / viande / poisson / autre --> ajouter le type dans le formulaire de création de l'ingrédient
+- permettre la suppression d'ingrédients, de repas, de séjour etc.
 
-
-- Conception du multi tenant
-
-
-- permettre la suppresion d'ingrédients, de repas, de séjour etc.
 - On doit pouvoir avoir un tag sur la saison pour les repas
+
 - Il faut gérer les noms des recettes et nouveaux ingrédients pour interdire la création de doublons
 
-- l'utilisateur doit pouvoir consulter ses recettes et ses ingrédients
+
+
+- Conception du multi tenant : comment partager les recettes et les ingrédients
 
 - Amélioration du design
 --- Page d'accueil qui indique en quelques mots ce que fait l'application
 
+--------------------------------------------------------------------------------------------
+- Ajouter la possibilité de visualiser son matériel
 - Ajouter des photos aux séjours et recettes
 - Télécharger la liste au format PDF
 

@@ -15,18 +15,25 @@
       <!-- Use standard links for navigation -->
       <a href="/" class="sidebar-link">
          <span class="link-icon">🏠</span>
-         <span class="link-text">Home</span>
+         <span class="link-text">Accueil</span>
       </a>
       {#if user}
         <a href="/protected" class="sidebar-link">
            <span class="link-icon">🔒</span>
-           <span class="link-text">Protected Page</span>
+           <span class="link-text">Page Protégée</span>
         </a>
-        <a href="/trips" class="sidebar-link">
+        <a href="/trips" class="sidebar-link" data-sveltekit-reload>
            <span class="link-icon">🗺️</span>
-           <span class="link-text">My Trips</span>
+           <span class="link-text">Mes Séjours</span>
         </a>
-        <!-- Removed "New Trip" link from sidebar as we now have a button on the My Trips page -->
+        <a href="/recipes" class="sidebar-link" data-sveltekit-reload>
+           <span class="link-icon">📝</span>
+           <span class="link-text">Mes Recettes</span>
+        </a>
+        <a href="/ingredients" class="sidebar-link" data-sveltekit-reload>
+           <span class="link-icon">🥕</span>
+           <span class="link-text">Mes Ingrédients</span>
+        </a>
       {/if}
     </nav>
   </aside>

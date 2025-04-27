@@ -36,20 +36,36 @@ interface CreateRecipePayload {
 }
 
 
-// --- GET Handler (Existing) ---
-export const GET: RequestHandler = async ({ platform }) => {
+// --- GET Handler (Updated) ---
+export const GET: RequestHandler = async ({ platform, locals }) => {
     const db = platform?.env?.DB;
+    
+    // --- Authentication ---
+    let user = locals.user;
+    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
+    console.log(`[API /api/recipes GET] Auth enabled: ${authEnabled}, user: ${user ? JSON.stringify(user) : 'undefined'}`);
+    
+    if (!authEnabled && !user) {
+        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+        console.log(`[API /api/recipes GET] Created default user: ${JSON.stringify(user)}`);
+    }
+    if (!user?.authenticated) {
+        console.warn("[API /api/recipes GET] Unauthenticated user attempted to fetch recipes.");
+        throw error(401, 'Authentication required to access recipes.');
+    }
+    // --- End Authentication ---
+    
     if (!db) {
         console.error("[API /api/recipes GET] Database binding 'DB' not found.");
         throw error(500, "Database binding not found.");
     }
 
     try {
-        console.log("[API /api/recipes GET] Fetching all recipes...");
+        console.log(`[API /api/recipes GET] Fetching recipes for user: ${user.id}`);
 
-        // 1. Fetch all recipes
-        const recipesStmt = db.prepare('SELECT * FROM recipes');
-        const { results: recipesList } = await recipesStmt.all<Omit<Recipe, 'ingredients' | 'kitchen_tools'>>();
+        // 1. Fetch user's recipes
+        const recipesStmt = db.prepare('SELECT * FROM recipes WHERE user_id = ?');
+        const { results: recipesList } = await recipesStmt.bind(user.id).all<Omit<Recipe, 'ingredients' | 'kitchen_tools'>>();
 
         if (!recipesList) {
             console.log("[API /api/recipes GET] No recipes found.");
@@ -97,8 +113,11 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
     // --- Authentication (Optional but recommended for recipe creation) ---
     let user = locals.user;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
+    console.log(`[API /api/recipes POST] Auth enabled: ${authEnabled}, user: ${user ? JSON.stringify(user) : 'undefined'}`);
+    
     if (!authEnabled && !user) {
         user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+        console.log(`[API /api/recipes POST] Created default user: ${JSON.stringify(user)}`);
     }
     if (!user?.authenticated) {
          // Decide if unauthenticated users can create recipes. For now, let's restrict it.
@@ -145,8 +164,8 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 
         // 1. Insert into recipes table
         const insertRecipeStmt = db.prepare(`
-            INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings)
-            VALUES (?, ?, ?, ?, ?, ?) RETURNING id
+            INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, user_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id
         `);
         // Use run() first to get the ID, then construct the full recipe object later if needed
         // Note: RETURNING id might not work directly in batch, so we do this separately first.
@@ -157,7 +176,8 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
             body.prep_time_minutes ?? null,
             body.cook_time_minutes ?? null,
             body.instructions ?? null,
-            body.servings
+            body.servings,
+            user.id
         ).first<{ id: number }>(); // Use first() with RETURNING
 
         if (!recipeInsertResult?.id) {
@@ -191,9 +211,26 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 
         // --- End Database Insertion ---
 
-        // Construct the newly created recipe object to return (without fetching again)
-        // Fetch associated ingredients/tools names if needed for the response, or keep it minimal
-        const newRecipe: Partial<Recipe> = { // Return a minimal representation
+        // Fetch the complete recipe with ingredients and tools to return
+        // Prepare statements for ingredients and tools
+        const ingredientsStmt = db.prepare(`
+            SELECT ri.ingredient_id, i.name, i.unit, i.type, ri.quantity
+            FROM recipe_ingredients ri JOIN ingredients i ON ri.ingredient_id = i.id
+            WHERE ri.recipe_id = ?
+        `);
+        
+        const toolsStmt = db.prepare(`
+            SELECT kt.id, kt.name
+            FROM recipe_kitchen_tools rkt JOIN kitchen_tools kt ON rkt.tool_id = kt.id
+            WHERE rkt.recipe_id = ?
+        `);
+
+        // Fetch ingredients and tools for the new recipe
+        const { results: ingredientsList } = await ingredientsStmt.bind(newRecipeId).all();
+        const { results: toolsList } = await toolsStmt.bind(newRecipeId).all();
+        
+        // Construct the complete recipe object
+        const newRecipe: Recipe = {
              id: newRecipeId,
              name: body.name.trim(),
              description: body.description ?? null,
@@ -201,12 +238,13 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
              cook_time_minutes: body.cook_time_minutes ?? null,
              instructions: body.instructions ?? null,
              servings: body.servings,
-             // ingredients and kitchen_tools arrays could be populated here if needed by fetching names,
-             // but for now, returning the core recipe info might be sufficient.
+             user_id: user.id,
+             ingredients: ingredientsList || [],
+             kitchen_tools: toolsList || []
         };
 
-
-        console.log(`[API /api/recipes POST] Successfully created recipe ID: ${newRecipeId}`);
+        console.log(`[API /api/recipes POST] Successfully created recipe ID: ${newRecipeId} with ${ingredientsList?.length || 0} ingredients and ${toolsList?.length || 0} tools for user: ${user.id}`);
+        console.log(`[API /api/recipes POST] Recipe details: ${JSON.stringify(newRecipe)}`);
         return json({ recipe: newRecipe }, { status: 201 }); // 201 Created status
 
     } catch (e: any) {

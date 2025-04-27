@@ -5,6 +5,7 @@ export interface Ingredient {
     name: string;
     unit: string; // e.g., 'g', 'kg', 'ml', 'l', 'pcs', 'unit', 'pincée', 'gousse', 'feuille'
     type: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre';
+    user_id?: string; // ID de l'utilisateur propriétaire
 }
 
 export interface KitchenTool {
@@ -17,7 +18,22 @@ export interface KitchenTool {
       id: number;
       name: string;
       description: string | null;
-      // Add other recipe fields if needed, like instructions, prep_time, etc.
+      prep_time_minutes: number | null;
+      cook_time_minutes: number | null;
+      instructions: string | null;
+      servings: number;
+      user_id?: string; // ID de l'utilisateur propriétaire
+      ingredients: {
+          ingredient_id: number;
+          name: string;
+          unit: string;
+          type: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre';
+          quantity: number;
+      }[];
+      kitchen_tools: {
+          id: number;
+          name: string;
+      }[];
   }
   
   // Structure for a Trip (moved from /trips/+page.server.ts)
