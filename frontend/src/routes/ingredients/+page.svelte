@@ -3,6 +3,7 @@
   import type { PageData } from './$types';
   import type { Ingredient } from '$lib/types';
   import IngredientCreateModal from '$lib/components/IngredientCreateModal.svelte';
+  import { fade } from 'svelte/transition';
 
   export let data: PageData;
   const { ingredients } = data;
@@ -92,6 +93,33 @@
     // Refresh ingredients list from API
     await fetchIngredients();
   }
+  
+  // Handle ingredient deletion
+  async function deleteIngredient(id: number, name: string) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer l'ingrédient "${name}" ?`)) {
+      return;
+    }
+    
+    isLoading = true;
+    try {
+      const response = await fetch(`/api/ingredients?id=${id}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || `Erreur lors de la suppression: ${response.statusText}`);
+      }
+      
+      console.log(`Ingredient deleted: ${name} (ID: ${id})`);
+      await fetchIngredients();
+    } catch (err: any) {
+      console.error("Error deleting ingredient:", err);
+      loadError = err.message || "Échec de la suppression de l'ingrédient";
+    } finally {
+      isLoading = false;
+    }
+  }
 </script>
 
 <div class="ingredients-container">
@@ -119,8 +147,17 @@
             <h2>{getTypeLabel(type)}</h2>
             <div class="ingredient-list">
               {#each typeIngredients as ingredient (ingredient.id)}
-                <div class="ingredient-card">
-                  <h3>{ingredient.name}</h3>
+                <div class="ingredient-card" transition:fade>
+                  <div class="card-header">
+                    <h3>{ingredient.name}</h3>
+                    <button
+                      class="delete-btn"
+                      title="Supprimer cet ingrédient"
+                      on:click|stopPropagation={() => deleteIngredient(ingredient.id, ingredient.name)}
+                    >
+                      &times;
+                    </button>
+                  </div>
                   <p class="ingredient-unit">Unité: {ingredient.unit}</p>
                 </div>
               {/each}
@@ -226,6 +263,37 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 1rem;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+  }
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .delete-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.8;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  
+  .delete-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
   }
   
   .ingredient-card:hover {
@@ -233,11 +301,11 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
   
-  .ingredient-card h3 {
+  .card-header h3 {
     color: #333;
-    margin-top: 0;
-    margin-bottom: 0.5rem;
+    margin: 0;
     font-size: 1.1rem;
+    flex-grow: 1;
   }
   
   .ingredient-unit {

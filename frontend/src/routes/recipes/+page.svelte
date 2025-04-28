@@ -3,6 +3,7 @@
   import type { PageData } from './$types';
   import type { Recipe } from '$lib/types';
   import RecipeCreateModal from '$lib/components/RecipeCreateModal.svelte';
+  import { fade } from 'svelte/transition';
 
   export let data: PageData;
   const { recipes } = data;
@@ -98,6 +99,33 @@
     // Refresh recipes list from API
     await fetchRecipes();
   }
+  
+  // Handle recipe deletion
+  async function deleteRecipe(id: number, name: string) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer la recette "${name}" ?`)) {
+      return;
+    }
+    
+    isLoading = true;
+    try {
+      const response = await fetch(`/api/recipes?id=${id}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || `Erreur lors de la suppression: ${response.statusText}`);
+      }
+      
+      console.log(`Recipe deleted: ${name} (ID: ${id})`);
+      await fetchRecipes();
+    } catch (err: any) {
+      console.error("Error deleting recipe:", err);
+      loadError = err.message || "Échec de la suppression de la recette";
+    } finally {
+      isLoading = false;
+    }
+  }
 </script>
 
 <div class="recipes-container">
@@ -119,8 +147,17 @@
   {:else}
     <div class="recipes-grid">
       {#each recipesList as recipe (recipe.id)}
-        <div class="recipe-card">
-          <h2>{recipe.name}</h2>
+        <div class="recipe-card" transition:fade>
+          <div class="card-header">
+            <h2>{recipe.name}</h2>
+            <button
+              class="delete-btn"
+              title="Supprimer cette recette"
+              on:click|stopPropagation={() => deleteRecipe(recipe.id, recipe.name)}
+            >
+              &times;
+            </button>
+          </div>
           
           {#if recipe.description}
             <p class="recipe-description">{recipe.description}</p>
@@ -259,6 +296,38 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     padding: 1.5rem;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+  }
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+  
+  .delete-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.8;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    margin-left: 10px;
+  }
+  
+  .delete-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
   }
   
   .recipe-card:hover {
@@ -266,11 +335,11 @@
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
   }
   
-  .recipe-card h2 {
+  .card-header h2 {
     color: #333;
-    margin-top: 0;
-    margin-bottom: 1rem;
+    margin: 0;
     font-size: 1.5rem;
+    flex-grow: 1;
   }
   
   .recipe-description {

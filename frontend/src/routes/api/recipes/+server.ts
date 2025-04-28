@@ -46,7 +46,7 @@ export const GET: RequestHandler = async ({ platform, locals }) => {
     console.log(`[API /api/recipes GET] Auth enabled: ${authEnabled}, user: ${user ? JSON.stringify(user) : 'undefined'}`);
     
     if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+        user = { email: 'dev@example.com', id: 'dev-user2', name: 'Development User', authenticated: true };
         console.log(`[API /api/recipes GET] Created default user: ${JSON.stringify(user)}`);
     }
     if (!user?.authenticated) {
@@ -116,7 +116,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
     console.log(`[API /api/recipes POST] Auth enabled: ${authEnabled}, user: ${user ? JSON.stringify(user) : 'undefined'}`);
     
     if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+        user = { email: 'dev@example.com', id: 'dev-user2', name: 'Development User', authenticated: true };
         console.log(`[API /api/recipes POST] Created default user: ${JSON.stringify(user)}`);
     }
     if (!user?.authenticated) {
@@ -258,5 +258,83 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
         //     throw error(409, 'A recipe with this name might already exist.');
         // }
         throw error(500, `Failed to create recipe: ${e.message || 'Unknown error'}`);
+    }
+};
+
+// --- DELETE Handler ---
+export const DELETE: RequestHandler = async ({ request, platform, locals, url }) => {
+    const db = platform?.env?.DB;
+    
+    // --- Authentication ---
+    let user = locals.user;
+    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
+    
+    if (!authEnabled && !user) {
+        user = { email: 'dev@example.com', id: 'dev-user2', name: 'Development User', authenticated: true };
+    }
+    if (!user?.authenticated) {
+        console.warn("[API /api/recipes DELETE] Unauthenticated user attempted to delete recipe.");
+        throw error(401, 'Authentication required to delete recipes.');
+    }
+    // --- End Authentication ---
+    
+    if (!db) {
+        console.error("[API /api/recipes DELETE] Database binding 'DB' not found.");
+        throw error(500, "Database binding not found.");
+    }
+    
+    try {
+        // Get recipe ID from query parameter
+        const recipeId = url.searchParams.get('id');
+        if (!recipeId || isNaN(parseInt(recipeId))) {
+            throw error(400, "Invalid recipe ID parameter.");
+        }
+        
+        const id = parseInt(recipeId);
+        console.log(`[API /api/recipes DELETE] Attempting to delete recipe ID: ${id} for user: ${user.id}`);
+        
+        // Check if recipe belongs to user
+        const checkStmt = db.prepare('SELECT id FROM recipes WHERE id = ? AND user_id = ?');
+        const recipe = await checkStmt.bind(id, user.id).first<{ id: number }>();
+        
+        if (!recipe) {
+            throw error(404, "Recipe not found or you don't have permission to delete it.");
+        }
+        
+        // Check if recipe is used in any meal components
+        const mealCheckStmt = db.prepare('SELECT COUNT(*) as count FROM meal_components WHERE recipe_id = ?');
+        const mealResult = await mealCheckStmt.bind(id).first<{ count: number }>();
+        
+        if (mealResult && mealResult.count > 0) {
+            throw error(409, `Cette recette est utilisée dans ${mealResult.count} repas et ne peut pas être supprimée.`);
+        }
+        
+        // Start transaction to delete recipe and related data
+        const batchActions = [];
+        
+        // Delete recipe ingredients
+        const deleteIngredientsStmt = db.prepare('DELETE FROM recipe_ingredients WHERE recipe_id = ?');
+        batchActions.push(deleteIngredientsStmt.bind(id));
+        
+        // Delete recipe kitchen tools
+        const deleteToolsStmt = db.prepare('DELETE FROM recipe_kitchen_tools WHERE recipe_id = ?');
+        batchActions.push(deleteToolsStmt.bind(id));
+        
+        // Delete the recipe
+        const deleteRecipeStmt = db.prepare('DELETE FROM recipes WHERE id = ? AND user_id = ?');
+        batchActions.push(deleteRecipeStmt.bind(id, user.id));
+        
+        // Execute batch
+        await db.batch(batchActions);
+        
+        console.log(`[API /api/recipes DELETE] Successfully deleted recipe ID: ${id} and related data`);
+        return json({ success: true, message: "Recette supprimée avec succès." });
+        
+    } catch (e: any) {
+        if (e.status >= 400 && e.status < 500) {
+            throw e; // Re-throw client-side errors
+        }
+        console.error('[API /api/recipes DELETE] Error deleting recipe:', e);
+        throw error(500, `Failed to delete recipe: ${e.message || 'Unknown error'}`);
     }
 };

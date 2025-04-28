@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ platform, locals }) => {
     
     // Pour le développement, utiliser un utilisateur par défaut si l'authentification est désactivée
     if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+        user = { email: 'dev@example.com', id: 'dev-user2', name: 'Development User', authenticated: true };
     }
 
     if (!db) {

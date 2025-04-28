@@ -12,7 +12,7 @@ export const GET: RequestHandler = async ({ platform, locals }) => {
     console.log(`[API /api/ingredients GET] Auth enabled: ${authEnabled}, user: ${user ? JSON.stringify(user) : 'undefined'}`);
     
     if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+        user = { email: 'dev@example.com', id: 'dev-user2', name: 'Development User', authenticated: true };
         console.log(`[API /api/ingredients GET] Created default user: ${JSON.stringify(user)}`);
     }
     if (!user?.authenticated) {
@@ -60,7 +60,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
     console.log(`[API /api/ingredients POST] Auth enabled: ${authEnabled}, user: ${user ? JSON.stringify(user) : 'undefined'}`);
     
     if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+        user = { email: 'dev@example.com', id: 'dev-user2', name: 'Development User', authenticated: true };
         console.log(`[API /api/ingredients POST] Created default user: ${JSON.stringify(user)}`);
     }
     // For now, let's allow authenticated users to add ingredients
@@ -132,5 +132,81 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
         }
         console.error('[API /api/ingredients POST] Error creating ingredient:', e);
         throw error(500, `Failed to create ingredient: ${e.message || 'Unknown error'}`);
+    }
+};
+
+// --- DELETE Handler ---
+export const DELETE: RequestHandler = async ({ request, platform, locals, url }) => {
+    const db = platform?.env?.DB;
+    
+    // --- Authentication ---
+    let user = locals.user;
+    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
+    
+    if (!authEnabled && !user) {
+        user = { email: 'dev@example.com', id: 'dev-user2', name: 'Development User', authenticated: true };
+    }
+    if (!user?.authenticated) {
+        console.warn("[API /api/ingredients DELETE] Unauthenticated user attempted to delete ingredient.");
+        throw error(401, 'Authentication required to delete ingredients.');
+    }
+    // --- End Authentication ---
+    
+    if (!db) {
+        console.error("[API /api/ingredients DELETE] Database binding 'DB' not found.");
+        throw error(500, "Database binding not found.");
+    }
+    
+    try {
+        // Get ingredient ID from query parameter
+        const ingredientId = url.searchParams.get('id');
+        if (!ingredientId || isNaN(parseInt(ingredientId))) {
+            throw error(400, "Invalid ingredient ID parameter.");
+        }
+        
+        const id = parseInt(ingredientId);
+        console.log(`[API /api/ingredients DELETE] Attempting to delete ingredient ID: ${id} for user: ${user.id}`);
+        
+        // Check if ingredient belongs to user
+        const checkStmt = db.prepare('SELECT id FROM ingredients WHERE id = ? AND user_id = ?');
+        const ingredient = await checkStmt.bind(id, user.id).first<{ id: number }>();
+        
+        if (!ingredient) {
+            throw error(404, "Ingredient not found or you don't have permission to delete it.");
+        }
+        
+        // Check if ingredient is used in any recipes
+        const usageCheckStmt = db.prepare('SELECT COUNT(*) as count FROM recipe_ingredients WHERE ingredient_id = ?');
+        const usageResult = await usageCheckStmt.bind(id).first<{ count: number }>();
+        
+        if (usageResult && usageResult.count > 0) {
+            throw error(409, `Cet ingrédient est utilisé dans ${usageResult.count} recette(s) et ne peut pas être supprimé.`);
+        }
+        
+        // Check if ingredient is used in any meal components
+        const mealCheckStmt = db.prepare('SELECT COUNT(*) as count FROM meal_components WHERE ingredient_id = ?');
+        const mealResult = await mealCheckStmt.bind(id).first<{ count: number }>();
+        
+        if (mealResult && mealResult.count > 0) {
+            throw error(409, `Cet ingrédient est utilisé dans ${mealResult.count} repas et ne peut pas être supprimé.`);
+        }
+        
+        // Delete the ingredient
+        const deleteStmt = db.prepare('DELETE FROM ingredients WHERE id = ? AND user_id = ?');
+        const result = await deleteStmt.bind(id, user.id).run();
+        
+        if (!result.success) {
+            throw error(500, "Failed to delete ingredient.");
+        }
+        
+        console.log(`[API /api/ingredients DELETE] Successfully deleted ingredient ID: ${id}`);
+        return json({ success: true, message: "Ingrédient supprimé avec succès." });
+        
+    } catch (e: any) {
+        if (e.status >= 400 && e.status < 500) {
+            throw e; // Re-throw client-side errors
+        }
+        console.error('[API /api/ingredients DELETE] Error deleting ingredient:', e);
+        throw error(500, `Failed to delete ingredient: ${e.message || 'Unknown error'}`);
     }
 };

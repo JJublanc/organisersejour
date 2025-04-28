@@ -24,7 +24,7 @@ export const load: PageServerLoad = async ({ locals, platform }): Promise<TripsP
          console.log("[Trips Load] Auth disabled and no user in locals, creating mock user for load.");
          user = { // Define User type inline or import it
              email: 'dev@example.com',
-             id: 'dev-user', // Use the standard mock user ID
+             id: 'dev-user2', // Use the standard mock user ID
              name: 'Development User (Load)',
              authenticated: true
          };
@@ -81,7 +81,7 @@ export const actions: Actions = {
              console.log("[Action createTrip] Auth disabled and no user in locals, creating mock user for action.");
              user = { // Define User type inline or import it
                  email: 'dev@example.com',
-                 id: 'dev-user', // Use the standard mock user ID
+                 id: 'dev-user2', // Use the standard mock user ID
                  name: 'Development User (Action)',
                  authenticated: true
              };

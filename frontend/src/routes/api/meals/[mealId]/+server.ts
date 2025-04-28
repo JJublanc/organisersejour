@@ -28,7 +28,7 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
     let user = locals.user;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
     if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+        user = { email: 'dev@example.com', id: 'dev-user2', name: 'Development User', authenticated: true };
     }
     if (!user?.authenticated || !user.id) {
         throw error(401, 'User not authenticated');

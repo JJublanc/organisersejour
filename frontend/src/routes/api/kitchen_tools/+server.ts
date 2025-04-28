@@ -33,7 +33,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
     let user = locals.user;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
     if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+        user = { email: 'dev@example.com', id: 'dev-user2', name: 'Development User', authenticated: true };
     }
     // For now, let's allow authenticated users to add tools
     if (!user?.authenticated) {
@@ -91,5 +91,73 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
         }
         console.error('[API /api/kitchen_tools POST] Error creating tool:', e);
         throw error(500, `Failed to create kitchen tool: ${e.message || 'Unknown error'}`);
+    }
+};
+
+// --- DELETE Handler ---
+export const DELETE: RequestHandler = async ({ request, platform, locals, url }) => {
+    const db = platform?.env?.DB;
+    
+    // --- Authentication ---
+    let user = locals.user;
+    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
+    
+    if (!authEnabled && !user) {
+        user = { email: 'dev@example.com', id: 'dev-user2', name: 'Development User', authenticated: true };
+    }
+    if (!user?.authenticated) {
+        console.warn("[API /api/kitchen_tools DELETE] Unauthenticated user attempted to delete kitchen tool.");
+        throw error(401, 'Authentication required to delete kitchen tools.');
+    }
+    // --- End Authentication ---
+    
+    if (!db) {
+        console.error("[API /api/kitchen_tools DELETE] Database binding 'DB' not found.");
+        throw error(500, "Database binding not found.");
+    }
+    
+    try {
+        // Get kitchen tool ID from query parameter
+        const toolId = url.searchParams.get('id');
+        if (!toolId || isNaN(parseInt(toolId))) {
+            throw error(400, "Invalid kitchen tool ID parameter.");
+        }
+        
+        const id = parseInt(toolId);
+        console.log(`[API /api/kitchen_tools DELETE] Attempting to delete kitchen tool ID: ${id}`);
+        
+        // Check if kitchen tool exists
+        const checkStmt = db.prepare('SELECT id FROM kitchen_tools WHERE id = ?');
+        const tool = await checkStmt.bind(id).first<{ id: number }>();
+        
+        if (!tool) {
+            throw error(404, "Kitchen tool not found.");
+        }
+        
+        // Check if kitchen tool is used in any recipes
+        const recipeCheckStmt = db.prepare('SELECT COUNT(*) as count FROM recipe_kitchen_tools WHERE tool_id = ?');
+        const recipeResult = await recipeCheckStmt.bind(id).first<{ count: number }>();
+        
+        if (recipeResult && recipeResult.count > 0) {
+            throw error(409, `Cet ustensile est utilisé dans ${recipeResult.count} recette(s) et ne peut pas être supprimé.`);
+        }
+        
+        // Delete the kitchen tool
+        const deleteStmt = db.prepare('DELETE FROM kitchen_tools WHERE id = ?');
+        const result = await deleteStmt.bind(id).run();
+        
+        if (!result.success) {
+            throw error(500, "Failed to delete kitchen tool.");
+        }
+        
+        console.log(`[API /api/kitchen_tools DELETE] Successfully deleted kitchen tool ID: ${id}`);
+        return json({ success: true, message: "Ustensile supprimé avec succès." });
+        
+    } catch (e: any) {
+        if (e.status >= 400 && e.status < 500) {
+            throw e; // Re-throw client-side errors
+        }
+        console.error('[API /api/kitchen_tools DELETE] Error deleting kitchen tool:', e);
+        throw error(500, `Failed to delete kitchen tool: ${e.message || 'Unknown error'}`);
     }
 };

@@ -29,7 +29,7 @@ export async function load({ request, platform, url }) {
     // If auth is disabled (e.g., in development), return a mock user
     const mockUser: User = {
       email: 'dev@example.com',
-      id: 'dev-user',
+      id: 'dev-user2',
       name: 'Development User',
       authenticated: true
     };
