@@ -29,7 +29,7 @@ export const GET: RequestHandler = async ({ platform, locals }) => {
     try {
         console.log(`[API /api/ingredients GET] Fetching ingredients for user: ${user.id}`);
 
-        const stmt = db.prepare('SELECT id, name, unit, type, user_id FROM ingredients WHERE user_id = ? ORDER BY type ASC, name ASC');
+        const stmt = db.prepare('SELECT id, name, unit, type, season, user_id FROM ingredients WHERE user_id = ? ORDER BY type ASC, name ASC');
         const { results } = await stmt.bind(user.id).all<Ingredient>();
 
         // Log ingredient types distribution for validation
@@ -80,6 +80,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
         const name = body.name?.toString().trim();
         const unit = body.unit?.toString().trim();
         const type = body.type?.toString().trim() || 'autre';
+        const season = body.season === null ? null : body.season?.toString().trim();
 
         // Validate type is one of the allowed values
         const validTypes = ['boisson', 'pain', 'condiment', 'légume', 'fruit', 'viande', 'poisson', 'autre'];
@@ -87,7 +88,13 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
             throw error(400, `Invalid ingredient type: ${type}. Must be one of: ${validTypes.join(', ')}`);
         }
 
-        console.log("[API /api/ingredients POST] Received ingredient creation request:", { name, unit, type });
+        // Validate season is one of the allowed values
+        const validSeasons = ['spring', 'summer', 'autumn', 'winter', null];
+        if (!validSeasons.includes(season)) {
+            throw error(400, `Invalid ingredient season: ${season}. Must be one of: spring, summer, autumn, winter, or null`);
+        }
+
+        console.log("[API /api/ingredients POST] Received ingredient creation request:", { name, unit, type, season });
 
         // --- Validation ---
         if (!name || name === '') {
@@ -102,8 +109,8 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 
         // --- Database Insertion ---
         try {
-            const stmt = db.prepare('INSERT INTO ingredients (name, unit, type, user_id) VALUES (?, ?, ?, ?) RETURNING id, name, unit, type, user_id');
-            const newIngredient = await stmt.bind(name, unit, type, user.id).first<Ingredient>();
+            const stmt = db.prepare('INSERT INTO ingredients (name, unit, type, season, user_id) VALUES (?, ?, ?, ?, ?) RETURNING id, name, unit, type, season, user_id');
+            const newIngredient = await stmt.bind(name, unit, type, season, user.id).first<Ingredient>();
 
             if (!newIngredient) {
                  console.error("[API /api/ingredients POST] Failed to insert ingredient or retrieve result.");

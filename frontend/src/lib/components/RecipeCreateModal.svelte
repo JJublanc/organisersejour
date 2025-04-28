@@ -10,6 +10,7 @@
     cook_time_minutes: number | null;
     instructions: string;
     servings: number;
+    season: 'spring' | 'summer' | 'autumn' | 'winter' | null;
     ingredients: { ingredient_id: number; quantity: number; unit: string; name: string }[]; // Include unit/name for display
     kitchen_tool_ids: number[];
   }
@@ -53,6 +54,7 @@
           cook_time_minutes: null,
           instructions: '',
           servings: 1,
+          season: null,
           ingredients: [],
           kitchen_tool_ids: [],
       };
@@ -244,6 +246,7 @@
           cook_time_minutes: recipe.cook_time_minutes,
           instructions: recipe.instructions.trim() || null,
           servings: recipe.servings,
+          season: recipe.season,
           ingredients: recipe.ingredients.map(ing => ({
               ingredient_id: ing.ingredient_id,
               quantity: ing.quantity
@@ -309,6 +312,17 @@
                    <div class="form-group">
                        <label for="recipe-cook-time">Temps cuisson (min)</label>
                        <input type="number" id="recipe-cook-time" bind:value={recipe.cook_time_minutes} min="0" />
+                   </div>
+                   
+                   <div class="form-group">
+                       <label for="recipe-season">Saison</label>
+                       <select id="recipe-season" bind:value={recipe.season}>
+                           <option value={null}>Toutes saisons</option>
+                           <option value="spring">Printemps</option>
+                           <option value="summer">Été</option>
+                           <option value="autumn">Automne</option>
+                           <option value="winter">Hiver</option>
+                       </select>
                    </div>
 
                   <div class="form-group span-2">

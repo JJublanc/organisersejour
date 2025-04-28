@@ -171,20 +171,21 @@ Backlog
 - les ingrédients rattachés directement au repas doivent s'enregistrer + ils doivent avoir une quantité et une unité par personne -> OK
 - ajouter une section boissons et pain dans les repas -> OK
 - Ajouter un type pour les ingrédients : boisson / pain / condiment / légume / fruit / viande / poisson / autre --> OK
-- l'utilisateur doit pouvoir consulter ses recettes et ses ingrédients -> OK
+- L'utilisateur doit pouvoir consulter ses recettes et ses ingrédients -> OK
 - Ajouter un utilisateur pour les recettes et les ingrédients et n'afficher que les recettes et ingrédients --> OK = vérifié en changeant l'utilisateur de dev
+- Permettre la suppression d'ingrédients, de repas, de séjour etc. -> OK
 
-- permettre la suppression d'ingrédients, de repas, de séjour etc. -> OK
 - On doit pouvoir avoir un tag sur la saison pour les repas
-- Pré-remplir la base de données avec des ingrédients, des recettes pour tous les utilisateurs (ils ne peuvent pas être supprimé, mais peuvent ne plus être affichés pour l'utilisateur)
 
-- Lancer un test automatique des fonctionnalités de l'application (Selenium ?)
+- Pré-remplir la base de données avec des ingrédients, des recettes pour tous les utilisateurs (ils ne peuvent pas être supprimé, mais peuvent ne plus être affichés pour l'utilisateur)
 
 - Amélioration du design
 --- Page d'accueil qui indique en quelques mots ce que fait l'application
 
 
 --------------------------------------------------------------------------------------------
+
+- Lancer un test automatique des fonctionnalités de l'application (Selenium ?)
 
 - Il faut gérer les noms des recettes et nouveaux ingrédients pour interdire la création de doublons --> OK mais changer le message pour aider l'utilisateur
 

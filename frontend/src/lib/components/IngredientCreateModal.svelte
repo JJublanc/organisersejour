@@ -10,6 +10,7 @@
   let ingredientName: string = '';
   let ingredientUnit: string = '';
   let ingredientType: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre' = 'autre';
+  let ingredientSeason: 'spring' | 'summer' | 'autumn' | 'winter' | null = null;
   let isSaving = false;
   let saveError: string | null = null;
 
@@ -23,6 +24,7 @@
     ingredientName = '';
     ingredientUnit = '';
     ingredientType = 'autre';
+    ingredientSeason = null;
     saveError = null;
     isSaving = false;
   }
@@ -43,7 +45,8 @@
         body: JSON.stringify({
           name: ingredientName.trim(),
           unit: ingredientUnit.trim(),
-          type: ingredientType
+          type: ingredientType,
+          season: ingredientSeason
         })
       });
 
@@ -99,6 +102,17 @@
             <option value="viande">Viande</option>
             <option value="poisson">Poisson</option>
             <option value="autre">Autre</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="ingredient-season">Saison :</label>
+          <select id="ingredient-season" bind:value={ingredientSeason} disabled={isSaving}>
+            <option value={null}>Toutes saisons</option>
+            <option value="spring">Printemps</option>
+            <option value="summer">Été</option>
+            <option value="autumn">Automne</option>
+            <option value="winter">Hiver</option>
           </select>
         </div>
 

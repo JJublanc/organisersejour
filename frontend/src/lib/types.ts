@@ -5,6 +5,7 @@ export interface Ingredient {
     name: string;
     unit: string; // e.g., 'g', 'kg', 'ml', 'l', 'pcs', 'unit', 'pincée', 'gousse', 'feuille'
     type: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre';
+    season: 'spring' | 'summer' | 'autumn' | 'winter' | null;
     user_id?: string; // ID de l'utilisateur propriétaire
 }
 
@@ -22,6 +23,7 @@ export interface KitchenTool {
       cook_time_minutes: number | null;
       instructions: string | null;
       servings: number;
+      season: 'spring' | 'summer' | 'autumn' | 'winter' | null;
       user_id?: string; // ID de l'utilisateur propriétaire
       ingredients: {
           ingredient_id: number;
@@ -72,6 +74,7 @@ export interface UpdateMealRequestBody {
     components: MealComponentPayload[];
     drinks?: string | null;
     bread?: boolean;
+    season?: 'spring' | 'summer' | 'autumn' | 'winter' | null;
 }
 // We can add more shared types here as needed, like Recipe, Meal, etc.
 
@@ -97,6 +100,7 @@ export interface Meal {
     type: 'breakfast' | 'lunch' | 'dinner';
     drinks: string | null;
     bread: boolean;
+    season: 'spring' | 'summer' | 'autumn' | 'winter' | null;
     // Recipe components grouped by course type
     recipe_components: {
         starter?: MealComponent[];

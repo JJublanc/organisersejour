@@ -78,6 +78,20 @@
     
     return labels[type] || 'Autres';
   }
+  
+  // Get season label in French
+  function getSeasonLabel(season: string | null): string {
+    if (!season) return '';
+    
+    const labels: Record<string, string> = {
+      'spring': 'Printemps',
+      'summer': 'Été',
+      'autumn': 'Automne',
+      'winter': 'Hiver'
+    };
+    
+    return labels[season] || '';
+  }
 
   // Group ingredients by type
   const groupedIngredients = groupIngredientsByType(ingredients);
@@ -159,6 +173,9 @@
                     </button>
                   </div>
                   <p class="ingredient-unit">Unité: {ingredient.unit}</p>
+                  {#if ingredient.season}
+                    <p class="ingredient-season">Saison: {getSeasonLabel(ingredient.season)}</p>
+                  {/if}
                 </div>
               {/each}
             </div>
@@ -312,6 +329,14 @@
     color: #666;
     font-size: 0.9rem;
     margin: 0;
+    margin-bottom: 0.3rem;
+  }
+  
+  .ingredient-season {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+    font-style: italic;
   }
   
   @media (max-width: 768px) {

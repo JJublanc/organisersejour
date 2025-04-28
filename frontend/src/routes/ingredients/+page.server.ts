@@ -26,7 +26,7 @@ export const load: PageServerLoad = async ({ platform, locals }) => {
         console.log(`[Page /ingredients] Fetching ingredients for user: ${user.id}`);
 
         // Fetch user's ingredients
-        const stmt = db.prepare('SELECT id, name, unit, type, user_id FROM ingredients WHERE user_id = ? ORDER BY type ASC, name ASC');
+        const stmt = db.prepare('SELECT id, name, unit, type, season, user_id FROM ingredients WHERE user_id = ? ORDER BY type ASC, name ASC');
         const { results } = await stmt.bind(user.id).all<Ingredient>();
 
         // Log ingredient types distribution for validation

@@ -11,6 +11,7 @@ export interface Recipe {
     cook_time_minutes: number | null;
     instructions: string | null;
     servings: number;
+    season: 'spring' | 'summer' | 'autumn' | 'winter' | null;
     ingredients: RecipeIngredient[]; // Array of associated ingredients
     kitchen_tools: KitchenTool[]; // Array of associated tools
 }
@@ -31,6 +32,7 @@ interface CreateRecipePayload {
     cook_time_minutes?: number | null;
     instructions?: string | null;
     servings: number;
+    season?: 'spring' | 'summer' | 'autumn' | 'winter' | null;
     ingredients: { ingredient_id: number; quantity: number }[]; // Required ingredients
     kitchen_tool_ids?: number[]; // Optional tools
 }
@@ -164,8 +166,8 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 
         // 1. Insert into recipes table
         const insertRecipeStmt = db.prepare(`
-            INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, user_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id
+            INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id
         `);
         // Use run() first to get the ID, then construct the full recipe object later if needed
         // Note: RETURNING id might not work directly in batch, so we do this separately first.
@@ -177,6 +179,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
             body.cook_time_minutes ?? null,
             body.instructions ?? null,
             body.servings,
+            body.season ?? null,
             user.id
         ).first<{ id: number }>(); // Use first() with RETURNING
 
@@ -238,6 +241,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
              cook_time_minutes: body.cook_time_minutes ?? null,
              instructions: body.instructions ?? null,
              servings: body.servings,
+             season: body.season ?? null,
              user_id: user.id,
              ingredients: ingredientsList || [],
              kitchen_tools: toolsList || []

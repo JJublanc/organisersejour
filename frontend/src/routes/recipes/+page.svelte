@@ -91,6 +91,21 @@
     
     return labels[type] || 'Autres';
   }
+
+  // Get season label in French
+  function getSeasonLabel(season: string | null): string {
+    if (!season) return '';
+    
+    const labels: Record<string, string> = {
+      'spring': 'Printemps',
+      'summer': 'Été',
+      'autumn': 'Automne',
+      'winter': 'Hiver'
+    };
+    
+    return labels[season] || '';
+  }
+  
   // Handle new recipe creation
   async function handleRecipeCreated(event: CustomEvent<Recipe>) {
     const newRecipe = event.detail;
@@ -170,6 +185,9 @@
             {/if}
             {#if recipe.cook_time_minutes}
               <span><strong>Cuisson:</strong> {formatTime(recipe.cook_time_minutes)}</span>
+            {/if}
+            {#if recipe.season}
+              <span><strong>Saison:</strong> {getSeasonLabel(recipe.season)}</span>
             {/if}
           </div>
           
