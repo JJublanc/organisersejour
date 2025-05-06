@@ -1,0 +1,26 @@
+-- Migration to add seasonal recipes and ingredients
+-- This migration adds:
+-- 1. New kitchen tools for complex recipes
+-- 2. Seasonal ingredients for each season (spring, summer, autumn, winter)
+-- 3. ~100 recipes for each season with varying complexity and meal types
+-- 4. Links between recipes and ingredients with quantities
+-- 5. Links between recipes and kitchen tools
+
+-- All new recipes and ingredients are assigned to 'system' user_id to indicate they are system-provided
+
+-- NOTE: Due to the large amount of data, this migration has been split into multiple files:
+-- - 0022_add_seasonal_recipes_part1.sql: Kitchen tools and seasonal ingredients
+-- - 0022_add_seasonal_recipes_part2.sql: Spring recipes
+-- - 0022_add_seasonal_recipes_part3.sql: Summer recipes
+-- - 0022_add_seasonal_recipes_part4.sql: Autumn recipes
+-- - 0022_add_seasonal_recipes_part5.sql: Winter recipes
+--
+-- To apply all migrations, use the provided shell script:
+-- bash apply_seasonal_recipes.sh
+--
+-- Or apply each migration file individually:
+-- npx wrangler d1 execute DB --local --file=migrations/0022_add_seasonal_recipes_part1.sql
+-- npx wrangler d1 execute DB --local --file=migrations/0022_add_seasonal_recipes_part2.sql
+-- npx wrangler d1 execute DB --local --file=migrations/0022_add_seasonal_recipes_part3.sql
+-- npx wrangler d1 execute DB --local --file=migrations/0022_add_seasonal_recipes_part4.sql
+-- npx wrangler d1 execute DB --local --file=migrations/0022_add_seasonal_recipes_part5.sql

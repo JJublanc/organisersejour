@@ -27,10 +27,21 @@ export const GET: RequestHandler = async ({ platform, locals }) => {
     }
 
     try {
-        console.log(`[API /api/ingredients GET] Fetching ingredients for user: ${user.id}`);
+        console.log(`[API /api/ingredients GET] Fetching ingredients for user: ${user.id} and system ingredients`);
 
-        const stmt = db.prepare('SELECT id, name, unit, type, season, user_id FROM ingredients WHERE user_id = ? ORDER BY type ASC, name ASC');
-        const { results } = await stmt.bind(user.id).all<Ingredient>();
+        const stmt = db.prepare(`
+            SELECT
+                id,
+                COALESCE(french_name, name) as name,
+                unit,
+                type,
+                season,
+                user_id
+            FROM ingredients
+            WHERE user_id = ? OR user_id = ?
+            ORDER BY type ASC, name ASC
+        `);
+        const { results } = await stmt.bind(user.id, 'system').all<Ingredient>();
 
         // Log ingredient types distribution for validation
         if (results && results.length > 0) {
@@ -174,12 +185,22 @@ export const DELETE: RequestHandler = async ({ request, platform, locals, url })
         const id = parseInt(ingredientId);
         console.log(`[API /api/ingredients DELETE] Attempting to delete ingredient ID: ${id} for user: ${user.id}`);
         
-        // Check if ingredient belongs to user
-        const checkStmt = db.prepare('SELECT id FROM ingredients WHERE id = ? AND user_id = ?');
-        const ingredient = await checkStmt.bind(id, user.id).first<{ id: number }>();
+        // Check if ingredient exists and belongs to user
+        const checkStmt = db.prepare('SELECT id, user_id FROM ingredients WHERE id = ?');
+        const ingredient = await checkStmt.bind(id).first<{ id: number, user_id: string }>();
         
         if (!ingredient) {
-            throw error(404, "Ingredient not found or you don't have permission to delete it.");
+            throw error(404, "Ingredient not found.");
+        }
+        
+        // Check if this is a system ingredient
+        if (ingredient.user_id === 'system') {
+            throw error(403, "Les ingrédients système ne peuvent pas être supprimés.");
+        }
+        
+        // Check if ingredient belongs to user
+        if (ingredient.user_id !== user.id) {
+            throw error(403, "Vous n'avez pas la permission de supprimer cet ingrédient.");
         }
         
         // Check if ingredient is used in any recipes

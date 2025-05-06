@@ -23,11 +23,27 @@ export const load: PageServerLoad = async ({ platform, locals }) => {
     }
 
     try {
-        console.log(`[Page /ingredients] Fetching ingredients for user: ${user.id}`);
+        // Vérifier que user n'est pas null
+        if (!user) {
+            throw error(401, 'User not authenticated');
+        }
+        
+        console.log(`[Page /ingredients] Fetching ingredients for user: ${user.id} and system ingredients`);
 
-        // Fetch user's ingredients
-        const stmt = db.prepare('SELECT id, name, unit, type, season, user_id FROM ingredients WHERE user_id = ? ORDER BY type ASC, name ASC');
-        const { results } = await stmt.bind(user.id).all<Ingredient>();
+        // Fetch user's ingredients and system ingredients
+        const stmt = db.prepare(`
+            SELECT
+                id,
+                COALESCE(french_name, name) as name,
+                unit,
+                type,
+                season,
+                user_id
+            FROM ingredients
+            WHERE user_id = ? OR user_id = ?
+            ORDER BY type ASC, name ASC
+        `);
+        const { results } = await stmt.bind(user.id, 'system').all<Ingredient>();
 
         // Log ingredient types distribution for validation
         if (results && results.length > 0) {

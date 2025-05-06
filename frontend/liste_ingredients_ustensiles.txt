@@ -1,0 +1,929 @@
+Je souhaite créer des recettes sur le format suivant : 
+{
+  "recipes": [
+    {
+      "name": "Salade de Tomates",
+      "description": "Une salade de tomates fraîches avec de l'huile d'olive",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 0,
+      "instructions": "1. Laver et couper les tomates en quartiers\n2. Ajouter l'huile d'olive, le sel et le poivre\n3. Mélanger et servir",
+      "servings": 4,
+      "season": "summer",
+      "ingredients": [
+        {
+          "ingredient_id": 1,
+          "quantity": 4
+        },
+        {
+          "ingredient_id": 3,
+          "quantity": 30
+        }
+      ],
+      "kitchen_tools": [
+        {
+          "id": 1
+        }
+      ]
+    }
+  ]
+}
+
+Il me faut 40 recettes, 20 par saison qui mobilisent les ingérdients et les ustensiles suivants : 
+
+[
+  {
+    "results": [
+      {
+        "id": 771,
+        "name": "Blé",
+        "unit": "g",
+        "type": "autre",
+        "season": "winter"
+      },
+      {
+        "id": 784,
+        "name": "Camembert",
+        "unit": "pcs",
+        "type": "autre",
+        "season": "spring"
+      },
+      {
+        "id": 780,
+        "name": "Crème fraîche",
+        "unit": "g",
+        "type": "autre",
+        "season": "autumn"
+      },
+      {
+        "id": 778,
+        "name": "Fromage",
+        "unit": "pcs",
+        "type": "autre",
+        "season": "null"
+      },
+      {
+        "id": 774,
+        "name": "Haricots rouges",
+        "unit": "g",
+        "type": "autre",
+        "season": "autumn"
+      },
+      {
+        "id": 781,
+        "name": "Lait concentré",
+        "unit": "ml",
+        "type": "autre",
+        "season": "null"
+      },
+      {
+        "id": 817,
+        "name": "Lait de vache",
+        "unit": "ml",
+        "type": "autre",
+        "season": "null"
+      },
+      {
+        "id": 772,
+        "name": "Lentilles",
+        "unit": "g",
+        "type": "autre",
+        "season": "null"
+      },
+      {
+        "id": 782,
+        "name": "Mozzarella",
+        "unit": "g",
+        "type": "autre",
+        "season": "winter"
+      },
+      {
+        "id": 768,
+        "name": "Pain",
+        "unit": "pcs",
+        "type": "autre",
+        "season": "null"
+      },
+      {
+        "id": 783,
+        "name": "Parmesan",
+        "unit": "pcs",
+        "type": "autre",
+        "season": "winter"
+      },
+      {
+        "id": 773,
+        "name": "Pois chiches",
+        "unit": "pcs",
+        "type": "autre",
+        "season": "null"
+      },
+      {
+        "id": 775,
+        "name": "Pommes de terre",
+        "unit": "pcs",
+        "type": "autre",
+        "season": "autumn"
+      },
+      {
+        "id": 770,
+        "name": "Quinoa",
+        "unit": "g",
+        "type": "autre",
+        "season": "null"
+      },
+      {
+        "id": 766,
+        "name": "Riz",
+        "unit": "g",
+        "type": "autre",
+        "season": "summer"
+      },
+      {
+        "id": 811,
+        "name": "Riz complet",
+        "unit": "g",
+        "type": "autre",
+        "season": "null"
+      },
+      {
+        "id": 785,
+        "name": "Roquefort",
+        "unit": "pcs",
+        "type": "autre",
+        "season": "null"
+      },
+      {
+        "id": 769,
+        "name": "Semoule",
+        "unit": "pcs",
+        "type": "autre",
+        "season": "summer"
+      },
+      {
+        "id": 779,
+        "name": "Yaourt",
+        "unit": "ml",
+        "type": "autre",
+        "season": "winter"
+      },
+      {
+        "id": 818,
+        "name": "Eau minérale",
+        "unit": "ml",
+        "type": "boisson",
+        "season": "null"
+      },
+      {
+        "id": 814,
+        "name": "Jus d'orange",
+        "unit": "ml",
+        "type": "boisson",
+        "season": "winter"
+      },
+      {
+        "id": 816,
+        "name": "Vin blanc",
+        "unit": "ml",
+        "type": "boisson",
+        "season": "null"
+      },
+      {
+        "id": 815,
+        "name": "Vin rouge",
+        "unit": "ml",
+        "type": "boisson",
+        "season": "null"
+      },
+      {
+        "id": 764,
+        "name": "Aneth",
+        "unit": "g",
+        "type": "condiment",
+        "season": "autumn"
+      },
+      {
+        "id": 754,
+        "name": "Bouillon",
+        "unit": "ml",
+        "type": "condiment",
+        "season": "spring"
+      },
+      {
+        "id": 799,
+        "name": "Cannelle",
+        "unit": "g",
+        "type": "condiment",
+        "season": "summer"
+      },
+      {
+        "id": 804,
+        "name": "Cardamome",
+        "unit": "g",
+        "type": "condiment",
+        "season": "summer"
+      },
+      {
+        "id": 760,
+        "name": "Ciboulette",
+        "unit": "pcs",
+        "type": "condiment",
+        "season": "autumn"
+      },
+      {
+        "id": 803,
+        "name": "Clou de girofle",
+        "unit": "g",
+        "type": "condiment",
+        "season": "spring"
+      },
+      {
+        "id": 761,
+        "name": "Coriandre",
+        "unit": "pcs",
+        "type": "condiment",
+        "season": "null"
+      },
+      {
+        "id": 796,
+        "name": "Cumin",
+        "unit": "g",
+        "type": "condiment",
+        "season": "null"
+      },
+      {
+        "id": 797,
+        "name": "Curcuma",
+        "unit": "g",
+        "type": "condiment",
+        "season": "winter"
+      },
+      {
+        "id": 801,
+        "name": "Curry",
+        "unit": "g",
+        "type": "condiment",
+        "season": "winter"
+      },
+      {
+        "id": 765,
+        "name": "Estragon",
+        "unit": "pcs",
+        "type": "condiment",
+        "season": "summer"
+      },
+      {
+        "id": 802,
+        "name": "Gingembre",
+        "unit": "g",
+        "type": "condiment",
+        "season": "winter"
+      },
+      {
+        "id": 751,
+        "name": "Ketchup",
+        "unit": "g",
+        "type": "condiment",
+        "season": "spring"
+      },
+      {
+        "id": 763,
+        "name": "Laurier",
+        "unit": "pcs",
+        "type": "condiment",
+        "season": "autumn"
+      },
+      {
+        "id": 750,
+        "name": "Mayonnaise",
+        "unit": "g",
+        "type": "condiment",
+        "season": "null"
+      },
+      {
+        "id": 762,
+        "name": "Menthe",
+        "unit": "g",
+        "type": "condiment",
+        "season": "autumn"
+      },
+      {
+        "id": 748,
+        "name": "Moutarde",
+        "unit": "g",
+        "type": "condiment",
+        "season": "summer"
+      },
+      {
+        "id": 800,
+        "name": "Noix de muscade",
+        "unit": "g",
+        "type": "condiment",
+        "season": "null"
+      },
+      {
+        "id": 798,
+        "name": "Paprika",
+        "unit": "g",
+        "type": "condiment",
+        "season": "spring"
+      },
+      {
+        "id": 759,
+        "name": "Persil",
+        "unit": "pcs",
+        "type": "condiment",
+        "season": "spring"
+      },
+      {
+        "id": 805,
+        "name": "Piment",
+        "unit": "g",
+        "type": "condiment",
+        "season": "null"
+      },
+      {
+        "id": 753,
+        "name": "Poivre",
+        "unit": "g",
+        "type": "condiment",
+        "season": "autumn"
+      },
+      {
+        "id": 758,
+        "name": "Romarin",
+        "unit": "g",
+        "type": "condiment",
+        "season": "autumn"
+      },
+      {
+        "id": 749,
+        "name": "Sauce soja",
+        "unit": "g",
+        "type": "condiment",
+        "season": "summer"
+      },
+      {
+        "id": 755,
+        "name": "Sauce tomate",
+        "unit": "ml",
+        "type": "condiment",
+        "season": "spring"
+      },
+      {
+        "id": 757,
+        "name": "Thym",
+        "unit": "pcs",
+        "type": "condiment",
+        "season": "winter"
+      },
+      {
+        "id": 747,
+        "name": "Vinaigre",
+        "unit": "ml",
+        "type": "condiment",
+        "season": "winter"
+      },
+      {
+        "id": 718,
+        "name": "Banane",
+        "unit": "g",
+        "type": "fruit",
+        "season": "autumn"
+      },
+      {
+        "id": 721,
+        "name": "Cerise",
+        "unit": "g",
+        "type": "fruit",
+        "season": "winter"
+      },
+      {
+        "id": 719,
+        "name": "Fraise",
+        "unit": "g",
+        "type": "fruit",
+        "season": "spring"
+      },
+      {
+        "id": 720,
+        "name": "Framboise",
+        "unit": "g",
+        "type": "fruit",
+        "season": "spring"
+      },
+      {
+        "id": 725,
+        "name": "Kiwi",
+        "unit": "g",
+        "type": "fruit",
+        "season": "null"
+      },
+      {
+        "id": 723,
+        "name": "Melon",
+        "unit": "pcs",
+        "type": "fruit",
+        "season": "null"
+      },
+      {
+        "id": 724,
+        "name": "Pastèque",
+        "unit": "g",
+        "type": "fruit",
+        "season": "winter"
+      },
+      {
+        "id": 717,
+        "name": "Poire",
+        "unit": "pcs",
+        "type": "fruit",
+        "season": "summer"
+      },
+      {
+        "id": 716,
+        "name": "Pomme",
+        "unit": "pcs",
+        "type": "fruit",
+        "season": "spring"
+      },
+      {
+        "id": 810,
+        "name": "Pomme rouge",
+        "unit": "pcs",
+        "type": "fruit",
+        "season": "autumn"
+      },
+      {
+        "id": 809,
+        "name": "Pomme verte",
+        "unit": "pcs",
+        "type": "fruit",
+        "season": "autumn"
+      },
+      {
+        "id": 722,
+        "name": "Raisin",
+        "unit": "pcs",
+        "type": "fruit",
+        "season": "spring"
+      },
+      {
+        "id": 700,
+        "name": "Aubergine",
+        "unit": "pcs",
+        "type": "légume",
+        "season": "spring"
+      },
+      {
+        "id": 704,
+        "name": "Brocoli",
+        "unit": "g",
+        "type": "légume",
+        "season": "summer"
+      },
+      {
+        "id": 697,
+        "name": "Carotte",
+        "unit": "pcs",
+        "type": "légume",
+        "season": "null"
+      },
+      {
+        "id": 786,
+        "name": "Champignon de Paris",
+        "unit": "g",
+        "type": "légume",
+        "season": "winter"
+      },
+      {
+        "id": 795,
+        "name": "Chanterelle",
+        "unit": "pcs",
+        "type": "légume",
+        "season": "winter"
+      },
+      {
+        "id": 703,
+        "name": "Chou",
+        "unit": "g",
+        "type": "légume",
+        "season": "autumn"
+      },
+      {
+        "id": 698,
+        "name": "Courgette",
+        "unit": "pcs",
+        "type": "légume",
+        "season": "spring"
+      },
+      {
+        "id": 787,
+        "name": "Cèpe",
+        "unit": "g",
+        "type": "légume",
+        "season": "null"
+      },
+      {
+        "id": 792,
+        "name": "Enoki",
+        "unit": "pcs",
+        "type": "légume",
+        "season": "winter"
+      },
+      {
+        "id": 788,
+        "name": "Girolle",
+        "unit": "pcs",
+        "type": "légume",
+        "season": "spring"
+      },
+      {
+        "id": 789,
+        "name": "Morille",
+        "unit": "pcs",
+        "type": "légume",
+        "season": "null"
+      },
+      {
+        "id": 790,
+        "name": "Pleurote",
+        "unit": "g",
+        "type": "légume",
+        "season": "null"
+      },
+      {
+        "id": 699,
+        "name": "Poivron",
+        "unit": "g",
+        "type": "légume",
+        "season": "autumn"
+      },
+      {
+        "id": 807,
+        "name": "Poivron rouge",
+        "unit": "pcs",
+        "type": "légume",
+        "season": "summer"
+      },
+      {
+        "id": 808,
+        "name": "Poivron vert",
+        "unit": "pcs",
+        "type": "légume",
+        "season": "summer"
+      },
+      {
+        "id": 702,
+        "name": "Pomme de terre",
+        "unit": "pcs",
+        "type": "légume",
+        "season": "null"
+      },
+      {
+        "id": 794,
+        "name": "Portobello",
+        "unit": "g",
+        "type": "légume",
+        "season": "winter"
+      },
+      {
+        "id": 705,
+        "name": "Radis",
+        "unit": "pcs",
+        "type": "légume",
+        "season": "summer"
+      },
+      {
+        "id": 791,
+        "name": "Shiitake",
+        "unit": "g",
+        "type": "légume",
+        "season": "spring"
+      },
+      {
+        "id": 693,
+        "name": "Test Carotte",
+        "unit": "pcs",
+        "type": "légume",
+        "season": "null"
+      },
+      {
+        "id": 694,
+        "name": "Test Oignon",
+        "unit": "pcs",
+        "type": "légume",
+        "season": "autumn"
+      },
+      {
+        "id": 695,
+        "name": "Test Single Ingredient",
+        "unit": "g",
+        "type": "légume",
+        "season": "summer"
+      },
+      {
+        "id": 692,
+        "name": "Test Tomate",
+        "unit": "g",
+        "type": "légume",
+        "season": "summer"
+      },
+      {
+        "id": 806,
+        "name": "Tomate cerise",
+        "unit": "pcs",
+        "type": "légume",
+        "season": "summer"
+      },
+      {
+        "id": 793,
+        "name": "Trompette de la mort",
+        "unit": "g",
+        "type": "légume",
+        "season": "summer"
+      },
+      {
+        "id": 820,
+        "name": "Baguette",
+        "unit": "pcs",
+        "type": "pain",
+        "season": "null"
+      },
+      {
+        "id": 813,
+        "name": "Pain complet",
+        "unit": "pcs",
+        "type": "pain",
+        "season": "null"
+      },
+      {
+        "id": 812,
+        "name": "Pain de campagne",
+        "unit": "pcs",
+        "type": "pain",
+        "season": "null"
+      },
+      {
+        "id": 743,
+        "name": "Bar",
+        "unit": "g",
+        "type": "poisson",
+        "season": "winter"
+      },
+      {
+        "id": 738,
+        "name": "Cabillaud",
+        "unit": "g",
+        "type": "poisson",
+        "season": "winter"
+      },
+      {
+        "id": 744,
+        "name": "Dorade",
+        "unit": "g",
+        "type": "poisson",
+        "season": "null"
+      },
+      {
+        "id": 745,
+        "name": "Hareng",
+        "unit": "g",
+        "type": "poisson",
+        "season": "summer"
+      },
+      {
+        "id": 739,
+        "name": "Maquereau",
+        "unit": "g",
+        "type": "poisson",
+        "season": "winter"
+      },
+      {
+        "id": 742,
+        "name": "Merlan",
+        "unit": "g",
+        "type": "poisson",
+        "season": "spring"
+      },
+      {
+        "id": 741,
+        "name": "Sardine",
+        "unit": "g",
+        "type": "poisson",
+        "season": "spring"
+      },
+      {
+        "id": 736,
+        "name": "Saumon",
+        "unit": "g",
+        "type": "poisson",
+        "season": "null"
+      },
+      {
+        "id": 737,
+        "name": "Thon",
+        "unit": "g",
+        "type": "poisson",
+        "season": "null"
+      },
+      {
+        "id": 740,
+        "name": "Truite",
+        "unit": "g",
+        "type": "poisson",
+        "season": "null"
+      },
+      {
+        "id": 729,
+        "name": "Agneau",
+        "unit": "g",
+        "type": "viande",
+        "season": "null"
+      },
+      {
+        "id": 727,
+        "name": "Boeuf",
+        "unit": "g",
+        "type": "viande",
+        "season": "spring"
+      },
+      {
+        "id": 730,
+        "name": "Canard",
+        "unit": "g",
+        "type": "viande",
+        "season": "summer"
+      },
+      {
+        "id": 732,
+        "name": "Dinde",
+        "unit": "g",
+        "type": "viande",
+        "season": "winter"
+      },
+      {
+        "id": 735,
+        "name": "Jambon",
+        "unit": "g",
+        "type": "viande",
+        "season": "winter"
+      },
+      {
+        "id": 733,
+        "name": "Lapin",
+        "unit": "g",
+        "type": "viande",
+        "season": "summer"
+      },
+      {
+        "id": 728,
+        "name": "Porc",
+        "unit": "g",
+        "type": "viande",
+        "season": "spring"
+      },
+      {
+        "id": 726,
+        "name": "Poulet",
+        "unit": "g",
+        "type": "viande",
+        "season": "autumn"
+      },
+      {
+        "id": 734,
+        "name": "Saucisse",
+        "unit": "g",
+        "type": "viande",
+        "season": "summer"
+      },
+      {
+        "id": 731,
+        "name": "Veau",
+        "unit": "g",
+        "type": "viande",
+        "season": "winter"
+      }
+    ],
+    "success": true,
+    "meta": {
+      "duration": 1
+    }
+  },
+  {
+    "results": [
+      {
+        "id": 22,
+        "name": "Baking stone"
+      },
+      {
+        "id": 14,
+        "name": "Blender"
+      },
+      {
+        "id": 6,
+        "name": "Casserole"
+      },
+      {
+        "id": 8,
+        "name": "Couteau"
+      },
+      {
+        "id": 13,
+        "name": "Food processor"
+      },
+      {
+        "id": 2,
+        "name": "Fouet"
+      },
+      {
+        "id": 5,
+        "name": "Four"
+      },
+      {
+        "id": 24,
+        "name": "Grill pan"
+      },
+      {
+        "id": 25,
+        "name": "Immersion blender"
+      },
+      {
+        "id": 16,
+        "name": "Mandoline"
+      },
+      {
+        "id": 18,
+        "name": "Mortar and pestle"
+      },
+      {
+        "id": 20,
+        "name": "Pastry brush"
+      },
+      {
+        "id": 9,
+        "name": "Planche à découper"
+      },
+      {
+        "id": 7,
+        "name": "Plat à gratin"
+      },
+      {
+        "id": 3,
+        "name": "Poêle"
+      },
+      {
+        "id": 11,
+        "name": "Pressure cooker"
+      },
+      {
+        "id": 21,
+        "name": "Rolling pin"
+      },
+      {
+        "id": 1,
+        "name": "Saladier"
+      },
+      {
+        "id": 12,
+        "name": "Slow cooker"
+      },
+      {
+        "id": 4,
+        "name": "Spatule"
+      },
+      {
+        "id": 15,
+        "name": "Stand mixer"
+      },
+      {
+        "id": 23,
+        "name": "Steamer basket"
+      },
+      {
+        "id": 19,
+        "name": "Thermometer"
+      },
+      {
+        "id": 17,
+        "name": "Zester/Grater"
+      },
+      {
+        "id": 10,
+        "name": "micro-onde"
+      }
+    ],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  },
+  {
+    "results": [],
+    "success": true,
+    "meta": {
+      "duration": 0
+    }
+  }
+]
+
+Il est très important que les recettes soient réalistes, délicieuses et équilibrées

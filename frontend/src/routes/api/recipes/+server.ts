@@ -63,11 +63,24 @@ export const GET: RequestHandler = async ({ platform, locals }) => {
     }
 
     try {
-        console.log(`[API /api/recipes GET] Fetching recipes for user: ${user.id}`);
+        console.log(`[API /api/recipes GET] Fetching recipes for user: ${user.id} and system recipes`);
 
-        // 1. Fetch user's recipes
-        const recipesStmt = db.prepare('SELECT * FROM recipes WHERE user_id = ?');
-        const { results: recipesList } = await recipesStmt.bind(user.id).all<Omit<Recipe, 'ingredients' | 'kitchen_tools'>>();
+        // 1. Fetch user's recipes and system recipes
+        const recipesStmt = db.prepare(`
+            SELECT
+                id,
+                COALESCE(french_name, name) as name,
+                description,
+                prep_time_minutes,
+                cook_time_minutes,
+                instructions,
+                servings,
+                season,
+                user_id
+            FROM recipes
+            WHERE user_id = ? OR user_id = ?
+        `);
+        const { results: recipesList } = await recipesStmt.bind(user.id, 'system').all<Omit<Recipe, 'ingredients' | 'kitchen_tools'>>();
 
         if (!recipesList) {
             console.log("[API /api/recipes GET] No recipes found.");
@@ -78,12 +91,12 @@ export const GET: RequestHandler = async ({ platform, locals }) => {
         const recipesWithDetails: Recipe[] = [];
         // Prepare statements outside loop
         const ingredientsStmt = db.prepare(`
-            SELECT ri.ingredient_id, i.name, i.unit, ri.quantity
+            SELECT ri.ingredient_id, COALESCE(i.french_name, i.name) as name, i.unit, ri.quantity
             FROM recipe_ingredients ri JOIN ingredients i ON ri.ingredient_id = i.id
             WHERE ri.recipe_id = ?
         `);
         const toolsStmt = db.prepare(`
-            SELECT kt.id, kt.name
+            SELECT kt.id, COALESCE(kt.french_name, kt.name) as name
             FROM recipe_kitchen_tools rkt JOIN kitchen_tools kt ON rkt.tool_id = kt.id
             WHERE rkt.recipe_id = ?
         `);
@@ -217,13 +230,13 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
         // Fetch the complete recipe with ingredients and tools to return
         // Prepare statements for ingredients and tools
         const ingredientsStmt = db.prepare(`
-            SELECT ri.ingredient_id, i.name, i.unit, i.type, ri.quantity
+            SELECT ri.ingredient_id, COALESCE(i.french_name, i.name) as name, i.unit, i.type, ri.quantity
             FROM recipe_ingredients ri JOIN ingredients i ON ri.ingredient_id = i.id
             WHERE ri.recipe_id = ?
         `);
         
         const toolsStmt = db.prepare(`
-            SELECT kt.id, kt.name
+            SELECT kt.id, COALESCE(kt.french_name, kt.name) as name
             FROM recipe_kitchen_tools rkt JOIN kitchen_tools kt ON rkt.tool_id = kt.id
             WHERE rkt.recipe_id = ?
         `);
@@ -297,12 +310,22 @@ export const DELETE: RequestHandler = async ({ request, platform, locals, url })
         const id = parseInt(recipeId);
         console.log(`[API /api/recipes DELETE] Attempting to delete recipe ID: ${id} for user: ${user.id}`);
         
-        // Check if recipe belongs to user
-        const checkStmt = db.prepare('SELECT id FROM recipes WHERE id = ? AND user_id = ?');
-        const recipe = await checkStmt.bind(id, user.id).first<{ id: number }>();
+        // Check if recipe exists and belongs to user
+        const checkStmt = db.prepare('SELECT id, user_id FROM recipes WHERE id = ?');
+        const recipe = await checkStmt.bind(id).first<{ id: number, user_id: string }>();
         
         if (!recipe) {
-            throw error(404, "Recipe not found or you don't have permission to delete it.");
+            throw error(404, "Recipe not found.");
+        }
+        
+        // Check if this is a system recipe
+        if (recipe.user_id === 'system') {
+            throw error(403, "Les recettes système ne peuvent pas être supprimées.");
+        }
+        
+        // Check if recipe belongs to user
+        if (recipe.user_id !== user.id) {
+            throw error(403, "Vous n'avez pas la permission de supprimer cette recette.");
         }
         
         // Check if recipe is used in any meal components

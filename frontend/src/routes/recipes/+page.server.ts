@@ -28,21 +28,35 @@ export const load: PageServerLoad = async ({ platform, locals }) => {
             throw error(401, 'User not authenticated');
         }
         
-        console.log(`[Page /recipes] Fetching recipes for user: ${user.id}`);
+        console.log(`[Page /recipes] Fetching recipes for user: ${user.id} and system recipes`);
 
-        // Fetch user's recipes
-        const recipesStmt = db.prepare('SELECT * FROM recipes WHERE user_id = ? ORDER BY name ASC');
-        const { results: recipesList } = await recipesStmt.bind(user.id).all<Omit<Recipe, 'ingredients' | 'kitchen_tools'>>();
+        // Fetch user's recipes and system recipes
+        const recipesStmt = db.prepare(`
+            SELECT
+                id,
+                COALESCE(french_name, name) as name,
+                description,
+                prep_time_minutes,
+                cook_time_minutes,
+                instructions,
+                servings,
+                season,
+                user_id
+            FROM recipes
+            WHERE user_id = ? OR user_id = ?
+            ORDER BY name ASC
+        `);
+        const { results: recipesList } = await recipesStmt.bind(user.id, 'system').all<Omit<Recipe, 'ingredients' | 'kitchen_tools'>>();
 
         // Prepare statements for ingredients and tools
         const ingredientsStmt = db.prepare(`
-            SELECT ri.ingredient_id, i.name, i.unit, i.type, ri.quantity
+            SELECT ri.ingredient_id, COALESCE(i.french_name, i.name) as name, i.unit, i.type, ri.quantity
             FROM recipe_ingredients ri JOIN ingredients i ON ri.ingredient_id = i.id
             WHERE ri.recipe_id = ?
         `);
         
         const toolsStmt = db.prepare(`
-            SELECT kt.id, kt.name
+            SELECT kt.id, COALESCE(kt.french_name, kt.name) as name
             FROM recipe_kitchen_tools rkt JOIN kitchen_tools kt ON rkt.tool_id = kt.id
             WHERE rkt.recipe_id = ?
         `);

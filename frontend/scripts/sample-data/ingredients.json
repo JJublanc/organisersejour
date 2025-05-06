@@ -1,0 +1,694 @@
+{
+  "ingredients": [
+    {
+      "name": "Tomate",
+      "unit": "g",
+      "type": "légume",
+      "season": "summer"
+    },
+    {
+      "name": "Carotte",
+      "unit": "pcs",
+      "type": "légume",
+      "season": null
+    },
+    {
+      "name": "Courgette",
+      "unit": "pcs",
+      "type": "légume",
+      "season": "spring"
+    },
+    {
+      "name": "Poivron",
+      "unit": "g",
+      "type": "légume",
+      "season": "autumn"
+    },
+    {
+      "name": "Aubergine",
+      "unit": "pcs",
+      "type": "légume",
+      "season": "spring"
+    },
+    {
+      "name": "Oignon",
+      "unit": "pcs",
+      "type": "légume",
+      "season": "autumn"
+    },
+    {
+      "name": "Pomme de terre",
+      "unit": "pcs",
+      "type": "légume",
+      "season": null
+    },
+    {
+      "name": "Chou",
+      "unit": "g",
+      "type": "légume",
+      "season": "autumn"
+    },
+    {
+      "name": "Brocoli",
+      "unit": "g",
+      "type": "légume",
+      "season": "summer"
+    },
+    {
+      "name": "Radis",
+      "unit": "pcs",
+      "type": "légume",
+      "season": "summer"
+    },
+    {
+      "name": "Pomme",
+      "unit": "pcs",
+      "type": "fruit",
+      "season": "spring"
+    },
+    {
+      "name": "Poire",
+      "unit": "pcs",
+      "type": "fruit",
+      "season": "summer"
+    },
+    {
+      "name": "Banane",
+      "unit": "g",
+      "type": "fruit",
+      "season": "autumn"
+    },
+    {
+      "name": "Fraise",
+      "unit": "g",
+      "type": "fruit",
+      "season": "spring"
+    },
+    {
+      "name": "Framboise",
+      "unit": "g",
+      "type": "fruit",
+      "season": "spring"
+    },
+    {
+      "name": "Cerise",
+      "unit": "g",
+      "type": "fruit",
+      "season": "winter"
+    },
+    {
+      "name": "Raisin",
+      "unit": "pcs",
+      "type": "fruit",
+      "season": "spring"
+    },
+    {
+      "name": "Melon",
+      "unit": "pcs",
+      "type": "fruit",
+      "season": null
+    },
+    {
+      "name": "Pastèque",
+      "unit": "g",
+      "type": "fruit",
+      "season": "winter"
+    },
+    {
+      "name": "Kiwi",
+      "unit": "g",
+      "type": "fruit",
+      "season": null
+    },
+    {
+      "name": "Poulet",
+      "unit": "g",
+      "type": "viande",
+      "season": "autumn"
+    },
+    {
+      "name": "Boeuf",
+      "unit": "g",
+      "type": "viande",
+      "season": "spring"
+    },
+    {
+      "name": "Porc",
+      "unit": "g",
+      "type": "viande",
+      "season": "spring"
+    },
+    {
+      "name": "Agneau",
+      "unit": "g",
+      "type": "viande",
+      "season": null
+    },
+    {
+      "name": "Canard",
+      "unit": "g",
+      "type": "viande",
+      "season": "summer"
+    },
+    {
+      "name": "Veau",
+      "unit": "g",
+      "type": "viande",
+      "season": "winter"
+    },
+    {
+      "name": "Dinde",
+      "unit": "g",
+      "type": "viande",
+      "season": "winter"
+    },
+    {
+      "name": "Lapin",
+      "unit": "g",
+      "type": "viande",
+      "season": "summer"
+    },
+    {
+      "name": "Saucisse",
+      "unit": "g",
+      "type": "viande",
+      "season": "summer"
+    },
+    {
+      "name": "Jambon",
+      "unit": "g",
+      "type": "viande",
+      "season": "winter"
+    },
+    {
+      "name": "Saumon",
+      "unit": "g",
+      "type": "poisson",
+      "season": null
+    },
+    {
+      "name": "Thon",
+      "unit": "g",
+      "type": "poisson",
+      "season": null
+    },
+    {
+      "name": "Cabillaud",
+      "unit": "g",
+      "type": "poisson",
+      "season": "winter"
+    },
+    {
+      "name": "Maquereau",
+      "unit": "g",
+      "type": "poisson",
+      "season": "winter"
+    },
+    {
+      "name": "Truite",
+      "unit": "g",
+      "type": "poisson",
+      "season": null
+    },
+    {
+      "name": "Sardine",
+      "unit": "g",
+      "type": "poisson",
+      "season": "spring"
+    },
+    {
+      "name": "Merlan",
+      "unit": "g",
+      "type": "poisson",
+      "season": "spring"
+    },
+    {
+      "name": "Bar",
+      "unit": "g",
+      "type": "poisson",
+      "season": "winter"
+    },
+    {
+      "name": "Dorade",
+      "unit": "g",
+      "type": "poisson",
+      "season": null
+    },
+    {
+      "name": "Hareng",
+      "unit": "g",
+      "type": "poisson",
+      "season": "summer"
+    },
+    {
+      "name": "Huile d'olive",
+      "unit": "g",
+      "type": "condiment",
+      "season": "summer"
+    },
+    {
+      "name": "Vinaigre",
+      "unit": "ml",
+      "type": "condiment",
+      "season": "winter"
+    },
+    {
+      "name": "Moutarde",
+      "unit": "g",
+      "type": "condiment",
+      "season": "summer"
+    },
+    {
+      "name": "Sauce soja",
+      "unit": "g",
+      "type": "condiment",
+      "season": "summer"
+    },
+    {
+      "name": "Mayonnaise",
+      "unit": "g",
+      "type": "condiment",
+      "season": null
+    },
+    {
+      "name": "Ketchup",
+      "unit": "g",
+      "type": "condiment",
+      "season": "spring"
+    },
+    {
+      "name": "Sel",
+      "unit": "g",
+      "type": "condiment",
+      "season": "spring"
+    },
+    {
+      "name": "Poivre",
+      "unit": "g",
+      "type": "condiment",
+      "season": "autumn"
+    },
+    {
+      "name": "Bouillon",
+      "unit": "ml",
+      "type": "condiment",
+      "season": "spring"
+    },
+    {
+      "name": "Sauce tomate",
+      "unit": "ml",
+      "type": "condiment",
+      "season": "spring"
+    },
+    {
+      "name": "Basilic",
+      "unit": "g",
+      "type": "condiment",
+      "season": "winter"
+    },
+    {
+      "name": "Thym",
+      "unit": "pcs",
+      "type": "condiment",
+      "season": "winter"
+    },
+    {
+      "name": "Romarin",
+      "unit": "g",
+      "type": "condiment",
+      "season": "autumn"
+    },
+    {
+      "name": "Persil",
+      "unit": "pcs",
+      "type": "condiment",
+      "season": "spring"
+    },
+    {
+      "name": "Ciboulette",
+      "unit": "pcs",
+      "type": "condiment",
+      "season": "autumn"
+    },
+    {
+      "name": "Coriandre",
+      "unit": "pcs",
+      "type": "condiment",
+      "season": null
+    },
+    {
+      "name": "Menthe",
+      "unit": "g",
+      "type": "condiment",
+      "season": "autumn"
+    },
+    {
+      "name": "Laurier",
+      "unit": "pcs",
+      "type": "condiment",
+      "season": "autumn"
+    },
+    {
+      "name": "Aneth",
+      "unit": "g",
+      "type": "condiment",
+      "season": "autumn"
+    },
+    {
+      "name": "Estragon",
+      "unit": "pcs",
+      "type": "condiment",
+      "season": "summer"
+    },
+    {
+      "name": "Riz",
+      "unit": "g",
+      "type": "autre",
+      "season": "summer"
+    },
+    {
+      "name": "Pâtes",
+      "unit": "g",
+      "type": "autre",
+      "season": null
+    },
+    {
+      "name": "Pain",
+      "unit": "pcs",
+      "type": "autre",
+      "season": null
+    },
+    {
+      "name": "Semoule",
+      "unit": "pcs",
+      "type": "autre",
+      "season": "summer"
+    },
+    {
+      "name": "Quinoa",
+      "unit": "g",
+      "type": "autre",
+      "season": null
+    },
+    {
+      "name": "Blé",
+      "unit": "g",
+      "type": "autre",
+      "season": "winter"
+    },
+    {
+      "name": "Lentilles",
+      "unit": "g",
+      "type": "autre",
+      "season": null
+    },
+    {
+      "name": "Pois chiches",
+      "unit": "pcs",
+      "type": "autre",
+      "season": null
+    },
+    {
+      "name": "Haricots rouges",
+      "unit": "g",
+      "type": "autre",
+      "season": "autumn"
+    },
+    {
+      "name": "Pommes de terre",
+      "unit": "pcs",
+      "type": "autre",
+      "season": "autumn"
+    },
+    {
+      "name": "Lait",
+      "unit": "ml",
+      "type": "autre",
+      "season": null
+    },
+    {
+      "name": "Beurre",
+      "unit": "ml",
+      "type": "autre",
+      "season": null
+    },
+    {
+      "name": "Fromage",
+      "unit": "pcs",
+      "type": "autre",
+      "season": null
+    },
+    {
+      "name": "Yaourt",
+      "unit": "ml",
+      "type": "autre",
+      "season": "winter"
+    },
+    {
+      "name": "Crème fraîche",
+      "unit": "g",
+      "type": "autre",
+      "season": "autumn"
+    },
+    {
+      "name": "Lait concentré",
+      "unit": "ml",
+      "type": "autre",
+      "season": null
+    },
+    {
+      "name": "Mozzarella",
+      "unit": "g",
+      "type": "autre",
+      "season": "winter"
+    },
+    {
+      "name": "Parmesan",
+      "unit": "pcs",
+      "type": "autre",
+      "season": "winter"
+    },
+    {
+      "name": "Camembert",
+      "unit": "pcs",
+      "type": "autre",
+      "season": "spring"
+    },
+    {
+      "name": "Roquefort",
+      "unit": "pcs",
+      "type": "autre",
+      "season": null
+    },
+    {
+      "name": "Champignon de Paris",
+      "unit": "g",
+      "type": "légume",
+      "season": "winter"
+    },
+    {
+      "name": "Cèpe",
+      "unit": "g",
+      "type": "légume",
+      "season": null
+    },
+    {
+      "name": "Girolle",
+      "unit": "pcs",
+      "type": "légume",
+      "season": "spring"
+    },
+    {
+      "name": "Morille",
+      "unit": "pcs",
+      "type": "légume",
+      "season": null
+    },
+    {
+      "name": "Pleurote",
+      "unit": "g",
+      "type": "légume",
+      "season": null
+    },
+    {
+      "name": "Shiitake",
+      "unit": "g",
+      "type": "légume",
+      "season": "spring"
+    },
+    {
+      "name": "Enoki",
+      "unit": "pcs",
+      "type": "légume",
+      "season": "winter"
+    },
+    {
+      "name": "Trompette de la mort",
+      "unit": "g",
+      "type": "légume",
+      "season": "summer"
+    },
+    {
+      "name": "Portobello",
+      "unit": "g",
+      "type": "légume",
+      "season": "winter"
+    },
+    {
+      "name": "Chanterelle",
+      "unit": "pcs",
+      "type": "légume",
+      "season": "winter"
+    },
+    {
+      "name": "Cumin",
+      "unit": "g",
+      "type": "condiment",
+      "season": null
+    },
+    {
+      "name": "Curcuma",
+      "unit": "g",
+      "type": "condiment",
+      "season": "winter"
+    },
+    {
+      "name": "Paprika",
+      "unit": "g",
+      "type": "condiment",
+      "season": "spring"
+    },
+    {
+      "name": "Cannelle",
+      "unit": "g",
+      "type": "condiment",
+      "season": "summer"
+    },
+    {
+      "name": "Noix de muscade",
+      "unit": "g",
+      "type": "condiment",
+      "season": null
+    },
+    {
+      "name": "Curry",
+      "unit": "g",
+      "type": "condiment",
+      "season": "winter"
+    },
+    {
+      "name": "Gingembre",
+      "unit": "g",
+      "type": "condiment",
+      "season": "winter"
+    },
+    {
+      "name": "Clou de girofle",
+      "unit": "g",
+      "type": "condiment",
+      "season": "spring"
+    },
+    {
+      "name": "Cardamome",
+      "unit": "g",
+      "type": "condiment",
+      "season": "summer"
+    },
+    {
+      "name": "Piment",
+      "unit": "g",
+      "type": "condiment",
+      "season": null
+    },
+    {
+      "name": "Tomate cerise",
+      "type": "légume",
+      "unit": "pcs",
+      "season": "summer"
+    },
+    {
+      "name": "Poivron rouge",
+      "type": "légume",
+      "unit": "pcs",
+      "season": "summer"
+    },
+    {
+      "name": "Poivron vert",
+      "type": "légume",
+      "unit": "pcs",
+      "season": "summer"
+    },
+    {
+      "name": "Pomme verte",
+      "type": "fruit",
+      "unit": "pcs",
+      "season": "autumn"
+    },
+    {
+      "name": "Pomme rouge",
+      "type": "fruit",
+      "unit": "pcs",
+      "season": "autumn"
+    },
+    {
+      "name": "Riz complet",
+      "type": "autre",
+      "unit": "g",
+      "season": null
+    },
+    {
+      "name": "Pain de campagne",
+      "type": "pain",
+      "unit": "pcs",
+      "season": null
+    },
+    {
+      "name": "Pain complet",
+      "type": "pain",
+      "unit": "pcs",
+      "season": null
+    },
+    {
+      "name": "Jus d'orange",
+      "type": "boisson",
+      "unit": "ml",
+      "season": "winter"
+    },
+    {
+      "name": "Vin rouge",
+      "type": "boisson",
+      "unit": "ml",
+      "season": null
+    },
+    {
+      "name": "Vin blanc",
+      "type": "boisson",
+      "unit": "ml",
+      "season": null
+    },
+    {
+      "name": "Lait de vache",
+      "type": "autre",
+      "unit": "ml",
+      "season": null
+    },
+    {
+      "name": "Eau minérale",
+      "type": "boisson",
+      "unit": "ml",
+      "season": null
+    },
+    {
+      "name": "Fromage râpé",
+      "type": "autre",
+      "unit": "g",
+      "season": null
+    },
+    {
+      "name": "Baguette",
+      "type": "pain",
+      "unit": "pcs",
+      "season": null
+    }
+  ]
+}

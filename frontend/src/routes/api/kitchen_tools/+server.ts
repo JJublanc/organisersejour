@@ -13,7 +13,7 @@ export const GET: RequestHandler = async ({ platform }: { platform: App.Platform
     try {
         console.log("[API /api/kitchen_tools GET] Fetching all kitchen tools...");
 
-        const stmt = db.prepare('SELECT id, name FROM kitchen_tools ORDER BY name ASC');
+        const stmt = db.prepare('SELECT id, COALESCE(french_name, name) as name FROM kitchen_tools ORDER BY name ASC');
         const { results } = await stmt.all<KitchenTool>();
 
         console.log(`[API /api/kitchen_tools GET] Successfully fetched ${results?.length ?? 0} kitchen tools.`);
@@ -126,20 +126,30 @@ export const DELETE: RequestHandler = async ({ request, platform, locals, url })
         const id = parseInt(toolId);
         console.log(`[API /api/kitchen_tools DELETE] Attempting to delete kitchen tool ID: ${id}`);
         
-        // Check if kitchen tool exists
-        const checkStmt = db.prepare('SELECT id FROM kitchen_tools WHERE id = ?');
-        const tool = await checkStmt.bind(id).first<{ id: number }>();
+        // Check if kitchen tool exists and is not a system tool
+        const checkStmt = db.prepare('SELECT id, name, (SELECT COUNT(*) FROM recipe_kitchen_tools WHERE tool_id = kitchen_tools.id) as usage_count FROM kitchen_tools WHERE id = ?');
+        const tool = await checkStmt.bind(id).first<{ id: number, name: string, usage_count: number }>();
         
         if (!tool) {
             throw error(404, "Kitchen tool not found.");
         }
         
-        // Check if kitchen tool is used in any recipes
-        const recipeCheckStmt = db.prepare('SELECT COUNT(*) as count FROM recipe_kitchen_tools WHERE tool_id = ?');
-        const recipeResult = await recipeCheckStmt.bind(id).first<{ count: number }>();
+        // Check if this is a system-provided tool by checking if it's used in any system recipes
+        const systemCheckStmt = db.prepare(`
+            SELECT COUNT(*) as count
+            FROM recipe_kitchen_tools rkt
+            JOIN recipes r ON rkt.recipe_id = r.id
+            WHERE rkt.tool_id = ? AND r.user_id = 'system'
+        `);
+        const systemResult = await systemCheckStmt.bind(id).first<{ count: number }>();
         
-        if (recipeResult && recipeResult.count > 0) {
-            throw error(409, `Cet ustensile est utilisé dans ${recipeResult.count} recette(s) et ne peut pas être supprimé.`);
+        if (systemResult && systemResult.count > 0) {
+            throw error(403, `Cet ustensile est fourni par le système et ne peut pas être supprimé.`);
+        }
+        
+        // We already have the usage count from the first query
+        if (tool.usage_count > 0) {
+            throw error(409, `Cet ustensile est utilisé dans ${tool.usage_count} recette(s) et ne peut pas être supprimé.`);
         }
         
         // Delete the kitchen tool
