@@ -400,27 +400,29 @@
                 return c.course_type === course && c.recipe_id === null && c.ingredient_id === null;
               }) as component (component.id)}
                 <div class="component-row">
-                  <select
-                    value={component.recipe_id || ''}
-                    on:change={(e) => {
-                      const target = e.target as HTMLSelectElement;
-                      selectRecipe(component.id, parseInt(target.value));
-                    }}
-                  >
-                    <option value="" disabled>-- Choisir une recette --</option>
-                    {#each availableRecipes as recipe}
-                      <option value={recipe.id}>{recipe.name}</option>
-                    {/each}
-                  </select>
-                  
-                  <button
-                    type="button"
-                    class="create-btn"
-                    on:click|preventDefault={() => openRecipeCreateModal()}
-                    title="Créer une nouvelle recette"
-                  >
-                    +
-                  </button>
+                  <div class="component-row-content">
+                    <select
+                      value={component.recipe_id || ''}
+                      on:change={(e) => {
+                        const target = e.target as HTMLSelectElement;
+                        selectRecipe(component.id, parseInt(target.value));
+                      }}
+                    >
+                      <option value="" disabled>-- Choisir une recette --</option>
+                      {#each availableRecipes as recipe}
+                        <option value={recipe.id}>{recipe.name}</option>
+                      {/each}
+                    </select>
+                    
+                    <button
+                      type="button"
+                      class="create-btn"
+                      on:click|preventDefault={() => openRecipeCreateModal()}
+                      title="Créer une nouvelle recette"
+                    >
+                      +
+                    </button>
+                  </div>
                   
                   <button
                     type="button"
@@ -442,7 +444,9 @@
                 return c.course_type === course && c.recipe_id !== null;
               }) as component (component.id)}
                 <div class="component-row selected-recipe">
-                  <span class="selected-item-name">{component.recipe_name}</span>
+                  <div class="component-row-content">
+                    <span class="selected-item-name">{component.recipe_name}</span>
+                  </div>
                   
                   <button
                     type="button"
@@ -464,62 +468,40 @@
             </section>
           {/each}
           
-          <!-- Ingredients Section -->
-          <section class="course-section ingredients-section">
-            <h4>Ingrédients</h4>
+          <!-- La section des ingrédients a été supprimée pour tous les types de repas -->
+          
+          <!-- Drinks Section -->
+          <section class="course-section drinks-section">
+            <h4>Boissons</h4>
             
-            <!-- Unselected ingredient components (excluding drinks and bread) -->
-            {#each editedComponents.filter(c => c.ingredient_id === null && c.course_type === 'extra' && c.recipe_id === null && c.notes !== 'Boisson' && c.notes !== 'Pain') as component (component.id)}
+            <!-- Unselected drink components -->
+            {#each editedComponents.filter(c => c.notes === 'Boisson' && c.recipe_id === null && c.ingredient_id === null) as component (component.id)}
               <div class="component-row">
-                <select
-                  value={component.ingredient_id || ''}
-                  on:change={(e) => {
-                    const target = e.target as HTMLSelectElement;
-                    selectIngredient(component.id, parseInt(target.value));
-                  }}
-                >
-                  <option value="" disabled>-- Choisir un ingrédient --</option>
-                  {#each availableIngredients as ingredient}
-                    <option value={ingredient.id}>{ingredient.name}</option>
-                  {/each}
-                </select>
-                
-                <button
-                  type="button"
-                  class="create-btn"
-                  on:click|preventDefault={() => openIngredientCreateModal(editedComponents.indexOf(component))}
-                  title="Créer un nouvel ingrédient"
-                >
-                  +
-                </button>
-                
-                <button
-                  type="button"
-                  class="remove-btn"
-                  on:click|preventDefault={() => removeComponent(component.id)}
-                >
-                  &times;
-                </button>
-              </div>
-            {/each}
-            
-            <!-- Selected ingredient components (excluding drinks and bread) -->
-            {#each editedComponents.filter(c => c.ingredient_id !== null && c.notes !== 'Boisson' && c.notes !== 'Pain') as component (component.id)}
-              <div class="component-row ingredient-row">
-                <span class="selected-item-name">{component.ingredient_name}</span>
-                
-                <div class="quantity-input-group">
-                  <input
-                    type="number"
-                    min="0.1"
-                    step="0.1"
-                    value={component.quantity_per_person || 1}
-                    on:input={(e) => {
-                      const target = e.target as HTMLInputElement;
-                      updateIngredientQuantity(component.id, parseFloat(target.value));
+                <div class="component-row-content">
+                  <select
+                    value={component.ingredient_id || ''}
+                    on:change={(e) => {
+                      const target = e.target as HTMLSelectElement;
+                      selectIngredient(component.id, parseInt(target.value));
                     }}
-                  />
-                  <span class="unit">{component.unit}/pers</span>
+                  >
+                    <option value="" disabled>-- Choisir une boisson --</option>
+                    {#each availableIngredients.filter(ingredient =>
+                      // Filtrer les ingrédients de type "boisson"
+                      ingredient.type === 'boisson'
+                    ) as ingredient}
+                      <option value={ingredient.id}>{ingredient.name}</option>
+                    {/each}
+                  </select>
+                  
+                  <button
+                    type="button"
+                    class="create-btn"
+                    on:click|preventDefault={() => openIngredientCreateModal(editedComponents.indexOf(component))}
+                    title="Créer un nouvel ingrédient de type boisson"
+                  >
+                    +
+                  </button>
                 </div>
                 
                 <button
@@ -532,58 +514,26 @@
               </div>
             {/each}
             
-            <button
-              type="button"
-              class="add-btn"
-              on:click|preventDefault={() => addIngredient()}
-            >
-              + Ajouter Ingrédient
-            </button>
-          </section>
-          
-          <!-- Drinks Section -->
-          <section class="course-section drinks-section">
-            <h4>Boissons</h4>
-            
-            <!-- Unselected drink components -->
-            {#each editedComponents.filter(c => c.notes === 'Boisson' && c.recipe_id === null && c.ingredient_id === null) as component (component.id)}
-              <div class="component-row">
-                <select
-                  value={component.recipe_id || ''}
-                  on:change={(e) => {
-                    const target = e.target as HTMLSelectElement;
-                    selectRecipe(component.id, parseInt(target.value));
-                  }}
-                >
-                  <option value="" disabled>-- Choisir une boisson --</option>
-                  {#each availableRecipes as recipe}
-                    <option value={recipe.id}>{recipe.name}</option>
-                  {/each}
-                </select>
-                
-                <button
-                  type="button"
-                  class="create-btn"
-                  on:click|preventDefault={() => openRecipeCreateModal()}
-                  title="Créer une nouvelle boisson"
-                >
-                  +
-                </button>
-                
-                <button
-                  type="button"
-                  class="remove-btn"
-                  on:click|preventDefault={() => removeComponent(component.id)}
-                >
-                  &times;
-                </button>
-              </div>
-            {/each}
-            
             <!-- Selected drink components -->
-            {#each editedComponents.filter(c => c.notes === 'Boisson' && c.recipe_id !== null) as component (component.id)}
+            {#each editedComponents.filter(c => c.notes === 'Boisson' && c.ingredient_id !== null) as component (component.id)}
               <div class="component-row selected-recipe">
-                <span class="selected-item-name">{component.recipe_name}</span>
+                <div class="component-row-content">
+                  <span class="selected-item-name">{component.ingredient_name}</span>
+                  
+                  <div class="quantity-input-group">
+                    <input
+                      type="number"
+                      min="0.1"
+                      step="0.1"
+                      value={component.quantity_per_person || 1}
+                      on:input={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        updateIngredientQuantity(component.id, parseFloat(target.value));
+                      }}
+                    />
+                    <span class="unit">{component.unit}/pers</span>
+                  </div>
+                </div>
                 
                 <button
                   type="button"
@@ -611,27 +561,32 @@
             <!-- Unselected bread components -->
             {#each editedComponents.filter(c => c.notes === 'Pain' && c.recipe_id === null && c.ingredient_id === null) as component (component.id)}
               <div class="component-row">
-                <select
-                  value={component.recipe_id || ''}
-                  on:change={(e) => {
-                    const target = e.target as HTMLSelectElement;
-                    selectRecipe(component.id, parseInt(target.value));
-                  }}
-                >
-                  <option value="" disabled>-- Choisir un pain --</option>
-                  {#each availableRecipes as recipe}
-                    <option value={recipe.id}>{recipe.name}</option>
-                  {/each}
-                </select>
-                
-                <button
-                  type="button"
-                  class="create-btn"
-                  on:click|preventDefault={() => openRecipeCreateModal()}
-                  title="Créer un nouveau pain"
-                >
-                  +
-                </button>
+                <div class="component-row-content">
+                  <select
+                    value={component.ingredient_id || ''}
+                    on:change={(e) => {
+                      const target = e.target as HTMLSelectElement;
+                      selectIngredient(component.id, parseInt(target.value));
+                    }}
+                  >
+                    <option value="" disabled>-- Choisir un pain --</option>
+                    {#each availableIngredients.filter(ingredient =>
+                      // Filtrer les ingrédients de type "pain"
+                      ingredient.type === 'pain'
+                    ) as ingredient}
+                      <option value={ingredient.id}>{ingredient.name}</option>
+                    {/each}
+                  </select>
+                  
+                  <button
+                    type="button"
+                    class="create-btn"
+                    on:click|preventDefault={() => openIngredientCreateModal(editedComponents.indexOf(component))}
+                    title="Créer un nouvel ingrédient de type pain"
+                  >
+                    +
+                  </button>
+                </div>
                 
                 <button
                   type="button"
@@ -644,9 +599,25 @@
             {/each}
             
             <!-- Selected bread components -->
-            {#each editedComponents.filter(c => c.notes === 'Pain' && c.recipe_id !== null) as component (component.id)}
+            {#each editedComponents.filter(c => c.notes === 'Pain' && c.ingredient_id !== null) as component (component.id)}
               <div class="component-row selected-recipe">
-                <span class="selected-item-name">{component.recipe_name}</span>
+                <div class="component-row-content">
+                  <span class="selected-item-name">{component.ingredient_name}</span>
+                  
+                  <div class="quantity-input-group">
+                    <input
+                      type="number"
+                      min="0.1"
+                      step="0.1"
+                      value={component.quantity_per_person || 1}
+                      on:input={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        updateIngredientQuantity(component.id, parseFloat(target.value));
+                      }}
+                    />
+                    <span class="unit">{component.unit}/pers</span>
+                  </div>
+                </div>
                 
                 <button
                   type="button"
@@ -749,17 +720,27 @@
   }
 
   .component-row {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    gap: 0.6rem;
-    align-items: center;
+    display: flex;
+    flex-direction: column;
     margin-bottom: 0.75rem;
     padding-bottom: 0.75rem;
     border-bottom: 1px solid #f0f0f0;
+    position: relative;
   }
   
-  .ingredient-row {
-    grid-template-columns: 1fr auto auto;
+  .component-row-content {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  
+  .component-row select,
+  .component-row .selected-item-name {
+    flex-grow: 1;
+  }
+  
+  .component-row .create-btn {
+    flex-shrink: 0;
   }
   
   .selected-recipe {
@@ -831,17 +812,29 @@
   }
 
   .remove-btn {
-    background-color: #dc3545;
+    background-color: rgba(220, 53, 69, 0.7);
     color: white;
     border: none;
-    border-radius: 4px;
-    width: 30px;
-    height: 30px;
-    font-size: 1.2rem;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 0.9rem;
+    line-height: 1;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: absolute;
+    top: 0;
+    right: 0;
+    transition: background-color 0.2s ease;
+    z-index: 10;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .remove-btn:hover {
+    background-color: #dc3545;
   }
 
   .modal-actions {

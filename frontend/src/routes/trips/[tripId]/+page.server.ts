@@ -84,9 +84,18 @@ export const load: ServerLoad = async (event: ServerLoadEvent): Promise<TripDeta
     try {
         console.log(`[Trip Detail Load] Fetching trip details for ID: ${tripIdNum}, User: ${userId}`);
 
-        // 1. Fetch the main trip details, ensuring it belongs to the user
-        const tripStmt = db.prepare('SELECT * FROM trips WHERE id = ? AND organiser_id = ?');
-        const tripResult = await tripStmt.bind(tripIdNum, userId).first<Trip>();
+        // 1. Fetch the main trip details
+        let tripResult: Trip | null;
+        
+        if (authEnabled) {
+            // In production, ensure trip belongs to the user
+            const tripStmt = db.prepare('SELECT * FROM trips WHERE id = ? AND organiser_id = ?');
+            tripResult = await tripStmt.bind(tripIdNum, userId).first<Trip>();
+        } else {
+            // In development, allow access to any trip
+            const tripStmt = db.prepare('SELECT * FROM trips WHERE id = ?');
+            tripResult = await tripStmt.bind(tripIdNum).first<Trip>();
+        }
 
         if (!tripResult) {
             throw error(404, 'Trip not found');

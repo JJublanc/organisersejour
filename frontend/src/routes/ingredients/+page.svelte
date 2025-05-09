@@ -286,31 +286,40 @@
   .card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 0.5rem;
+    position: relative;
+  }
+  
+  .card-header h3 {
+    padding-right: 24px; /* Espace pour le bouton de suppression */
+    margin: 0;
   }
   
   .delete-btn {
-    background-color: #dc3545;
+    background-color: rgba(220, 53, 69, 0.7);
     color: white;
     border: none;
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    font-size: 16px;
+    width: 22px;
+    height: 22px;
+    font-size: 14px;
     line-height: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     padding: 0;
-    opacity: 0.8;
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    margin: 0;
+    position: absolute;
+    top: 0;
+    right: 0;
+    transition: background-color 0.2s ease;
+    z-index: 10;
   }
   
   .delete-btn:hover {
-    opacity: 1;
-    transform: scale(1.1);
+    background-color: #dc3545;
   }
   
   .ingredient-card:hover {
