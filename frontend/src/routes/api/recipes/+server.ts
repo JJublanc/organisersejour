@@ -14,6 +14,7 @@ export interface Recipe {
     season: 'spring' | 'summer' | 'autumn' | 'winter' | null;
     ingredients: RecipeIngredient[]; // Array of associated ingredients
     kitchen_tools: KitchenTool[]; // Array of associated tools
+    user_id: string; // Add user_id to the Recipe interface
 }
 
 // Define the structure for the join table data (RecipeIngredient)
@@ -40,6 +41,7 @@ interface CreateRecipePayload {
 
 // --- GET Handler (Updated) ---
 export const GET: RequestHandler = async ({ platform, locals }) => {
+    console.log("[API /api/recipes GET] locals.user:", locals.user); // Log locals.user
     const db = platform?.env?.DB;
     
     // --- Authentication ---
@@ -242,8 +244,8 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
         `);
 
         // Fetch ingredients and tools for the new recipe
-        const { results: ingredientsList } = await ingredientsStmt.bind(newRecipeId).all();
-        const { results: toolsList } = await toolsStmt.bind(newRecipeId).all();
+        const { results: ingredientsList } = await ingredientsStmt.bind(newRecipeId).all<RecipeIngredient>();
+        const { results: toolsList } = await toolsStmt.bind(newRecipeId).all<KitchenTool>();
         
         // Construct the complete recipe object
         const newRecipe: Recipe = {
