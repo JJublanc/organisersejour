@@ -44,9 +44,10 @@ export async function load({ request, platform, url }) {
   // Get user from Cloudflare Access JWT
   console.log(`[Layout Load] CF-Access-JWT-Assertion: ${request.headers.get('CF-Access-JWT-Assertion')}`); // Log JWT header
   const user = getUserFromRequest(request);
-  
+
+  console.log("[Layout Load] User object after getUserFromRequest:", user); // Log the user object
   console.log("[Layout Load] Auth enabled, returning user from request:", user); // Log returned real user
-  
+
   // If authentication is enabled and the user is not authenticated and the route is not public
   if (authEnabled && (!user || !user.authenticated) && !isPublicRoute) {
     console.log("[Layout Load] User not authenticated, redirecting to login");
