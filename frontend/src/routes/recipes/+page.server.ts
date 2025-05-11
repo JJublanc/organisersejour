@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 import type { Recipe } from '$lib/types';
 
 export const load: PageServerLoad = async ({ platform, locals }) => {
+    console.log("[Page /recipes] locals.user:", locals.user); // Log locals.user
     const db = platform?.env?.DB;
     let user = locals.user;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
