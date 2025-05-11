@@ -60,17 +60,33 @@ export function parseJwt(token: string | null): JwtPayload | null {
  */
 export function getUserFromRequest(request: Request): User | null {
   // Cloudflare Access sets these headers for authenticated requests
-  const jwt = request.headers.get('CF-Access-JWT-Assertion');
-  
+  // In Pages, the JWT is often in a cookie named CF_Authorization
+  let jwt = request.headers.get('CF-Access-JWT-Assertion');
+
+  if (!jwt) {
+    // If header is not present, try to get it from the cookie
+    const cookieHeader = request.headers.get('Cookie');
+    if (cookieHeader) {
+      const cookies = cookieHeader.split(';');
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'CF_Authorization') {
+          jwt = value;
+          break;
+        }
+      }
+    }
+  }
+
   if (!jwt) {
     return null;
   }
-  
+
   const payload = parseJwt(jwt);
   if (!payload) {
     return null;
   }
-  
+
   return {
     email: payload.email || '',
     id: payload.sub || '',
