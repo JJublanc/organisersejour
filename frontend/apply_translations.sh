@@ -7,7 +7,7 @@ echo "Applying translation migrations..."
 
 # Apply the migration to add French name columns
 echo "Adding French name columns to tables..."
-npx wrangler d1 execute DB --local --file=migrations/0024_add_french_names.sql
+npx wrangler d1 execute DB --local --file=migrations/0023_add_french_names_2.sql
 
 # Apply part 1: Kitchen tools and spring/summer ingredients
 echo "Populating French names for kitchen tools and spring/summer ingredients..."
