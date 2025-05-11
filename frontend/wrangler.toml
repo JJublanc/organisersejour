@@ -3,7 +3,7 @@ compatibility_date = "2024-04-12"
 pages_build_output_dir = "./build"
 
 # === ENVIRONNEMENT PAR DÉFAUT ===
-# Utilisé en local ou si tu n’as pas précisé --env
+# Utilisé en local ou si tu n'as pas précisé --env
 [[d1_databases]]
 binding = "DB"
 database_name = "hello-db"
@@ -14,9 +14,13 @@ binding = "DB_PREPROD"
 database_name = "hello-db-preprod"
 database_id = "68a63f61-c3d3-46c1-a2f7-a907e6c5472c"
 
+# Configuration pour Cloudflare Access
+[vars]
+AUTH_ENABLED = "true"
+
 # === ENVIRONNEMENT PREVIEW (PRÉPROD) ===
 [env.preview]
-vars = { ENVIRONMENT = "preprod" }
+vars = { ENVIRONMENT = "preprod", AUTH_ENABLED = "true" }
 
 [[env.preview.d1_databases]]
 binding = "DB_PREPROD"
@@ -25,7 +29,7 @@ database_id = "68a63f61-c3d3-46c1-a2f7-a907e6c5472c"
 
 # === ENVIRONNEMENT PRODUCTION ===
 [env.production]
-vars = { ENVIRONMENT = "prod" }
+vars = { ENVIRONMENT = "prod", AUTH_ENABLED = "true" }
 
 [[env.production.d1_databases]]
 binding = "DB"

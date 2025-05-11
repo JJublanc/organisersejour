@@ -1,15 +1,27 @@
-<script>
-	let message = "Clique sur le bouton pour tester /api/hello";
-
-	async function pingHello() {
-		const res = await fetch('/api/hello');
-		const data = await res.json();
-		message = data.message;
-	}
+<script lang="ts">
+  // Data is now loaded by +page.server.ts and passed in automatically
+  export let data;
+  // Remove form prop as it's no longer needed here
+  // export let form: Record<string, any> | undefined | null;
 </script>
 
 <main>
-	<h1>Bienvenue !</h1>
-	<p>{message}</p>
-	<button on:click={pingHello}>Appeler /api/hello</button>
+  <h1>Bienvenue !</h1>
+
+  {#if data.message}
+    <p>Message from DB: {data.message}</p>
+  {:else}
+    <p>Loading message...</p>
+  {/if}
+
+  <!-- Remove the trip creation form -->
+
 </main>
+
+<!-- Remove form styles -->
+<style>
+  /* Keep any original styles for the welcome page if there were any */
+  main {
+    padding: 1rem;
+  }
+</style>
