@@ -42,6 +42,7 @@ export async function load({ request, platform, url }) {
   }
   
   // Get user from Cloudflare Access JWT
+  console.log(`[Layout Load] CF-Access-JWT-Assertion: ${request.headers.get('CF-Access-JWT-Assertion')}`); // Log JWT header
   const user = getUserFromRequest(request);
   
   console.log("[Layout Load] Auth enabled, returning user from request:", user); // Log returned real user
