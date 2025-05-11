@@ -1,15 +1,20 @@
-import { error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit'; // Remove parent import
 import type { PageServerLoad } from './$types';
 import type { Recipe } from '$lib/types';
+import type { User } from '$lib/auth'; // Import User type
 
-export const load: PageServerLoad = async ({ platform, locals }) => {
+export const load: PageServerLoad = async ({ platform, locals, parent }) => { // Add parent to destructured arguments
     console.log("[Page /recipes] locals.user:", locals.user); // Log locals.user
     const db = platform?.env?.DB;
-    let user = locals.user;
+    
+    // Get user from parent layout load data
+    const parentData = await parent();
+    let user: User | null = parentData.user as User | null; // Change const to let and cast
+
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
 
     // If auth is enabled, ensure user is authenticated
-    if (authEnabled && !user?.authenticated) {
+    if (authEnabled && (!user || !user.authenticated)) { // Check if user is null or not authenticated
         throw error(401, 'Authentication required');
     }
     
