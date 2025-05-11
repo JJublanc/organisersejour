@@ -5,8 +5,6 @@
 
 PRAGMA foreign_keys=off; -- Disable foreign key checks temporarily
 
-BEGIN TRANSACTION;
-
 -- 1. Create a new table with the desired structure
 CREATE TABLE meal_components_new (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +56,5 @@ ALTER TABLE meal_components_new RENAME TO meal_components;
 
 -- 5. Recreate indexes
 CREATE INDEX idx_meal_components_meal_id ON meal_components(meal_id); -- Recreate index from migration 0015
-
-COMMIT;
 
 PRAGMA foreign_keys=on; -- Re-enable foreign key checks
