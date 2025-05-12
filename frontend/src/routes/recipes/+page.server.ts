@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit'; // Remove parent import
 import type { PageServerLoad } from './$types';
-import type { Recipe } from '$lib/types';
+import type { Recipe, RecipeIngredient, KitchenTool } from '$lib/types'; // Import RecipeIngredient and KitchenTool
 import type { User } from '$lib/auth'; // Import User type
 
 export const load: PageServerLoad = async ({ platform, locals, parent }) => { // Add parent to destructured arguments
@@ -56,44 +56,76 @@ export const load: PageServerLoad = async ({ platform, locals, parent }) => { //
         `);
         const { results: recipesList } = await recipesStmt.bind(user.id, 'system').all<Omit<Recipe, 'ingredients' | 'kitchen_tools'>>();
 
-        // Prepare statements for ingredients and tools
-        const ingredientsStmt = db.prepare(`
-            SELECT ri.ingredient_id, COALESCE(i.french_name, i.name) as name, i.unit, i.type, ri.quantity
-            FROM recipe_ingredients ri JOIN ingredients i ON ri.ingredient_id = i.id
-            WHERE ri.recipe_id = ?
-        `);
-        
-        const toolsStmt = db.prepare(`
-            SELECT kt.id, COALESCE(kt.french_name, kt.name) as name
-            FROM recipe_kitchen_tools rkt JOIN kitchen_tools kt ON rkt.tool_id = kt.id
-            WHERE rkt.recipe_id = ?
-        `);
-
-        // For each recipe, fetch its ingredients and tools
-        const recipesWithDetails: Recipe[] = [];
-        
-        for (const recipe of recipesList) {
-            const { results: ingredientsList } = await ingredientsStmt.bind(recipe.id).all<{
-                ingredient_id: number;
-                name: string;
-                unit: string;
-                type: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre';
-                quantity: number;
-            }>();
-            
-            const { results: toolsList } = await toolsStmt.bind(recipe.id).all<{
-                id: number;
-                name: string;
-            }>();
-            
-            recipesWithDetails.push({
-                ...recipe,
-                ingredients: ingredientsList || [],
-                kitchen_tools: toolsList || [],
-            });
+        if (!recipesList || recipesList.length === 0) {
+            console.log("[Page /recipes] No recipes found.");
+            return { recipes: [] };
         }
 
-        console.log(`[Page /recipes] Successfully fetched ${recipesWithDetails.length} recipes.`);
+        // Get all recipe IDs
+        const recipeIds = recipesList.map(recipe => recipe.id);
+
+        // 2. Fetch all ingredients for all fetched recipes in one query
+        const allIngredientsStmt = db.prepare(`
+            SELECT ri.recipe_id, ri.ingredient_id, COALESCE(i.french_name, i.name) as name, i.unit, i.type, ri.quantity
+            FROM recipe_ingredients ri JOIN ingredients i ON ri.ingredient_id = i.id
+            WHERE ri.recipe_id IN (${recipeIds.map(() => '?').join(',')})
+        `);
+        const { results: allIngredientsList } = await allIngredientsStmt.bind(...recipeIds).all<{
+            recipe_id: number;
+            ingredient_id: number;
+            name: string;
+            unit: string;
+            type: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre';
+            quantity: number;
+        }>();
+
+        // 3. Fetch all kitchen tools for all fetched recipes in one query
+        const allToolsStmt = db.prepare(`
+            SELECT rkt.recipe_id, kt.id, COALESCE(kt.french_name, kt.name) as name
+            FROM recipe_kitchen_tools rkt JOIN kitchen_tools kt ON rkt.tool_id = kt.id
+            WHERE rkt.recipe_id IN (${recipeIds.map(() => '?').join(',')})
+        `);
+        const { results: allToolsList } = await allToolsStmt.bind(...recipeIds).all<{
+            recipe_id: number;
+            id: number;
+            name: string;
+        }>();
+
+        // 4. Map ingredients and tools to their respective recipes
+        const ingredientsMap = new Map<number, RecipeIngredient[]>();
+        allIngredientsList?.forEach(item => {
+            if (!ingredientsMap.has(item.recipe_id)) {
+                ingredientsMap.set(item.recipe_id, []);
+            }
+            ingredientsMap.get(item.recipe_id)?.push({
+                ingredient_id: item.ingredient_id,
+                name: item.name,
+                unit: item.unit,
+                quantity: item.quantity,
+                type: item.type, // Include the type property
+            });
+        });
+
+        const toolsMap = new Map<number, KitchenTool[]>();
+        allToolsList?.forEach(item => {
+            if (!toolsMap.has(item.recipe_id)) {
+                toolsMap.set(item.recipe_id, []);
+            }
+            toolsMap.get(item.recipe_id)?.push({
+                id: item.id,
+                name: item.name,
+            });
+        });
+
+
+        // 5. Construct the final list of recipes with details
+        const recipesWithDetails: Recipe[] = recipesList.map(recipe => ({
+            ...recipe,
+            ingredients: ingredientsMap.get(recipe.id) || [],
+            kitchen_tools: toolsMap.get(recipe.id) || [],
+        }));
+
+        console.log(`[Page /recipes] Successfully fetched ${recipesWithDetails.length} recipes with details.`);
         return { recipes: recipesWithDetails };
 
     } catch (e: any) {

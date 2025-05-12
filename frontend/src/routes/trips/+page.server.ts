@@ -29,6 +29,7 @@ export const load: PageServerLoad = async ({ locals, platform }): Promise<TripsP
              authenticated: true
          };
     }
+    console.log("[Trips Load] User object AFTER workaround:", user); // Log user after workaround
     console.log("[Trips Load] User object for load:", user);
     // --- End Workaround ---
 
@@ -41,12 +42,13 @@ export const load: PageServerLoad = async ({ locals, platform }): Promise<TripsP
     const userId = user.id; // Use user.id from the determined user
 
     try {
-        const db = platform?.env?.DB;
+        // Use DB_PREPROD in preprod, otherwise use DB
+        const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
         if (!db) {
-            console.error("[Trips Load] Database binding 'DB' not found."); // Log DB binding issue
+            console.error("[Trips Load] Database binding not found."); // Log DB binding issue
             throw new Error("Database binding not found.");
         }
-        console.log("[Trips Load] Database binding 'DB' found."); // Log DB binding success
+        console.log("[Trips Load] Database binding found."); // Log DB binding success
 
         // Fetch trips belonging to the current user
         const stmt = db.prepare('SELECT * FROM trips WHERE organiser_id = ? ORDER BY start_date DESC');

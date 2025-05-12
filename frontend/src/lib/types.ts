@@ -14,6 +14,15 @@ export interface KitchenTool {
     name: string;
   }
   
+  // Define the structure for the join table data (RecipeIngredient)
+  export interface RecipeIngredient {
+      ingredient_id: number;
+      name: string; // Name of the ingredient
+      unit: string; // Unit of the ingredient
+      quantity: number;
+      type: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre'; // Add type property
+  }
+  
   // Structure for a Recipe
   export interface Recipe {
       id: number;
@@ -25,17 +34,8 @@ export interface KitchenTool {
       servings: number;
       season: 'spring' | 'summer' | 'autumn' | 'winter' | null;
       user_id?: string; // ID de l'utilisateur propriétaire
-      ingredients: {
-          ingredient_id: number;
-          name: string;
-          unit: string;
-          type: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre';
-          quantity: number;
-      }[];
-      kitchen_tools: {
-          id: number;
-          name: string;
-      }[];
+      ingredients: RecipeIngredient[]; // Use RecipeIngredient[]
+      kitchen_tools: KitchenTool[]; // Use KitchenTool[]
   }
   
   // Structure for a Trip (moved from /trips/+page.server.ts)
