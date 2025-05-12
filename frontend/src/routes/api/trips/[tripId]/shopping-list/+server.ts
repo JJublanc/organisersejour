@@ -6,6 +6,7 @@ interface RecipeIngredientInfo {
     ingredient_id: number;
     ingredient_name: string;
     ingredient_unit: string;
+    ingredient_type: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre'; // Use specific union type
     quantity: number; // Quantity per base serving of the recipe
     recipe_servings: number; // Base servings for the recipe
 }
@@ -15,12 +16,14 @@ interface DirectIngredientInfo {
      ingredient_id: number;
      ingredient_name: string;
      ingredient_unit: string;
+     ingredient_type: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre'; // Use specific union type
      quantity: number; // Quantity specified directly in meal_components (assumed for whole group)
 }
 
 export const GET: RequestHandler = async ({ params, locals, platform }) => {
     const { tripId } = params;
-    const db = platform?.env?.DB;
+    // Use DB_PREPROD in preprod, otherwise use DB
+    const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
 
     // --- Authentication Check ---
     let user = locals.user;
