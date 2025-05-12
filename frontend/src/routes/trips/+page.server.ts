@@ -73,6 +73,7 @@ export const load: PageServerLoad = async ({ locals, platform }): Promise<TripsP
 export const actions: Actions = {
     createTrip: async ({ request, locals, platform }) => {
         console.log("--- createTrip action started ---"); // Log start
+        console.log("[Action createTrip] locals.user (initial):", locals.user); // Log initial locals.user
 
         // --- Workaround: Explicitly get/mock user at the start of the action ---
         let user = locals.user; // Try to get from locals first
@@ -88,6 +89,7 @@ export const actions: Actions = {
                  authenticated: true
              };
         }
+        console.log("[Action createTrip] User object AFTER workaround:", user); // Log user after workaround
         console.log("[Action createTrip] User object for action:", user);
         // --- End Workaround ---
 
