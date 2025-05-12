@@ -22,7 +22,8 @@ interface UpdateMealRequestBody {
 
 export const PUT: RequestHandler = async ({ params, request, locals, platform }) => {
     const { mealId } = params;
-    const db = platform?.env?.DB;
+    // Use DB_PREPROD in preprod, otherwise use DB
+    const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
 
     // --- Authentication Check ---
     let user = locals.user;
