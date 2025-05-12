@@ -4,7 +4,8 @@ import type { Ingredient } from '$lib/types'; // Import the Ingredient type
 // --- GET Handler (Updated) ---
 // Explicitly type platform using the global App namespace
 export const GET: RequestHandler = async ({ platform, locals }) => {
-    const db = platform?.env?.DB;
+    // Use DB_PREPROD in preprod, otherwise use DB
+    const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
     
     // --- Authentication ---
     let user = locals.user;
@@ -63,7 +64,8 @@ export const GET: RequestHandler = async ({ platform, locals }) => {
 
 // --- POST Handler (New) ---
 export const POST: RequestHandler = async ({ request, platform, locals }) => {
-    const db = platform?.env?.DB;
+    // Use DB_PREPROD in preprod, otherwise use DB
+    const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
 
     // --- Authentication (Optional - decide if needed) ---
     let user = locals.user;
@@ -155,7 +157,8 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 
 // --- DELETE Handler ---
 export const DELETE: RequestHandler = async ({ request, platform, locals, url }) => {
-    const db = platform?.env?.DB;
+    // Use DB_PREPROD in preprod, otherwise use DB
+    const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
     
     // --- Authentication ---
     let user = locals.user;
