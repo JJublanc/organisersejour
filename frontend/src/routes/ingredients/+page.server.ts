@@ -3,7 +3,8 @@ import type { PageServerLoad } from './$types';
 import type { Ingredient } from '$lib/types';
 
 export const load: PageServerLoad = async ({ platform, locals }) => {
-    const db = platform?.env?.DB;
+    // Use DB_PREPROD in preprod, otherwise use DB
+    const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
     let user = locals.user;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
 

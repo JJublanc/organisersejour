@@ -129,12 +129,13 @@ export const actions: Actions = {
         // --- End Validation ---
 
         try {
-            const db = platform?.env?.DB;
+            // Use DB_PREPROD in preprod, otherwise use DB
+            const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
             if (!db) {
-                console.error("[Action createTrip] Database binding 'DB' not found in platform.env"); // Log DB binding issue
+                console.error("[Action createTrip] Database binding not found."); // Log DB binding issue
                 throw new Error("Database binding not found.");
             }
-            console.log("[Action createTrip] Database binding 'DB' found."); // Log DB binding success
+            console.log("[Action createTrip] Database binding found."); // Log DB binding success
 
             const stmt = db.prepare(
                 'INSERT INTO trips (name, start_date, end_date, location, organiser_id, num_people) VALUES (?, ?, ?, ?, ?, ?)'
