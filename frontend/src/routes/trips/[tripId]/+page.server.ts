@@ -59,7 +59,8 @@ export interface TripDetailPageData {
 export const load: ServerLoad = async (event: ServerLoadEvent): Promise<TripDetailPageData> => {
     const { params, locals, platform } = event;
     const { tripId } = params;
-    const db = platform?.env?.DB;
+    // Use DB_PREPROD in preprod, otherwise use DB
+    const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
 
     // --- Authentication Check ---
     let user = locals.user;
