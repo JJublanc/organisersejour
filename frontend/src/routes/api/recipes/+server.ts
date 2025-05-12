@@ -42,7 +42,9 @@ interface CreateRecipePayload {
 // --- GET Handler (Updated) ---
 export const GET: RequestHandler = async ({ platform, locals }) => {
     console.log("[API /api/recipes GET] locals.user:", locals.user); // Log locals.user
-    const db = platform?.env?.DB;
+    
+    // Use DB_PREPROD in preprod, otherwise use DB
+    const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
     
     // --- Authentication ---
     let user = locals.user;
@@ -125,7 +127,8 @@ export const GET: RequestHandler = async ({ platform, locals }) => {
 
 // --- POST Handler (New) ---
 export const POST: RequestHandler = async ({ request, platform, locals }) => {
-    const db = platform?.env?.DB;
+    // Use DB_PREPROD in preprod, otherwise use DB
+    const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
 
     // --- Authentication (Optional but recommended for recipe creation) ---
     let user = locals.user;
@@ -282,7 +285,8 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 
 // --- DELETE Handler ---
 export const DELETE: RequestHandler = async ({ request, platform, locals, url }) => {
-    const db = platform?.env?.DB;
+    // Use DB_PREPROD in preprod, otherwise use DB
+    const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
     
     // --- Authentication ---
     let user = locals.user;

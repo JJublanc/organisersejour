@@ -5,7 +5,9 @@ import type { User } from '$lib/auth'; // Import User type
 
 export const load: PageServerLoad = async ({ platform, locals, parent }) => { // Add parent to destructured arguments
     console.log("[Page /recipes] locals.user:", locals.user); // Log locals.user
-    const db = platform?.env?.DB;
+    
+    // Use DB_PREPROD in preprod, otherwise use DB
+    const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
     
     // Get user from parent layout load data
     const parentData = await parent();
