@@ -1,6 +1,6 @@
 -- Migration to create the recipes table
 CREATE TABLE recipes (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT, -- Optional description of the recipe
   prep_time_minutes INTEGER, -- Preparation time in minutes

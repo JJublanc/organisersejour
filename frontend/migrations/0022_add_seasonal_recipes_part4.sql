@@ -4,7 +4,8 @@
 -- 6. Add Autumn Recipes
 
 -- Autumn Breakfast Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Pumpkin Spice Pancakes', 'Fluffy pancakes with warm autumn spices and pumpkin.', 15, 15,
 '1. In a large bowl, whisk together flour, baking powder, baking soda, salt, cinnamon, nutmeg, and ginger.
@@ -48,7 +49,8 @@ VALUES
 10. Let cool in pan for 5 minutes, then transfer to a wire rack to cool completely.', 12, 'autumn', 'system');
 
 -- Autumn Lunch Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Butternut Squash Soup', 'A creamy, warming soup perfect for autumn days.', 20, 40,
 '1. Heat olive oil in a large pot over medium heat.
@@ -111,7 +113,8 @@ VALUES
 10. Serve warm or at room temperature.', 4, 'autumn', 'system');
 
 -- Autumn Dinner Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Venison Stew with Root Vegetables', 'A rich, hearty stew with tender venison and autumn vegetables.', 30, 120,
 '1. Season venison cubes with salt and pepper.
@@ -194,7 +197,8 @@ VALUES
 13. Serve hot, garnished with additional fresh herbs.', 4, 'autumn', 'system');
 
 -- Autumn Dessert Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Apple Crisp', 'Warm spiced apples topped with a crispy oat topping.', 20, 45,
 '1. Preheat oven to 180°C.
@@ -248,7 +252,8 @@ VALUES
 
 -- Link Autumn Recipes to Ingredients
 -- Pumpkin Spice Pancakes
-INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+ON CONFLICT (recipe_id, ingredient_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Pumpkin Spice Pancakes' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Flour' AND user_id = 'system'), 200),
 ((SELECT id FROM recipes WHERE name = 'Pumpkin Spice Pancakes' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Pumpkin' AND user_id = 'system'), 150),
 ((SELECT id FROM recipes WHERE name = 'Pumpkin Spice Pancakes' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Egg' AND user_id = 'system'), 2),
@@ -260,7 +265,8 @@ INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VA
 ((SELECT id FROM recipes WHERE name = 'Pumpkin Spice Pancakes' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Maple syrup' AND user_id = 'system'), 50);
 
 -- Butternut Squash Soup
-INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+ON CONFLICT (recipe_id, ingredient_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Butternut Squash Soup' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Butternut squash' AND user_id = 'system'), 800),
 ((SELECT id FROM recipes WHERE name = 'Butternut Squash Soup' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Onion' AND user_id = 'system'), 1),
 ((SELECT id FROM recipes WHERE name = 'Butternut Squash Soup' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Apple' AND user_id = 'system'), 1),
@@ -275,14 +281,16 @@ INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VA
 
 -- Link Autumn Recipes to Kitchen Tools
 -- Pumpkin Spice Pancakes
-INSERT OR IGNORE INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+INSERT INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+ON CONFLICT (recipe_id, tool_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Pumpkin Spice Pancakes' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Saladier')),
 ((SELECT id FROM recipes WHERE name = 'Pumpkin Spice Pancakes' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Fouet')),
 ((SELECT id FROM recipes WHERE name = 'Pumpkin Spice Pancakes' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Poêle')),
 ((SELECT id FROM recipes WHERE name = 'Pumpkin Spice Pancakes' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Spatule'));
 
 -- Butternut Squash Soup
-INSERT OR IGNORE INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+INSERT INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+ON CONFLICT (recipe_id, tool_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Butternut Squash Soup' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Casserole')),
 ((SELECT id FROM recipes WHERE name = 'Butternut Squash Soup' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Couteau')),
 ((SELECT id FROM recipes WHERE name = 'Butternut Squash Soup' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Planche à découper')),

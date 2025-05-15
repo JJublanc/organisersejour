@@ -11,7 +11,10 @@
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"db:migrate:dev": "node ./scripts/apply-neon-migrations.js NEON_DEV_URL",
+		"db:migrate:preprod": "node ./scripts/apply-neon-migrations.js NEON_PREPROD_URL",
+		"db:migrate:prod": "node ./scripts/apply-neon-migrations.js NEON_PROD_URL"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^4.0.0",

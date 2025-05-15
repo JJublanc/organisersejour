@@ -4,7 +4,8 @@
 -- 4. Add Spring Recipes
 
 -- Spring Breakfast Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Spring Vegetable Frittata', 'A light and fluffy frittata packed with spring vegetables.', 15, 20, 
 '1. Preheat oven to 180°C.
@@ -50,7 +51,8 @@ VALUES
 8. Garnish with fresh herbs before serving.', 4, 'spring', 'system');
 
 -- Spring Lunch Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Spring Pea Soup', 'A vibrant, fresh soup highlighting the sweetness of spring peas.', 15, 20,
 '1. Heat olive oil in a large pot over medium heat.
@@ -108,7 +110,8 @@ VALUES
 8. Top with second slice of bread and serve.', 2, 'spring', 'system');
 
 -- Spring Dinner Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Spring Asparagus Risotto', 'Creamy risotto with fresh asparagus and lemon.', 15, 30,
 '1. In a large pot, heat vegetable stock and keep at a simmer.
@@ -179,7 +182,8 @@ VALUES
 11. Serve with crusty bread.', 6, 'spring', 'system');
 
 -- Spring Dessert Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Strawberry Rhubarb Crisp', 'Sweet strawberries and tart rhubarb topped with a crispy oat topping.', 20, 40,
 '1. Preheat oven to 180°C.
@@ -231,7 +235,8 @@ VALUES
 
 -- Link Spring Recipes to Ingredients
 -- Spring Vegetable Frittata
-INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+ON CONFLICT (recipe_id, ingredient_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Spring Vegetable Frittata' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Egg' AND user_id = 'system'), 8),
 ((SELECT id FROM recipes WHERE name = 'Spring Vegetable Frittata' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Spring onion' AND user_id = 'system'), 3),
 ((SELECT id FROM recipes WHERE name = 'Spring Vegetable Frittata' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Asparagus' AND user_id = 'system'), 200),
@@ -242,7 +247,8 @@ INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VA
 ((SELECT id FROM recipes WHERE name = 'Spring Vegetable Frittata' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Black pepper' AND user_id = 'system'), 2);
 
 -- Strawberry Rhubarb Overnight Oats
-INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+ON CONFLICT (recipe_id, ingredient_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Strawberry Rhubarb Overnight Oats' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Rhubarb' AND user_id = 'system'), 50),
 ((SELECT id FROM recipes WHERE name = 'Strawberry Rhubarb Overnight Oats' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Strawberry' AND user_id = 'system'), 50),
 ((SELECT id FROM recipes WHERE name = 'Strawberry Rhubarb Overnight Oats' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Milk' AND user_id = 'system'), 150),
@@ -253,7 +259,8 @@ INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VA
 ((SELECT id FROM recipes WHERE name = 'Strawberry Rhubarb Overnight Oats' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Salt' AND user_id = 'system'), 1);
 
 -- Spring Herb Baked Eggs
-INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+ON CONFLICT (recipe_id, ingredient_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Spring Herb Baked Eggs' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Egg' AND user_id = 'system'), 4),
 ((SELECT id FROM recipes WHERE name = 'Spring Herb Baked Eggs' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Butter' AND user_id = 'system'), 10),
 ((SELECT id FROM recipes WHERE name = 'Spring Herb Baked Eggs' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Fresh parsley' AND user_id = 'system'), 5),
@@ -265,20 +272,23 @@ INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VA
 
 -- Link Spring Recipes to Kitchen Tools
 -- Spring Vegetable Frittata
-INSERT OR IGNORE INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+INSERT INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+ON CONFLICT (recipe_id, tool_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Spring Vegetable Frittata' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Poêle')),
 ((SELECT id FROM recipes WHERE name = 'Spring Vegetable Frittata' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Fouet')),
 ((SELECT id FROM recipes WHERE name = 'Spring Vegetable Frittata' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Couteau')),
 ((SELECT id FROM recipes WHERE name = 'Spring Vegetable Frittata' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Planche à découper'));
 
 -- Strawberry Rhubarb Overnight Oats
-INSERT OR IGNORE INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+INSERT INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+ON CONFLICT (recipe_id, tool_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Strawberry Rhubarb Overnight Oats' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Casserole')),
 ((SELECT id FROM recipes WHERE name = 'Strawberry Rhubarb Overnight Oats' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Couteau')),
 ((SELECT id FROM recipes WHERE name = 'Strawberry Rhubarb Overnight Oats' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Planche à découper'));
 
 -- Spring Herb Baked Eggs
-INSERT OR IGNORE INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+INSERT INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+ON CONFLICT (recipe_id, tool_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Spring Herb Baked Eggs' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Four')),
 ((SELECT id FROM recipes WHERE name = 'Spring Herb Baked Eggs' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Couteau')),
 ((SELECT id FROM recipes WHERE name = 'Spring Herb Baked Eggs' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Planche à découper'));

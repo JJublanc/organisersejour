@@ -7,7 +7,7 @@
 -- All new recipes and ingredients are assigned to 'system' user_id to indicate they are system-provided
 
 -- 1. Add new kitchen tools
-INSERT OR IGNORE INTO kitchen_tools (name) VALUES
+INSERT INTO kitchen_tools (name) VALUES
 ('Pressure cooker'),
 ('Slow cooker'),
 ('Food processor'),
@@ -27,7 +27,7 @@ INSERT OR IGNORE INTO kitchen_tools (name) VALUES
 -- 2. Add seasonal ingredients
 
 -- Spring ingredients (March-May)
-INSERT OR IGNORE INTO ingredients (name, unit, type, season, user_id) VALUES
+INSERT INTO ingredients (name, unit, type, season, user_id) VALUES
 -- Vegetables
 ('Asparagus', 'g', 'légume', 'spring', 'system'),
 ('Artichoke', 'pcs', 'légume', 'spring', 'system'),
@@ -58,7 +58,7 @@ INSERT OR IGNORE INTO ingredients (name, unit, type, season, user_id) VALUES
 ('Lamb', 'g', 'viande', 'spring', 'system');
 
 -- Summer ingredients (June-August)
-INSERT OR IGNORE INTO ingredients (name, unit, type, season, user_id) VALUES
+INSERT INTO ingredients (name, unit, type, season, user_id) VALUES
 -- Vegetables
 ('Tomato', 'g', 'légume', 'summer', 'system'),
 ('Zucchini', 'pcs', 'légume', 'summer', 'system'),
@@ -91,7 +91,7 @@ INSERT OR IGNORE INTO ingredients (name, unit, type, season, user_id) VALUES
 ('Burrata', 'g', 'autre', 'summer', 'system');
 
 -- Autumn ingredients (September-November)
-INSERT OR IGNORE INTO ingredients (name, unit, type, season, user_id) VALUES
+INSERT INTO ingredients (name, unit, type, season, user_id) VALUES
 -- Vegetables
 ('Pumpkin', 'g', 'légume', 'autumn', 'system'),
 ('Butternut squash', 'g', 'légume', 'autumn', 'system'),
@@ -123,7 +123,7 @@ INSERT OR IGNORE INTO ingredients (name, unit, type, season, user_id) VALUES
 ('Hazelnuts', 'g', 'autre', 'autumn', 'system');
 
 -- Winter ingredients (December-February)
-INSERT OR IGNORE INTO ingredients (name, unit, type, season, user_id) VALUES
+INSERT INTO ingredients (name, unit, type, season, user_id) VALUES
 -- Vegetables
 ('Kale', 'g', 'légume', 'winter', 'system'),
 ('Cabbage', 'pcs', 'légume', 'winter', 'system'),
@@ -149,7 +149,7 @@ INSERT OR IGNORE INTO ingredients (name, unit, type, season, user_id) VALUES
 ('Dried mushrooms', 'g', 'autre', 'winter', 'system');
 
 -- 3. Add common ingredients (available year-round)
-INSERT OR IGNORE INTO ingredients (name, unit, type, season, user_id) VALUES
+INSERT INTO ingredients (name, unit, type, season, user_id) VALUES
 ('Olive oil', 'ml', 'condiment', NULL, 'system'),
 ('Vegetable oil', 'ml', 'condiment', NULL, 'system'),
 ('Butter', 'g', 'condiment', NULL, 'system'),

@@ -28,6 +28,22 @@ jobs:
       - name: Install Wrangler
         run: npm install -g wrangler
 
+      - name: Apply Neon migrations to preprod DB
+        if: github.ref == 'refs/heads/dev'
+        run: npm run db:migrate:preprod
+        working-directory: frontend
+        env:
+          NEON_PREPROD_URL: ${{ secrets.NEON_PREPROD_URL }}
+          NEON_PASSWORD: ${{ secrets.NEON_PASSWORD }}
+
+      - name: Apply Neon migrations to prod DB
+        if: github.ref == 'refs/heads/main'
+        run: npm run db:migrate:prod
+        working-directory: frontend
+        env:
+          NEON_PROD_URL: ${{ secrets.NEON_PROD_URL }}
+          NEON_PASSWORD: ${{ secrets.NEON_PASSWORD }}
+
       - uses: actions/checkout@v4
       - name: Apply migrations to preprod DB
         uses: cloudflare/wrangler-action@v3

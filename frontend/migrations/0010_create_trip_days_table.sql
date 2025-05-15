@@ -1,8 +1,8 @@
 -- Migration to create the trip_days table
 CREATE TABLE trip_days (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   trip_id INTEGER NOT NULL,
-  date TEXT NOT NULL, -- Store date as ISO 8601 string (YYYY-MM-DD)
+  date DATE NOT NULL,
   FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE -- If a trip is deleted, its days are also deleted
 );
 

@@ -4,7 +4,8 @@
 -- 5. Add Summer Recipes
 
 -- Summer Breakfast Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Summer Berry Smoothie Bowl', 'A refreshing smoothie bowl packed with summer berries.', 10, 0,
 '1. In a blender, combine frozen mixed berries, banana, yogurt, and a splash of milk.
@@ -42,7 +43,8 @@ VALUES
 8. Serve with maple syrup and fresh berries.', 4, 'summer', 'system');
 
 -- Summer Lunch Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Fresh Tomato Gazpacho', 'A cold soup perfect for hot summer days.', 20, 0,
 '1. Roughly chop tomatoes, cucumber, bell pepper, and red onion.
@@ -90,7 +92,8 @@ VALUES
 7. Serve immediately.', 4, 'summer', 'system');
 
 -- Summer Dinner Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Grilled Fish with Summer Salsa', 'Grilled fish topped with a fresh summer fruit salsa.', 20, 10,
 '1. Make the salsa: combine diced peach, diced cucumber, diced red onion, minced jalapeño, chopped cilantro, lime juice, and salt.
@@ -150,7 +153,8 @@ VALUES
 10. Garnish with fresh basil before serving.', 6, 'summer', 'system');
 
 -- Summer Dessert Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Fresh Berry Tart', 'A buttery tart shell filled with pastry cream and topped with summer berries.', 40, 25,
 '1. Preheat oven to 180°C.
@@ -207,7 +211,8 @@ VALUES
 
 -- Link Summer Recipes to Ingredients
 -- Summer Berry Smoothie Bowl
-INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+ON CONFLICT (recipe_id, ingredient_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Summer Berry Smoothie Bowl' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Raspberry' AND user_id = 'system'), 100),
 ((SELECT id FROM recipes WHERE name = 'Summer Berry Smoothie Bowl' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Blueberry' AND user_id = 'system'), 50),
 ((SELECT id FROM recipes WHERE name = 'Summer Berry Smoothie Bowl' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Yogurt' AND user_id = 'system'), 100),
@@ -215,7 +220,8 @@ INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VA
 ((SELECT id FROM recipes WHERE name = 'Summer Berry Smoothie Bowl' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Honey' AND user_id = 'system'), 15);
 
 -- Tomato and Herb Frittata
-INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+ON CONFLICT (recipe_id, ingredient_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Tomato and Herb Frittata' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Egg' AND user_id = 'system'), 8),
 ((SELECT id FROM recipes WHERE name = 'Tomato and Herb Frittata' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Tomato' AND user_id = 'system'), 200),
 ((SELECT id FROM recipes WHERE name = 'Tomato and Herb Frittata' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Fresh basil' AND user_id = 'system'), 10),
@@ -224,7 +230,8 @@ INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VA
 ((SELECT id FROM recipes WHERE name = 'Tomato and Herb Frittata' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Black pepper' AND user_id = 'system'), 2);
 
 -- Fresh Tomato Gazpacho
-INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+ON CONFLICT (recipe_id, ingredient_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Fresh Tomato Gazpacho' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Tomato' AND user_id = 'system'), 500),
 ((SELECT id FROM recipes WHERE name = 'Fresh Tomato Gazpacho' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Cucumber' AND user_id = 'system'), 1),
 ((SELECT id FROM recipes WHERE name = 'Fresh Tomato Gazpacho' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Bell pepper' AND user_id = 'system'), 1),
@@ -236,11 +243,13 @@ INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VA
 
 -- Link Summer Recipes to Kitchen Tools
 -- Summer Berry Smoothie Bowl
-INSERT OR IGNORE INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+INSERT INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+ON CONFLICT (recipe_id, tool_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Summer Berry Smoothie Bowl' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Blender'));
 
 -- Tomato and Herb Frittata
-INSERT OR IGNORE INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+INSERT INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+ON CONFLICT (recipe_id, tool_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Tomato and Herb Frittata' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Poêle')),
 ((SELECT id FROM recipes WHERE name = 'Tomato and Herb Frittata' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Fouet')),
 ((SELECT id FROM recipes WHERE name = 'Tomato and Herb Frittata' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Four')),
@@ -248,7 +257,8 @@ INSERT OR IGNORE INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
 ((SELECT id FROM recipes WHERE name = 'Tomato and Herb Frittata' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Planche à découper'));
 
 -- Fresh Tomato Gazpacho
-INSERT OR IGNORE INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+INSERT INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+ON CONFLICT (recipe_id, tool_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Fresh Tomato Gazpacho' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Blender')),
 ((SELECT id FROM recipes WHERE name = 'Fresh Tomato Gazpacho' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Couteau')),
 ((SELECT id FROM recipes WHERE name = 'Fresh Tomato Gazpacho' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Planche à découper'));

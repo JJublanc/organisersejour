@@ -39,8 +39,8 @@ interface CreateRecipePayload {
 }
 
 
-// --- GET Handler (Updated) ---
-export const GET: RequestHandler = async ({ platform, locals }) => {
+// --- GET Handler (Updated for Pagination) ---
+export const GET: RequestHandler = async ({ platform, locals, url }) => { // Add url to get query parameters
     console.log("[API /api/recipes GET] locals.user:", locals.user); // Log locals.user
     
     // Use DB_PREPROD in preprod, otherwise use DB
@@ -62,9 +62,24 @@ export const GET: RequestHandler = async ({ platform, locals }) => {
     // --- End Authentication ---
     
     if (!db) {
-        console.error("[API /api/recipes GET] Database binding 'DB' not found.");
+        console.error("[API /api/recipes GET] Database binding not found.");
         throw error(500, "Database binding not found.");
     }
+
+    // --- Pagination Parameters ---
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || '20'); // Default limit
+    const offset = (page - 1) * limit;
+
+    if (isNaN(page) || page < 1) {
+        throw error(400, 'Invalid page parameter.');
+    }
+    if (isNaN(limit) || limit < 1) {
+        throw error(400, 'Invalid limit parameter.');
+    }
+    console.log(`[API /api/recipes GET] Pagination: page=${page}, limit=${limit}, offset=${offset}`);
+    // --- End Pagination Parameters ---
+
 
     try {
         console.log(`[API /api/recipes GET] Fetching recipes for user: ${user.id} and system recipes`);

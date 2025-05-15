@@ -4,7 +4,8 @@
 -- 7. Add Winter Recipes
 
 -- Winter Breakfast Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Cranberry Orange Oatmeal', 'Warming oatmeal with winter fruits and spices.', 5, 10,
 '1. In a saucepan, combine oats, milk, water, cinnamon, and a pinch of salt.
@@ -47,7 +48,8 @@ VALUES
 11. Let cool slightly before slicing and serving.', 4, 'winter', 'system');
 
 -- Winter Lunch Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('White Bean and Kale Soup', 'A hearty, nutritious soup perfect for cold winter days.', 15, 30,
 '1. Heat olive oil in a large pot over medium heat.
@@ -110,7 +112,8 @@ VALUES
 10. Serve at room temperature.', 4, 'winter', 'system');
 
 -- Winter Dinner Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Slow-Cooked Beef Bourguignon', 'A rich, hearty stew perfect for cold winter nights.', 30, 180,
 '1. Season beef cubes with salt and pepper.
@@ -198,7 +201,8 @@ VALUES
 14. Serve immediately, garnished with additional Parmesan and fried sage leaves if desired.', 4, 'winter', 'system');
 
 -- Winter Dessert Recipes
-INSERT OR IGNORE INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+INSERT INTO recipes (name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id)
+ON CONFLICT (name, user_id) DO NOTHING
 VALUES
 ('Orange Almond Cake', 'A moist, flourless cake with winter citrus.', 20, 60,
 '1. Preheat oven to 180°C.
@@ -259,7 +263,8 @@ VALUES
 
 -- Link Winter Recipes to Ingredients
 -- Slow-Cooked Beef Bourguignon
-INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+ON CONFLICT (recipe_id, ingredient_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Slow-Cooked Beef Bourguignon' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Beef for stew' AND user_id = 'system'), 800),
 ((SELECT id FROM recipes WHERE name = 'Slow-Cooked Beef Bourguignon' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Bacon' AND user_id = 'system'), 100),
 ((SELECT id FROM recipes WHERE name = 'Slow-Cooked Beef Bourguignon' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Red wine' AND user_id = 'system'), 300),
@@ -275,7 +280,8 @@ INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VA
 ((SELECT id FROM recipes WHERE name = 'Slow-Cooked Beef Bourguignon' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Black pepper' AND user_id = 'system'), 2);
 
 -- White Bean and Kale Soup
-INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES
+ON CONFLICT (recipe_id, ingredient_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'White Bean and Kale Soup' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Kale' AND user_id = 'system'), 200),
 ((SELECT id FROM recipes WHERE name = 'White Bean and Kale Soup' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Dried beans' AND user_id = 'system'), 250),
 ((SELECT id FROM recipes WHERE name = 'White Bean and Kale Soup' AND user_id = 'system'), (SELECT id FROM ingredients WHERE name = 'Onion' AND user_id = 'system'), 1),
@@ -290,14 +296,16 @@ INSERT OR IGNORE INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VA
 
 -- Link Winter Recipes to Kitchen Tools
 -- Slow-Cooked Beef Bourguignon
-INSERT OR IGNORE INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+INSERT INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+ON CONFLICT (recipe_id, tool_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'Slow-Cooked Beef Bourguignon' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Slow cooker')),
 ((SELECT id FROM recipes WHERE name = 'Slow-Cooked Beef Bourguignon' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Couteau')),
 ((SELECT id FROM recipes WHERE name = 'Slow-Cooked Beef Bourguignon' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Planche à découper')),
 ((SELECT id FROM recipes WHERE name = 'Slow-Cooked Beef Bourguignon' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Spatule'));
 
 -- White Bean and Kale Soup
-INSERT OR IGNORE INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+INSERT INTO recipe_kitchen_tools (recipe_id, tool_id) VALUES
+ON CONFLICT (recipe_id, tool_id) DO NOTHING
 ((SELECT id FROM recipes WHERE name = 'White Bean and Kale Soup' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Casserole')),
 ((SELECT id FROM recipes WHERE name = 'White Bean and Kale Soup' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Couteau')),
 ((SELECT id FROM recipes WHERE name = 'White Bean and Kale Soup' AND user_id = 'system'), (SELECT id FROM kitchen_tools WHERE name = 'Planche à découper')),

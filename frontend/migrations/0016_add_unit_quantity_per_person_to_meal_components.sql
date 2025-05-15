@@ -3,11 +3,10 @@
 
 -- Using the recreate table method for compatibility and to handle constraint changes.
 
-PRAGMA foreign_keys=off; -- Disable foreign key checks temporarily
 
 -- 1. Create a new table with the desired structure
 CREATE TABLE meal_components_new (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     meal_id INTEGER NOT NULL,
     course_type TEXT CHECK(course_type IN ('starter', 'main', 'dessert', 'side', 'extra', 'breakfast_item')) NOT NULL,
     recipe_id INTEGER,
@@ -56,5 +55,3 @@ ALTER TABLE meal_components_new RENAME TO meal_components;
 
 -- 5. Recreate indexes
 CREATE INDEX idx_meal_components_meal_id ON meal_components(meal_id); -- Recreate index from migration 0015
-
-PRAGMA foreign_keys=on; -- Re-enable foreign key checks

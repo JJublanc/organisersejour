@@ -1,7 +1,7 @@
 -- Migration to create the new meal_components table
 
 CREATE TABLE meal_components (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     meal_id INTEGER NOT NULL,
     course_type TEXT CHECK(course_type IN ('starter', 'main', 'dessert', 'side', 'extra', 'breakfast_item')) NOT NULL, -- Course/category
     recipe_id INTEGER, -- FK to recipes, NULLABLE
