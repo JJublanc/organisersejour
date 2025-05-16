@@ -2,7 +2,7 @@
 -- migrations/0000_init.sql
 
 CREATE TABLE IF NOT EXISTS messages (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   content TEXT NOT NULL
 );
 INSERT INTO messages (content) VALUES ('Hello from D1 🎉');

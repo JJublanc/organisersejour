@@ -1,0 +1,224 @@
+/* 
+  Reset CSS moderne pour normaliser les styles entre navigateurs
+  Basé sur Normalize.css et Reset CSS moderne
+*/
+
+/* Box sizing universel */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Réinitialisation des marges et paddings */
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  vertical-align: baseline;
+}
+
+/* Éléments HTML5 pour les anciens navigateurs */
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+main,
+menu,
+nav,
+section {
+  display: block;
+}
+
+/* Réinitialisation des listes */
+ol,
+ul {
+  list-style: none;
+}
+
+/* Réinitialisation des citations */
+blockquote,
+q {
+  quotes: none;
+}
+
+blockquote:before,
+blockquote:after,
+q:before,
+q:after {
+  content: '';
+  content: none;
+}
+
+/* Réinitialisation des tableaux */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* Réinitialisation des images */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* Réinitialisation des formulaires */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* Réinitialisation des liens */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Réinitialisation du corps et de la typographie */
+body {
+  min-height: 100vh;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--color-neutral-900);
+  background-color: var(--color-neutral-50);
+}
+
+/* Réinitialisation des boutons */
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Réinitialisation des champs de formulaire */
+input,
+textarea {
+  outline: none;
+}
+
+/* Réinitialisation des éléments cachés */
+[hidden] {
+  display: none !important;
+}
+
+/* Accessibilité - classe pour masquer visuellement mais garder accessible aux lecteurs d'écran */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Suppression des animations pour les personnes qui préfèrent les réduire */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

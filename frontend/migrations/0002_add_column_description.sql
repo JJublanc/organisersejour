@@ -3,7 +3,7 @@ DROP TABLE IF EXISTS messages;
 
 -- Créer la table "messages" sans contrainte NOT NULL sur la colonne content
 CREATE TABLE IF NOT EXISTS messages (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   content TEXT
 );
 
