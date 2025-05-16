@@ -10,7 +10,7 @@ on:
 jobs:
   migrate:
     runs-on: ubuntu-latest
-    name: Apply D1 Migrations
+    name: Apply Migrations
 
     steps:
       - name: Checkout code
