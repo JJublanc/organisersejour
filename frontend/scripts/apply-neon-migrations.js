@@ -49,12 +49,12 @@ async function applyMigrations(dbUrlEnvVarName) {
         // 1. Apply the script to create the migrations table if it doesn't exist
         const createTableScript = path.join(migrationsDir, '0000_create_migrations_table.sql');
         console.log(`Applying ${createTableScript}...`);
-        execSync(`PGPASSWORD=${dbPassword} psql ${dbUrl} -f ${createTableScript}`, { stdio: 'inherit' });
+        execSync(`PGPASSWORD=${dbPassword} psql "${dbUrl}" -f "${createTableScript}"`, { stdio: 'inherit' });
         console.log(`${createTableScript} applied successfully.`);
 
         // 2. Get list of applied migrations
         console.log('Fetching applied migrations...');
-        const appliedMigrationsOutput = execSync(`PGPASSWORD=${dbPassword} psql ${dbUrl} -c "SELECT name FROM applied_migrations ORDER BY name;"`, { encoding: 'utf8' });
+        const appliedMigrationsOutput = execSync(`PGPASSWORD=${dbPassword} psql "${dbUrl}" -c "SELECT name FROM applied_migrations ORDER BY name;"`, { encoding: 'utf8' });
         const appliedMigrations = appliedMigrationsOutput
             .split('\n')
             .slice(2, -3) // Remove header, separator, and footer lines from psql output
@@ -78,8 +78,8 @@ async function applyMigrations(dbUrlEnvVarName) {
                     console.log(`Schema migration ${file} already applied. Skipping.`);
                 } else {
                     console.log(`Applying schema migration ${file}...`);
-                    execSync(`PGPASSWORD=${dbPassword} psql ${dbUrl} -f ${filePath}`, { stdio: 'inherit' });
-                    execSync(`PGPASSWORD=${dbPassword} psql ${dbUrl} -c "INSERT INTO applied_migrations (name) VALUES ('${file}')"`, { stdio: 'inherit' });
+                    execSync(`PGPASSWORD=${dbPassword} psql "${dbUrl}" -f "${filePath}"`, { stdio: 'inherit' });
+                    execSync(`PGPASSWORD=${dbPassword} psql "${dbUrl}" -c "INSERT INTO applied_migrations (name) VALUES ('${file}')"`, { stdio: 'inherit' });
                     console.log(`Schema migration ${file} applied and recorded.`);
                 }
             } else {
