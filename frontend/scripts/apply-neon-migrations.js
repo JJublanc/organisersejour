@@ -31,7 +31,7 @@ function isSchemaMigration(filePath) {
 }
 
 async function applyMigrations(dbUrlEnvVarName) {
-    const dbUrl = process.env[dbUrlEnvVarName];
+    const dbUrl = process.env[dbUrlEnvVarName].trim();
     const dbPassword = process.env.NEON_PASSWORD;
 
     if (!dbUrl) {
