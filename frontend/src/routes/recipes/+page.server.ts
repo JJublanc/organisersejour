@@ -1,97 +1,78 @@
-import { error } from '@sveltejs/kit'; // Remove parent import
-import type { PageServerLoad } from './$types';
-import type { Recipe, RecipeIngredient, KitchenTool } from '$lib/types'; // Import RecipeIngredient and KitchenTool
-import type { User } from '$lib/auth'; // Import User type
+import { error, type ServerLoad } from '@sveltejs/kit';
+import type { Recipe, RecipeIngredient, KitchenTool } from '$lib/types';
+import type { User } from '$lib/auth';
+import { getNeonDbUrl, getDbClient } from '$lib/server/db';
 
-export const load: PageServerLoad = async ({ platform, locals, parent }) => { // Add parent to destructured arguments
-    console.log("[Page /recipes] locals.user:", locals.user); // Log locals.user
-    
-    // Use DB_PREPROD in preprod, otherwise use DB
-    const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
-    
-    // Get user from parent layout load data
+export const load: ServerLoad = async ({ platform, locals, parent }) => {
+    console.log("[Page /recipes] locals.user:", locals.user);
+
+    const dbUrl = getNeonDbUrl(platform?.env);
+    if (!dbUrl) {
+        console.error("[Page /recipes] Neon Database URL not found.");
+        throw error(500, "Database connection information not found.");
+    }
+    const sql = getDbClient(dbUrl);
+
     const parentData = await parent();
-    let user: User | null = parentData.user as User | null; // Change const to let and cast
-
+    let user: User | null = parentData.user as User | null;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
 
-    // If auth is enabled, ensure user is authenticated
-    if (authEnabled && (!user || !user.authenticated)) { // Check if user is null or not authenticated
+    if (authEnabled && (!user || !user.authenticated)) {
         throw error(401, 'Authentication required');
     }
-    
-    // Pour le développement, utiliser un utilisateur par défaut si l'authentification est désactivée
     if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user2', name: 'Development User', authenticated: true };
+        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
     }
-
-    if (!db) {
-        console.error("[Page /recipes] Database binding 'DB' not found.");
-        throw error(500, "Database binding not found.");
+    if (!user) { // Should be caught by authEnabled check or default user assignment
+        throw error(401, 'User context not available');
     }
 
     try {
-        // Vérifier que user n'est pas null
-        if (!user) {
-            throw error(401, 'User not authenticated');
-        }
-        
         console.log(`[Page /recipes] Fetching recipes for user: ${user.id} and system recipes`);
 
-        // Fetch user's recipes and system recipes
-        const recipesStmt = db.prepare(`
+        const recipesList = await sql<Omit<Recipe, 'ingredients' | 'kitchen_tools'>[]>`
             SELECT
-                id,
-                COALESCE(french_name, name) as name,
-                description,
-                prep_time_minutes,
-                cook_time_minutes,
-                instructions,
-                servings,
-                season,
-                user_id
+                id, COALESCE(french_name, name) as name, description,
+                prep_time_minutes, cook_time_minutes, instructions,
+                servings, season, user_id
             FROM recipes
-            WHERE user_id = ? OR user_id = ?
+            WHERE user_id = ${user.id} OR user_id = 'system'
             ORDER BY name ASC
-        `);
-        const { results: recipesList } = await recipesStmt.bind(user.id, 'system').all<Omit<Recipe, 'ingredients' | 'kitchen_tools'>>();
+        `;
 
         if (!recipesList || recipesList.length === 0) {
             console.log("[Page /recipes] No recipes found.");
             return { recipes: [] };
         }
 
-        // Get all recipe IDs
         const recipeIds = recipesList.map(recipe => recipe.id);
 
-        // 2. Fetch all ingredients for all fetched recipes in one query
-        const allIngredientsStmt = db.prepare(`
-            SELECT ri.recipe_id, ri.ingredient_id, COALESCE(i.french_name, i.name) as name, i.unit, i.type, ri.quantity
-            FROM recipe_ingredients ri JOIN ingredients i ON ri.ingredient_id = i.id
-            WHERE ri.recipe_id IN (${recipeIds.map(() => '?').join(',')})
-        `);
-        const { results: allIngredientsList } = await allIngredientsStmt.bind(...recipeIds).all<{
+        // Fetch all ingredients for all fetched recipes
+        // postgres.js can handle array directly in IN clause with sql() helper or by spreading
+        const allIngredientsList = await sql<{
             recipe_id: number;
             ingredient_id: number;
             name: string;
             unit: string;
             type: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre';
             quantity: number;
-        }>();
+        }[]>`
+            SELECT ri.recipe_id, ri.ingredient_id, COALESCE(i.french_name, i.name) as name, i.unit, i.type, ri.quantity
+            FROM recipe_ingredients ri JOIN ingredients i ON ri.ingredient_id = i.id
+            WHERE ri.recipe_id IN ${sql(recipeIds)}
+        `;
 
-        // 3. Fetch all kitchen tools for all fetched recipes in one query
-        const allToolsStmt = db.prepare(`
-            SELECT rkt.recipe_id, kt.id, COALESCE(kt.french_name, kt.name) as name
-            FROM recipe_kitchen_tools rkt JOIN kitchen_tools kt ON rkt.tool_id = kt.id
-            WHERE rkt.recipe_id IN (${recipeIds.map(() => '?').join(',')})
-        `);
-        const { results: allToolsList } = await allToolsStmt.bind(...recipeIds).all<{
+        // Fetch all kitchen tools for all fetched recipes
+        const allToolsList = await sql<{
             recipe_id: number;
             id: number;
             name: string;
-        }>();
+        }[]>`
+            SELECT rkt.recipe_id, kt.id, COALESCE(kt.french_name, kt.name) as name
+            FROM recipe_kitchen_tools rkt JOIN kitchen_tools kt ON rkt.tool_id = kt.id
+            WHERE rkt.recipe_id IN ${sql(recipeIds)}
+        `;
 
-        // 4. Map ingredients and tools to their respective recipes
         const ingredientsMap = new Map<number, RecipeIngredient[]>();
         allIngredientsList?.forEach(item => {
             if (!ingredientsMap.has(item.recipe_id)) {
@@ -102,7 +83,7 @@ export const load: PageServerLoad = async ({ platform, locals, parent }) => { //
                 name: item.name,
                 unit: item.unit,
                 quantity: item.quantity,
-                type: item.type, // Include the type property
+                type: item.type,
             });
         });
 
@@ -117,8 +98,6 @@ export const load: PageServerLoad = async ({ platform, locals, parent }) => { //
             });
         });
 
-
-        // 5. Construct the final list of recipes with details
         const recipesWithDetails: Recipe[] = recipesList.map(recipe => ({
             ...recipe,
             ingredients: ingredientsMap.get(recipe.id) || [],
@@ -130,6 +109,11 @@ export const load: PageServerLoad = async ({ platform, locals, parent }) => { //
 
     } catch (e: any) {
         console.error('[Page /recipes] Error fetching recipes:', e);
+        // Check if it's a PostgresError and if code is '42P01' (undefined_table)
+        if (e.code === '42P01') {
+             console.error(`[Page /recipes] Table not found. This might indicate migrations haven't run on Neon for the current environment.`);
+             throw error(500, `Database table not found. Please ensure migrations are up to date. Error: ${e.message}`);
+        }
         throw error(500, `Failed to fetch recipes: ${e.message || 'Unknown error'}`);
     }
 };

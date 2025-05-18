@@ -26,7 +26,7 @@
     <p style="color: green;">{form.message}</p>
 {/if}
 
-<form method="POST">
+<form method="POST" action="?/createTrip">
   <div>
     <label for="name">Trip Name:</label>
     <input type="text" id="name" name="name" required value={form?.name ?? ''}>

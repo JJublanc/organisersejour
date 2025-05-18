@@ -30,31 +30,64 @@ function isSchemaMigration(filePath) {
     }
 }
 
-async function applyMigrations(dbUrlEnvVarName) {
-    const dbUrl = process.env[dbUrlEnvVarName].trim();
-    const dbPassword = process.env.NEON_PASSWORD;
-
-    if (!dbUrl) {
-        console.error(`Error: Environment variable ${dbUrlEnvVarName} is not set.`);
-        process.exit(1);
+async function applyMigrations(dbUrlOrEnvName) {
+    // Check if the argument is a URL or an environment variable name
+    let dbUrl;
+    let dbPassword;
+    let usePasswordFromEnv = true;
+    
+    if (dbUrlOrEnvName.startsWith('postgres://')) {
+        // It's a direct URL
+        dbUrl = dbUrlOrEnvName.trim();
+        
+        // Try to extract password from URL if present
+        try {
+            const url = new URL(dbUrl);
+            if (url.password) {
+                dbPassword = url.password;
+                usePasswordFromEnv = false;
+                console.log('Using password from the provided URL');
+            }
+        } catch (e) {
+            console.log('Could not parse URL, will use NEON_PASSWORD environment variable');
+        }
+    } else {
+        // It's an environment variable name
+        dbUrl = process.env[dbUrlOrEnvName];
+        if (!dbUrl) {
+            console.error(`Error: Environment variable ${dbUrlOrEnvName} is not set.`);
+            process.exit(1);
+        }
+        dbUrl = dbUrl.trim();
+    }
+    
+    // If we couldn't extract password from URL, use environment variable
+    if (usePasswordFromEnv) {
+        dbPassword = process.env.NEON_PASSWORD;
     }
     if (!dbPassword) {
         console.error('Error: Environment variable NEON_PASSWORD is not set.');
         process.exit(1);
     }
 
-    console.log(`Applying migrations to database specified by ${dbUrlEnvVarName}...`);
+    console.log(`Applying migrations to database specified by ${dbUrlOrEnvName}...`);
 
     try {
         // 1. Apply the script to create the migrations table if it doesn't exist
         const createTableScript = path.join(migrationsDir, '0000_create_migrations_table.sql');
         console.log(`Applying ${createTableScript}...`);
-        execSync(`PGPASSWORD=${dbPassword} psql "${dbUrl}" -f "${createTableScript}"`, { stdio: 'inherit' });
+        if (usePasswordFromEnv) {
+            execSync(`PGPASSWORD=${dbPassword} psql "${dbUrl}" -f "${createTableScript}"`, { stdio: 'inherit' });
+        } else {
+            execSync(`psql "${dbUrl}" -f "${createTableScript}"`, { stdio: 'inherit' });
+        }
         console.log(`${createTableScript} applied successfully.`);
 
         // 2. Get list of applied migrations
         console.log('Fetching applied migrations...');
-        const appliedMigrationsOutput = execSync(`PGPASSWORD=${dbPassword} psql "${dbUrl}" -c "SELECT name FROM applied_migrations ORDER BY name;"`, { encoding: 'utf8' });
+        const appliedMigrationsOutput = usePasswordFromEnv
+            ? execSync(`PGPASSWORD=${dbPassword} psql "${dbUrl}" -c "SELECT name FROM applied_migrations ORDER BY name;"`, { encoding: 'utf8' })
+            : execSync(`psql "${dbUrl}" -c "SELECT name FROM applied_migrations ORDER BY name;"`, { encoding: 'utf8' });
         const appliedMigrations = appliedMigrationsOutput
             .split('\n')
             .slice(2, -3) // Remove header, separator, and footer lines from psql output
@@ -78,8 +111,13 @@ async function applyMigrations(dbUrlEnvVarName) {
                     console.log(`Schema migration ${file} already applied. Skipping.`);
                 } else {
                     console.log(`Applying schema migration ${file}...`);
-                    execSync(`PGPASSWORD=${dbPassword} psql "${dbUrl}" -f "${filePath}"`, { stdio: 'inherit' });
-                    execSync(`PGPASSWORD=${dbPassword} psql "${dbUrl}" -c "INSERT INTO applied_migrations (name) VALUES ('${file}')"`, { stdio: 'inherit' });
+                    if (usePasswordFromEnv) {
+                        execSync(`PGPASSWORD=${dbPassword} psql "${dbUrl}" -f "${filePath}"`, { stdio: 'inherit' });
+                        execSync(`PGPASSWORD=${dbPassword} psql "${dbUrl}" -c "INSERT INTO applied_migrations (name) VALUES ('${file}')"`, { stdio: 'inherit' });
+                    } else {
+                        execSync(`psql "${dbUrl}" -f "${filePath}"`, { stdio: 'inherit' });
+                        execSync(`psql "${dbUrl}" -c "INSERT INTO applied_migrations (name) VALUES ('${file}')"`, { stdio: 'inherit' });
+                    }
                     console.log(`Schema migration ${file} applied and recorded.`);
                 }
             } else {
@@ -97,9 +135,12 @@ async function applyMigrations(dbUrlEnvVarName) {
 
 const args = process.argv.slice(2);
 if (args.length !== 1) {
-    console.error('Usage: node apply-neon-migrations.js <DB_URL_ENV_VAR_NAME>');
+    console.error('Usage: node apply-neon-migrations.js <DB_URL_OR_ENV_VAR_NAME>');
+    console.error('Examples:');
+    console.error('  node apply-neon-migrations.js NEON_DEV_URL');
+    console.error('  node apply-neon-migrations.js "postgres://username:password@hostname/database"');
     process.exit(1);
 }
 
-const dbUrlEnvVarName = args[0];
-applyMigrations(dbUrlEnvVarName);
+const dbUrlOrEnvName = args[0];
+applyMigrations(dbUrlOrEnvName);

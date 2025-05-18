@@ -1,70 +1,66 @@
 import { error, redirect, type ServerLoad, type ServerLoadEvent } from '@sveltejs/kit';
-import type { Trip, Ingredient, KitchenTool, ShoppingListItem } from '$lib/types'; // Import shared types
+import type { Trip, Ingredient, KitchenTool, ShoppingListItem } from '$lib/types';
+import { getNeonDbUrl, getDbClient } from '$lib/server/db';
+import type { User } from '$lib/auth';
 
 // --- Define data structures for this page ---
-
-// Structure for a component within a meal (recipe or ingredient) - Updated for new schema
 export interface MealComponent {
 	id: number; // meal_components.id
 	course_type: 'starter' | 'main' | 'dessert' | 'side' | 'extra' | 'breakfast_item';
 	recipe_id: number | null;
 	ingredient_id: number | null;
-	total_quantity: number | null; // Renamed from quantity, used for non-direct ingredients or pre-calculated totals
-	unit: string | null; // Unit for direct ingredients
-	quantity_per_person: number | null; // Quantity per person for direct ingredients
+	total_quantity: number | null;
+	unit: string | null;
+	quantity_per_person: number | null;
 	notes: string | null;
 	display_order: number;
-	// Include names for display
 	recipe_name?: string | null;
 	ingredient_name?: string | null;
-	// ingredient_unit is now directly available as 'unit' for direct ingredients
-	// Keep ingredient_unit for potential backward compatibility or display logic if needed, but prefer 'unit'
-	ingredient_unit?: string | null; // This might be derived from 'unit' or fetched separately if needed elsewhere
+	ingredient_unit?: string | null;
 }
 
-// Structure for a Meal, separating recipe components and accompaniments
 export interface Meal {
 	id: number;
 	type: 'breakfast' | 'lunch' | 'dinner';
-	drinks: string | null; // This might become redundant if drinks are added as accompaniments
-	bread: boolean; // This might become redundant if bread is added as an accompaniment
-	// Recipe components grouped by course type
+	drinks: string | null;
+	bread: boolean;
 	recipe_components: {
 		starter?: MealComponent[];
 		main?: MealComponent[];
 		dessert?: MealComponent[];
-		side?: MealComponent[]; // Keep side? Or merge into extra? Let's keep for now.
+		side?: MealComponent[];
 		extra?: MealComponent[];
 		breakfast_item?: MealComponent[];
 	};
-	// Direct ingredients treated as accompaniments/drinks
 	accompaniments: MealComponent[];
 }
 
-// Structure for a Trip Day
 export interface TripDay {
     id: number;
     date: string; // YYYY-MM-DD
-    meals: Meal[]; // Meals for this day (breakfast, lunch, dinner)
+    meals: Meal[];
 }
 
-// Structure for the data loaded by this page
 export interface TripDetailPageData {
     trip: Trip;
     days: TripDay[];
 }
 
 // --- Load Function ---
-
 export const load: ServerLoad = async (event: ServerLoadEvent): Promise<TripDetailPageData> => {
-    const { params, locals, platform } = event;
+    const { params, locals, platform, parent } = event;
     const { tripId } = params;
-    // Use DB_PREPROD in preprod, otherwise use DB
-    const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
 
-    // --- Authentication Check ---
-    let user = locals.user;
+    const dbUrl = getNeonDbUrl(platform?.env);
+    if (!dbUrl) {
+        throw error(500, "Neon Database URL not found.");
+    }
+    const sql = getDbClient(dbUrl);
+
+    const parentData = await parent();
+    let user: User | null = parentData.user as User | null;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
+
     if (!authEnabled && !user) {
         user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
     }
@@ -72,11 +68,7 @@ export const load: ServerLoad = async (event: ServerLoadEvent): Promise<TripDeta
         throw redirect(302, '/trips');
     }
     const userId = user.id;
-    // --- End Authentication Check ---
 
-    if (!db) {
-        throw error(500, "Database binding not found.");
-    }
     if (!tripId || isNaN(parseInt(tripId))) {
          throw error(400, "Invalid Trip ID parameter.");
     }
@@ -85,106 +77,89 @@ export const load: ServerLoad = async (event: ServerLoadEvent): Promise<TripDeta
     try {
         console.log(`[Trip Detail Load] Fetching trip details for ID: ${tripIdNum}, User: ${userId}`);
 
-        // 1. Fetch the main trip details
-        let tripResult: Trip | null;
-        
+        let tripResultRows: Trip[];
         if (authEnabled) {
-            // In production, ensure trip belongs to the user
-            const tripStmt = db.prepare('SELECT * FROM trips WHERE id = ? AND organiser_id = ?');
-            tripResult = await tripStmt.bind(tripIdNum, userId).first<Trip>();
+            tripResultRows = await sql<Trip[]>`SELECT * FROM trips WHERE id = ${tripIdNum} AND organiser_id = ${userId}`;
         } else {
-            // In development, allow access to any trip
-            const tripStmt = db.prepare('SELECT * FROM trips WHERE id = ?');
-            tripResult = await tripStmt.bind(tripIdNum).first<Trip>();
+            tripResultRows = await sql<Trip[]>`SELECT * FROM trips WHERE id = ${tripIdNum}`;
         }
+        const tripResult = tripResultRows[0];
 
         if (!tripResult) {
-            throw error(404, 'Trip not found');
+            throw error(404, 'Trip not found or not authorized');
         }
 
-        // 2. Fetch trip days associated with this trip
-        const daysStmt = db.prepare('SELECT id, date FROM trip_days WHERE trip_id = ? ORDER BY date ASC');
-        const { results: daysList } = await daysStmt.bind(tripIdNum).all<Omit<TripDay, 'meals'>>();
+        const daysList = await sql<Omit<TripDay, 'meals'>[]>`
+            SELECT id, date FROM trip_days WHERE trip_id = ${tripIdNum} ORDER BY date ASC
+        `;
 
         const daysData: TripDay[] = [];
         if (daysList) {
-            // Prepare statements outside the loop
-            const mealsStmt = db.prepare('SELECT id, type, drinks, bread FROM meals WHERE trip_day_id = ? ORDER BY CASE type WHEN \'breakfast\' THEN 1 WHEN \'lunch\' THEN 2 WHEN \'dinner\' THEN 3 ELSE 4 END');
-            // Fetch all components for a meal, joining recipe/ingredient names
-            const componentsStmt = db.prepare(`
-    SELECT
-     mc.id, mc.course_type, mc.recipe_id, mc.ingredient_id,
-     mc.total_quantity, mc.unit, mc.quantity_per_person, -- Use new columns
-     mc.notes, mc.display_order,
-     r.name AS recipe_name,
-     i.name AS ingredient_name,
-     mc.unit AS ingredient_unit -- Alias mc.unit also as ingredient_unit for potential compatibility
-    FROM meal_components mc
-                LEFT JOIN recipes r ON mc.recipe_id = r.id
-                LEFT JOIN ingredients i ON mc.ingredient_id = i.id
-                WHERE mc.meal_id = ?
-                ORDER BY mc.display_order ASC, mc.id ASC
-            `);
-
             for (const day of daysList) {
-    // 3. Fetch meals for the current day
-    // Adjust the type hint for the fetched meal data
-    const { results: mealsList } = await mealsStmt.bind(day.id).all<Omit<Meal, 'recipe_components' | 'accompaniments'>>();
+                const mealsList = await sql<Omit<Meal, 'recipe_components' | 'accompaniments'>[]>`
+                    SELECT id, type, drinks, bread FROM meals 
+                    WHERE trip_day_id = ${day.id} 
+                    ORDER BY CASE type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END
+                `;
 
-    const mealsData: Meal[] = [];
-    if (mealsList) {
-     for (const meal of mealsList) {
-      // 4. Fetch components for the current meal
-      const { results: componentsList } = await componentsStmt.bind(meal.id).all<MealComponent>();
+                const mealsData: Meal[] = [];
+                if (mealsList) {
+                    for (const meal of mealsList) {
+                        const componentsList = await sql<MealComponent[]>`
+                            SELECT
+                                mc.id, mc.course_type, mc.recipe_id, mc.ingredient_id,
+                                mc.total_quantity, mc.unit, mc.quantity_per_person,
+                                mc.notes, mc.display_order,
+                                COALESCE(r.french_name, r.name) AS recipe_name,
+                                COALESCE(i.french_name, i.name) AS ingredient_name,
+                                mc.unit AS ingredient_unit
+                            FROM meal_components mc
+                            LEFT JOIN recipes r ON mc.recipe_id = r.id
+                            LEFT JOIN ingredients i ON mc.ingredient_id = i.id
+                            WHERE mc.meal_id = ${meal.id}
+                            ORDER BY mc.display_order ASC, mc.id ASC
+                        `;
 
-      // Separate recipe components (grouped) and accompaniments (flat list)
-      const groupedRecipeComponents: Meal['recipe_components'] = {};
-      const accompanimentsList: MealComponent[] = [];
+                        const groupedRecipeComponents: Meal['recipe_components'] = {};
+                        const accompanimentsList: MealComponent[] = [];
 
-      if (componentsList) {
-       for (const comp of componentsList) {
-        if (comp.recipe_id !== null) {
-         // It's a recipe component, group by course
-         const course = comp.course_type as keyof Meal['recipe_components'];
-         if (!groupedRecipeComponents[course]) {
-          groupedRecipeComponents[course] = [];
-         }
-         groupedRecipeComponents[course]!.push(comp);
-        } else if (comp.ingredient_id !== null) {
-         // It's a direct ingredient, add to accompaniments list
-         accompanimentsList.push(comp);
-        }
-        // Ignore components that are neither (shouldn't happen with DB constraints)
-       }
-      }
-
-      mealsData.push({
-       ...meal,
-       bread: Boolean(meal.bread), // Keep for now, might remove later
-       recipe_components: groupedRecipeComponents, // Assign grouped recipes
-       accompaniments: accompanimentsList // Assign flat list of accompaniments
-      });
-     }
+                        if (componentsList) {
+                            for (const comp of componentsList) {
+                                if (comp.recipe_id !== null) {
+                                    const course = comp.course_type as keyof Meal['recipe_components'];
+                                    if (!groupedRecipeComponents[course]) {
+                                        groupedRecipeComponents[course] = [];
+                                    }
+                                    groupedRecipeComponents[course]!.push(comp);
+                                } else if (comp.ingredient_id !== null) {
+                                    accompanimentsList.push(comp);
+                                }
+                            }
+                        }
+                        mealsData.push({
+                            ...meal,
+                            bread: Boolean(meal.bread),
+                            recipe_components: groupedRecipeComponents,
+                            accompaniments: accompanimentsList
+                        });
+                    }
                 }
-                daysData.push({
-                    ...day,
-                    meals: mealsData
-                });
+                daysData.push({ ...day, meals: mealsData });
             }
         }
 
         console.log(`[Trip Detail Load] Successfully fetched trip '${tripResult.name}' with ${daysData.length} days.`);
-
-        return {
-            trip: tripResult,
-            days: daysData
-        };
+        return { trip: tripResult, days: daysData };
 
     } catch (e: any) {
          if (e.status === 404 || e.status === 403 || e.status === 401 || e.status === 400) {
              throw e;
          }
         console.error(`[Trip Detail Load] Error fetching trip details for ID ${tripIdNum}:`, e);
+        if (e.code === '42P01') { // undefined_table for PostgreSQL
+             console.error(`[Trip Detail Load] Table not found. This might indicate migrations haven't run on Neon for the current environment.`);
+             throw error(500, `Database table not found. Please ensure migrations are up to date. Error: ${e.message}`);
+        }
         throw error(500, `Failed to load trip details: ${e.message || 'Unknown error'}`);
     }
 };

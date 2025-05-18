@@ -34,3 +34,5 @@ Thumbs.db
 
 # Optional: lock files if tu préfères pas les versionner
 package-lock.json
+
+.dev.vars

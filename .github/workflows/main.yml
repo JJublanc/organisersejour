@@ -1,4 +1,4 @@
-name: Migrate D1 Database
+name: Migrate Neon Database
 
 on:
   push:
@@ -44,22 +44,4 @@ jobs:
           NEON_PROD_URL: ${{ secrets.NEON_PROD_URL }}
           NEON_PASSWORD: ${{ secrets.NEON_PASSWORD }}
 
-      - uses: actions/checkout@v4
-      - name: Apply migrations to preprod DB
-        uses: cloudflare/wrangler-action@v3
-        if: github.ref == 'refs/heads/dev'
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: frontend
-          command: d1 migrations apply hello-db-preprod --remote
-
-      - uses: actions/checkout@v4
-      - name: Apply migrations to prod DB
-        uses: cloudflare/wrangler-action@v3
-        if: github.ref == 'refs/heads/main'
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: frontend
-          command: d1 migrations apply hello-db --remote
+      # D1 migration steps have been removed as we've migrated to Neon PostgreSQL

@@ -1,65 +1,58 @@
-import { error } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { error, type ServerLoad } from '@sveltejs/kit';
 import type { Ingredient } from '$lib/types';
+import { getNeonDbUrl, getDbClient } from '$lib/server/db';
+import type { User } from '$lib/auth';
 
-export const load: PageServerLoad = async ({ platform, locals }) => {
-    // Use DB_PREPROD in preprod, otherwise use DB
-    const db = platform?.env?.ENVIRONMENT === 'preprod' ? platform?.env?.DB_PREPROD : platform?.env?.DB;
-    let user = locals.user;
+export const load: ServerLoad = async ({ platform, locals, parent }) => {
+    const dbUrl = getNeonDbUrl(platform?.env);
+    if (!dbUrl) {
+        console.error("[Page /ingredients] Neon Database URL not found.");
+        throw error(500, "Database connection information not found.");
+    }
+    const sql = getDbClient(dbUrl);
+
+    const parentData = await parent();
+    let user: User | null = parentData.user as User | null;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
 
-    // If auth is enabled, ensure user is authenticated
-    if (authEnabled && !user?.authenticated) {
+    if (authEnabled && (!user || !user.authenticated)) {
         throw error(401, 'Authentication required');
     }
-    
-    // Pour le développement, utiliser un utilisateur par défaut si l'authentification est désactivée
     if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user2', name: 'Development User', authenticated: true };
+        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
     }
-
-    if (!db) {
-        console.error("[Page /ingredients] Database binding 'DB' not found.");
-        throw error(500, "Database binding not found.");
+    if (!user) {
+        throw error(401, 'User context not available');
     }
 
     try {
-        // Vérifier que user n'est pas null
-        if (!user) {
-            throw error(401, 'User not authenticated');
-        }
-        
         console.log(`[Page /ingredients] Fetching ingredients for user: ${user.id} and system ingredients`);
 
-        // Fetch user's ingredients and system ingredients
-        const stmt = db.prepare(`
+        const ingredients = await sql<Ingredient[]>`
             SELECT
-                id,
-                COALESCE(french_name, name) as name,
-                unit,
-                type,
-                season,
-                user_id
+                id, COALESCE(french_name, name) as name, unit, type, season, user_id
             FROM ingredients
-            WHERE user_id = ? OR user_id = ?
+            WHERE user_id = ${user.id} OR user_id = 'system'
             ORDER BY type ASC, name ASC
-        `);
-        const { results } = await stmt.bind(user.id, 'system').all<Ingredient>();
+        `;
 
-        // Log ingredient types distribution for validation
-        if (results && results.length > 0) {
-            const typeDistribution = results.reduce((acc, ing) => {
+        if (ingredients && ingredients.length > 0) {
+            const typeDistribution = ingredients.reduce((acc, ing) => {
                 acc[ing.type] = (acc[ing.type] || 0) + 1;
                 return acc;
             }, {} as Record<string, number>);
             console.log(`[Page /ingredients] Type distribution: ${JSON.stringify(typeDistribution)}`);
         }
 
-        console.log(`[Page /ingredients] Successfully fetched ${results?.length ?? 0} ingredients.`);
-        return { ingredients: results || [] };
+        console.log(`[Page /ingredients] Successfully fetched ${ingredients?.length ?? 0} ingredients.`);
+        return { ingredients: ingredients || [] };
 
     } catch (e: any) {
         console.error('[Page /ingredients] Error fetching ingredients:', e);
+        if (e.code === '42P01') { // undefined_table for PostgreSQL
+             console.error(`[Page /ingredients] Table not found. This might indicate migrations haven't run on Neon for the current environment.`);
+             throw error(500, `Database table not found. Please ensure migrations are up to date. Error: ${e.message}`);
+        }
         throw error(500, `Failed to fetch ingredients: ${e.message || 'Unknown error'}`);
     }
 };
