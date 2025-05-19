@@ -2,9 +2,11 @@ import type { RequestHandler } from '@sveltejs/kit';
 
 /**
  * Route SvelteKit pour l'API /api/hello
- * Accède à la base de données D1 via platform.env
+ * Accède à la base de données Neon PostgreSQL via platform.env
  * Fonctionne à la fois en développement et en production
  */
+import { getNeonDbUrl, getDbClient } from '$lib/server/db';
+
 export const GET: RequestHandler = async ({ platform }) => {
   try {
     // Message de secours si la base de données n'est pas accessible
@@ -18,22 +20,29 @@ export const GET: RequestHandler = async ({ platform }) => {
       });
     }
     
-    // Si nous avons accès à platform.env, essayons d'utiliser la base de données
+    // Si nous avons accès à platform.env, essayons d'utiliser la base de données Neon
     try {
-      const env = platform.env;
-      const isProd = env.ENVIRONMENT === 'prod';
-      const db = isProd ? env.DB : env.DB_PREPROD;
+      // Obtenir l'URL de la base de données Neon en fonction de l'environnement
+      const dbUrl = getNeonDbUrl(platform.env);
       
-      if (!db) {
-        console.error("Base de données non disponible");
+      if (!dbUrl) {
+        console.error("URL de base de données Neon non disponible");
         return new Response(JSON.stringify({ message: fallbackMessage }), {
           headers: { 'Content-Type': 'application/json' }
         });
       }
       
-      const result = await db.prepare('SELECT text FROM messages WHERE id = 1').first();
+      // Créer un client PostgreSQL
+      const sql = getDbClient(dbUrl);
+      
+      // Exécuter une requête simple pour tester la connexion
+      const result = await sql`SELECT 'Connexion à Neon PostgreSQL réussie!' as text`;
+      
+      // Le résultat est un tableau, nous prenons le premier élément
+      const firstRow = result[0];
+      
       return new Response(JSON.stringify({
-        message: result?.text || 'Aucun message trouvé dans la DB'
+        message: firstRow?.text || 'Aucun message trouvé dans la DB'
       }), {
         headers: { 'Content-Type': 'application/json' }
       });

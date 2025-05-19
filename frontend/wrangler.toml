@@ -12,6 +12,12 @@ pages_build_output_dir = "./build"
 [vars]
 AUTH_ENABLED = "true"
 ENVIRONMENT = "dev"
+# Variables pour la connexion à la base de données Neon
+# Ces variables seront remplacées par celles définies dans .dev.vars
+NEON_DEV_URL = ""
+NEON_PREPROD_URL = ""
+NEON_PROD_URL = ""
+NEON_PASSWORD = ""
 
 # === ENVIRONNEMENT PREVIEW (PRÉPROD) ===
 [env.preview]
