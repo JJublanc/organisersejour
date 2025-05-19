@@ -6,7 +6,7 @@ pages_build_output_dir = "./build"
 # === ENVIRONNEMENT PAR DÉFAUT ===
 # Utilisé en local ou si tu n'as pas précisé --env
 # D1 databases have been removed as we've migrated to Neon PostgreSQL
-# Environment variables for Neon are set in .dev.vars for local development
+# Environment variables for Neon are set in .env for local development
 
 # Configuration pour Cloudflare Access
 [vars]
