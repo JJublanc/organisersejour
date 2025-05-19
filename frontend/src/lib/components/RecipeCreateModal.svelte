@@ -31,6 +31,7 @@
   let newIngredientName = '';
   let newIngredientUnit = '';
   let newIngredientType: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre' = 'autre';
+  let newIngredientSeason: 'spring' | 'summer' | 'autumn' | 'winter' | null = null;
   let isAddingIngredient = false;
   let addIngredientError: string | null = null;
 
@@ -75,6 +76,7 @@
       showNewIngredientForm = false;
       newIngredientName = '';
       newIngredientUnit = '';
+      newIngredientSeason = null;
       isAddingIngredient = false;
       addIngredientError = null;
       showNewToolForm = false;
@@ -150,7 +152,8 @@
               body: JSON.stringify({
                 name: newIngredientName.trim(),
                 unit: newIngredientUnit.trim(),
-                type: newIngredientType
+                type: newIngredientType,
+                season: newIngredientSeason
               })
           });
           const data = await response.json();
@@ -164,6 +167,7 @@
           newIngredientName = '';
           newIngredientUnit = '';
           newIngredientType = 'autre';
+          newIngredientSeason = null;
           showNewIngredientForm = false;
       } catch (err: any) {
           console.error("Error adding ingredient:", err);
@@ -356,6 +360,13 @@
                                   <option value="viande">Viande</option>
                                   <option value="poisson">Poisson</option>
                                   <option value="autre">Autre</option>
+                              </select>
+                              <select bind:value={newIngredientSeason}>
+                                  <option value={null}>Toutes saisons</option>
+                                  <option value="spring">Printemps</option>
+                                  <option value="summer">Été</option>
+                                  <option value="autumn">Automne</option>
+                                  <option value="winter">Hiver</option>
                               </select>
                               <button type="button" on:click={saveNewIngredient} disabled={isAddingIngredient}>
                                   {isAddingIngredient ? 'Ajout...' : 'Ajouter'}
