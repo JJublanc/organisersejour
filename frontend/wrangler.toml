@@ -21,15 +21,16 @@ NEON_PASSWORD = ""
 
 # === ENVIRONNEMENT PREVIEW (PRÉPROD) ===
 [env.preview]
-vars = { ENVIRONMENT = "preprod", AUTH_ENABLED = "true" }
+vars = { ENVIRONMENT = "preprod", AUTH_ENABLED = "true", NEON_PREPROD_URL = "", NEON_PROD_URL = "", NEON_DEV_URL = "", NEON_PASSWORD = "" }
 compatibility_flags = ["nodejs_compat"] # Ajouté ici
 
 # D1 databases have been removed as we've migrated to Neon PostgreSQL
 # Neon database URLs are set as secrets in the Cloudflare dashboard
+# Ces variables doivent être configurées comme des secrets dans le tableau de bord Cloudflare
 
 # === ENVIRONNEMENT PRODUCTION ===
 [env.production]
-vars = { ENVIRONMENT = "prod", AUTH_ENABLED = "true" }
+vars = { ENVIRONMENT = "prod", AUTH_ENABLED = "true", NEON_PREPROD_URL = "", NEON_PROD_URL = "", NEON_DEV_URL = "", NEON_PASSWORD = "" }
 compatibility_flags = ["nodejs_compat"] # Ajouté ici
 
 # D1 databases have been removed as we've migrated to Neon PostgreSQL
