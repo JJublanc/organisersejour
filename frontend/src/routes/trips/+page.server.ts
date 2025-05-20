@@ -11,11 +11,28 @@ export type TripsPageData = {
 
 export const load: PageServerLoad = async ({ locals, platform, parent }): Promise<TripsPageData> => {
     console.log("[Trips Load] Starting load function...");
+    console.log("[Trips Load] platform:", platform ? "defined" : "undefined");
+    console.log("[Trips Load] platform.env:", platform?.env ? "defined" : "undefined");
+    
+    if (platform?.env) {
+        console.log("[Trips Load] Environment:", platform.env.ENVIRONMENT);
+        console.log("[Trips Load] Available environment variables:", Object.keys(platform.env));
+        
+        // Vérifier si les variables de base de données sont définies
+        // Utiliser une assertion de type pour éviter les erreurs TypeScript
+        console.log("[Trips Load] NEON_PREPROD_URL:", (platform.env as any).NEON_PREPROD_URL ? "defined" : "undefined");
+        console.log("[Trips Load] NEON_PROD_URL:", (platform.env as any).NEON_PROD_URL ? "defined" : "undefined");
+        console.log("[Trips Load] NEON_DEV_URL:", (platform.env as any).NEON_DEV_URL ? "defined" : "undefined");
+    }
+    
     const dbUrl = getNeonDbUrl(platform?.env);
+    console.log("[Trips Load] dbUrl after getNeonDbUrl:", dbUrl ? "non-empty" : "empty");
+    
     if (!dbUrl) {
         console.error("[Trips Load] Neon Database URL not found.");
         throw error(500, "Database connection information not found.");
     }
+    
     const sql = getDbClient(dbUrl);
 
     const parentData = await parent();
