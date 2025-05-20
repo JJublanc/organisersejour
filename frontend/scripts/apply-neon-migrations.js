@@ -102,7 +102,7 @@ async function applyMigrations(dbUrlOrEnvName) {
             .sort();
 
         console.log('Found migration files:', migrationFiles);
-r
+
         // 4. Apply pending schema-altering migrations
         for (const file of migrationFiles) {
             const filePath = path.join(migrationsDir, file);
