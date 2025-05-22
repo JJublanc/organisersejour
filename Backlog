@@ -1,0 +1,41 @@
+Backlog
+- ajouter la possibilité de créer une recette -> OK
+- ajouter la possibilité de créer un ingrédient -> OK
+- ajouter la possibilité de créer un unstensile de cuisine -> OK
+- ajouter la possibilité d'ajouter plusieurs recettes pour un repas -> OK
+- les recettes doivent contenir le type entrée / plat / dessert / autre -> OK
+- les ingrédients rattachés directement au repas doivent s'enregistrer + ils doivent avoir une quantité et une unité par personne -> OK
+- ajouter une section boissons et pain dans les repas -> OK
+- Ajouter un type pour les ingrédients : boisson / pain / condiment / légume / fruit / viande / poisson / autre --> OK
+- L'utilisateur doit pouvoir consulter ses recettes et ses ingrédients -> OK
+- Ajouter un utilisateur pour les recettes et les ingrédients et n'afficher que les recettes et ingrédients --> OK = vérifié en changeant l'utilisateur de dev
+- Permettre la suppression d'ingrédients, de repas, de séjour etc. -> OK
+- On doit pouvoir avoir un tag sur la saison pour les repas -> OK
+
+
+- Pré-remplir la base de données avec des ingrédients, des recettes pour tous les utilisateurs (ils ne peuvent pas être supprimé, mais peuvent ne plus être affichés pour l'utilisateur) -> WIP car certaines recettes manquent d'ingrédients et les instructions et descriptions sont encore en anglais
+
+- Amélioration du design
+--- Page d'accueil qui indique en quelques mots ce que fait l'application
+
+
+--------------------------------------------------------------------------------------------
+
+- Créer un mécanisme pour créer des nouvelles recettes de manière automatique en tant qu'administrateur. Il faut garantir que chaque recette est cohérente, que les ingrédients sont ceux de l'instruction, qu'il y a des ingrédients, que tout est en français, etc.
+- Créer un ménanisme pour supprimer les recettes systèmes
+
+- Lancer un test automatique des fonctionnalités de l'application (Selenium ?)
+
+- Il faut gérer les noms des recettes et nouveaux ingrédients pour interdire la création de doublons --> OK mais changer le message pour aider l'utilisateur
+
+- Conception du multi tenant : comment partager les recettes et les ingrédients
+
+- Ajouter la possibilité de visualiser son matériel
+- Ajouter des photos aux séjours et recettes
+- Télécharger la liste au format PDF
+
+- Filtrer : pour choisir une recette l'utilisateur doit pouvoir filtrer en fonction du type de cette (entrée / plat / dessert / autre), des instruments de cuisine nécessaires, de la saison de la recette (printemps / été / automne / hiver / toutes saisons)
+
+- changer les listes en recherche intelligentes
+
+- Features avancées : génération / duplication de recettes, génération de commande sur Carrefour ou autre, création de l'application mobile

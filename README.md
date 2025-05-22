@@ -8,13 +8,13 @@ Frontend: SvelteKit
 
 Hosting: Cloudflare Pages
 
-Backend API: Cloudflare Pages Functions (powered by Workers, written in TypeScript)
+Backend API: SvelteKit API routes (deployed as Cloudflare Workers via adapter-cloudflare)
 
 Database: Cloudflare D1 (SQLite-based)
 
 Monitoring: Cloudflare Analytics
 
-Authentication: Keycloak (planned)
+Authentication: Cloudflare Access with One-Time PIN (email-based authentication)
 
 CI/CD: Git-based deployments with Cloudflare Pages (CI/CD pipeline will come later)
 
@@ -33,76 +33,78 @@ A D1 database created via the Cloudflare Dashboard or wrangler
 💠 Project Structure
 
 organisersejour/
-├── frontend/               # SvelteKit frontend + Pages Functions
+├── frontend/               # SvelteKit frontend
 │   ├── src/                # SvelteKit app source
-│   ├── functions/          # API routes (Workers)
+│   │   ├── routes/         # SvelteKit routes (pages and API endpoints)
+│   │   │   ├── api/        # API routes
+│   │   │   └── protected/  # Protected routes (require authentication)
+│   │   └── lib/            # Shared libraries and utilities
 │   ├── schema.sql          # SQL schema for D1 database
-│   ├── wrangler.toml       # Wrangler config for Pages Functions + D1
+│   ├── wrangler.toml       # Wrangler config for D1 and environment variables
 │   └── ...
 
 🧪 Local Development
 
-1. Install dependencies
+1. Clone the repository and install dependencies
 
 ```bash
-cd frontend
+git clone https://github.com/yourusername/organisersejour.git
+cd organisersejour/frontend
 npm install
 ```
 
-2. Configure Wrangler
+2. Configure environment variables
 
-Create your wrangler.toml inside the frontend/ folder:
+Create a `.env` file in the frontend/ folder:
 
-```bash
-name = "holiday-meal-planner"
-compatibility_date = "2024-04-12"
-pages_build_output_dir = ".svelte-kit/cloudflare"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "your-d1-db-name"
-database_id = "your-d1-db-id"
+```
+# Development environment variables
+VITE_AUTH_ENABLED=false
 ```
 
-💡 Replace your-d1-db-name and your-d1-db-id with actual values from npx wrangler d1 list.
-
-3. Prepare your database
-
-Create a schema.sql file in frontend/ with:
+3. Start the development server
 
 ```bash
-CREATE TABLE IF NOT EXISTS messages (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  text TEXT
-);
-
-INSERT INTO messages (text) VALUES ('Hello from D1 🎉');
+npm run dev
 ```
 
-Then run:
+This starts the SvelteKit development server, which serves both the frontend and API routes.
 
-npx wrangler d1 execute your-d1-db-name --file=schema.sql
+4. Access the application
 
-4. Start development server
+Open your browser and navigate to:
+```
+http://localhost:5173
+```
+
+5. Testing with Cloudflare bindings (optional)
+
+If you want to test with Cloudflare D1 and other bindings, you can use:
 
 ```bash
-npx wrangler dev
+npm run dev:cf
 ```
 
-This serves the Svelte app and API (/api/hello) using Pages Functions.
+This requires:
+- Wrangler CLI installed (`npm install -g wrangler`)
+- A Cloudflare account
+- Proper configuration in `wrangler.toml` and `.dev.vars`
 
 🔍 API Example
 
-The backend exposes an endpoint at:
+The application exposes an API endpoint at:
 
 GET /api/hello
 
+This endpoint is implemented as a SvelteKit API route in `src/routes/api/hello/+server.ts`.
+
 Returns:
 
+```json
 {
-  "id": 1,
-  "text": "Hello from D1 🎉"
+  "message": "Hello from D1 🎉"
 }
+```
 
 📦 Build for Production
 
@@ -189,9 +191,19 @@ Cloudflare Pages integrates with Cloudflare Analytics by default.
 
 Additional monitoring via Cloudflare Logs and custom logging coming soon.
 
-🔒 Authentication (Planned)
+🔒 Authentication
 
-Authentication with Keycloak will be added to protect routes and associate users with meal plans.
+Authentication is implemented using Cloudflare Access with One-Time PIN (email-based authentication). This provides:
+
+- Secure access to the application
+- Email-based authentication (no passwords required)
+- Protected routes that require authentication
+
+The authentication flow is:
+1. User visits the application
+2. If not authenticated, they're redirected to Cloudflare Access login
+3. User enters their email and receives a one-time PIN
+4. After authentication, they're redirected back to the application
 
 📋 Roadmap
 

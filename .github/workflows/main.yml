@@ -1,4 +1,4 @@
-name: Migrate D1 Database
+name: Migrate Neon Database
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 jobs:
   migrate:
     runs-on: ubuntu-latest
-    name: Apply D1 Migrations
+    name: Apply Migrations
 
     steps:
       - name: Checkout code
@@ -28,22 +28,20 @@ jobs:
       - name: Install Wrangler
         run: npm install -g wrangler
 
-      - uses: actions/checkout@v4
-      - name: Apply migrations to preprod DB
-        uses: cloudflare/wrangler-action@v3
+      - name: Apply Neon migrations to preprod DB
         if: github.ref == 'refs/heads/dev'
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: frontend
-          command: d1 migrations apply hello-db-preprod --remote
+        run: npm run db:migrate:preprod
+        working-directory: frontend
+        env:
+          NEON_PREPROD_URL: ${{ secrets.NEON_PREPROD_URL }}
+          NEON_PASSWORD: ${{ secrets.NEON_PASSWORD }}
 
-      - uses: actions/checkout@v4
-      - name: Apply migrations to prod DB
-        uses: cloudflare/wrangler-action@v3
+      - name: Apply Neon migrations to prod DB
         if: github.ref == 'refs/heads/main'
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: frontend
-          command: d1 migrations apply hello-db --remote
+        run: npm run db:migrate:prod
+        working-directory: frontend
+        env:
+          NEON_PROD_URL: ${{ secrets.NEON_PROD_URL }}
+          NEON_PASSWORD: ${{ secrets.NEON_PASSWORD }}
+
+      # D1 migration steps have been removed as we've migrated to Neon PostgreSQL
