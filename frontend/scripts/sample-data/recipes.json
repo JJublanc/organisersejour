@@ -1,0 +1,98 @@
+[
+  {
+    "name": "Risotto aux champignons sauvages",
+    "description": "Un risotto crémeux et savoureux avec un mélange de champignons sauvages et du parmesan.",
+    "prep_time_minutes": 15,
+    "cook_time_minutes": 30,
+    "instructions": "1. Émincer l’oignon et les champignons.\n2. Faire revenir l’oignon dans l’huile d’olive.\n3. Ajouter les champignons et cuire jusqu’à évaporation de l’eau.\n4. Ajouter le riz et nacrer 2 min.\n5. Verser le vin blanc et laisser évaporer.\n6. Ajouter le bouillon chaud petit à petit en remuant.\n7. Cuire 18-20 min.\n8. Hors du feu, ajouter le beurre et le parmesan.\n9. Mélanger et servir immédiatement.",
+    "servings": 4,
+    "season": "fall",
+    "ingredients": [
+      { "name": "Riz arborio", "quantity": 300, "unit": "g", "type": "féculent", "season": "null" },
+      { "name": "Champignons sauvages", "quantity": 300, "unit": "g", "type": "légume", "season": "fall" },
+      { "name": "Oignon", "quantity": 1, "unit": "pcs", "type": "légume", "season": "fall" },
+      { "name": "Bouillon de légumes", "quantity": 1, "unit": "l", "type": "autre", "season": "null" },
+      { "name": "Vin blanc sec", "quantity": 10, "unit": "cl", "type": "boisson", "season": "null" },
+      { "name": "Parmesan râpé", "quantity": 50, "unit": "g", "type": "fromage", "season": "null" },
+      { "name": "Beurre", "quantity": 30, "unit": "g", "type": "matière grasse", "season": "null" },
+      { "name": "Huile d'olive", "quantity": 2, "unit": "cl", "type": "condiment", "season": "null" }
+    ],
+    "kitchen_tools": [
+      { "name": "Casserole" },
+      { "name": "Poêle" },
+      { "name": "Louche" },
+      { "name": "Couteau de chef" }
+    ]
+  },
+  {
+    "name": "Salade de fraises, mozzarella et basilic",
+    "description": "Une salade fraîche et originale aux fraises, mozzarella et basilic, idéale pour l’été.",
+    "prep_time_minutes": 10,
+    "cook_time_minutes": 0,
+    "instructions": "1. Laver et équeuter les fraises, puis les couper en deux.\n2. Couper la mozzarella en tranches ou billes.\n3. Disposer les fraises et la mozzarella dans un saladier.\n4. Ajouter le basilic ciselé.\n5. Arroser d’un filet d’huile d’olive et de vinaigre balsamique.\n6. Saler, poivrer, mélanger délicatement et servir frais.",
+    "servings": 2,
+    "season": "summer",
+    "ingredients": [
+      { "name": "Fraises", "quantity": 250, "unit": "g", "type": "fruit", "season": "summer" },
+      { "name": "Mozzarella", "quantity": 125, "unit": "g", "type": "fromage", "season": "null" },
+      { "name": "Basilic frais", "quantity": 10, "unit": "g", "type": "herbe", "season": "summer" },
+      { "name": "Huile d'olive", "quantity": 1, "unit": "cl", "type": "condiment", "season": "null" },
+      { "name": "Vinaigre balsamique", "quantity": 1, "unit": "cl", "type": "condiment", "season": "null" },
+      { "name": "Sel", "quantity": 1, "unit": "g", "type": "condiment", "season": "null" },
+      { "name": "Poivre", "quantity": 1, "unit": "g", "type": "condiment", "season": "null" }
+    ],
+    "kitchen_tools": [
+      { "name": "Couteau d’office" },
+      { "name": "Saladier" },
+      { "name": "Cuillère" }
+    ]
+  },
+  {
+    "name": "Tajine de poulet aux abricots et amandes",
+    "description": "Un plat marocain sucré-salé à base de poulet, abricots secs et amandes.",
+    "prep_time_minutes": 20,
+    "cook_time_minutes": 60,
+    "instructions": "1. Émincer l’oignon. Faire dorer le poulet dans l’huile.\n2. Ajouter l’oignon, les épices, bien mélanger.\n3. Ajouter les abricots, amandes et le bouillon.\n4. Couvrir et laisser mijoter 45 min.\n5. Ajouter le miel et laisser réduire 10-15 min à découvert.\n6. Servir chaud avec de la semoule.",
+    "servings": 4,
+    "season": "fall",
+    "ingredients": [
+      { "name": "Poulet (cuisses)", "quantity": 4, "unit": "pcs", "type": "viande", "season": "null" },
+      { "name": "Oignon", "quantity": 2, "unit": "pcs", "type": "légume", "season": "fall" },
+      { "name": "Abricots secs", "quantity": 150, "unit": "g", "type": "fruit sec", "season": "null" },
+      { "name": "Amandes mondées", "quantity": 50, "unit": "g", "type": "fruit sec", "season": "null" },
+      { "name": "Bouillon de volaille", "quantity": 50, "unit": "cl", "type": "autre", "season": "null" },
+      { "name": "Miel", "quantity": 1, "unit": "cs", "type": "sucrant", "season": "null" },
+      { "name": "Ras el hanout", "quantity": 2, "unit": "cc", "type": "épice", "season": "null" },
+      { "name": "Huile d’olive", "quantity": 2, "unit": "cl", "type": "condiment", "season": "null" },
+      { "name": "Sel", "quantity": 3, "unit": "g", "type": "condiment", "season": "null" },
+      { "name": "Poivre", "quantity": 2, "unit": "g", "type": "condiment", "season": "null" }
+    ],
+    "kitchen_tools": [
+      { "name": "Cocotte ou tajine" },
+      { "name": "Couteau de chef" },
+      { "name": "Cuillère en bois" }
+    ]
+  },
+  {
+    "name": "Gnocchis poêlés au beurre de sauge",
+    "description": "Des gnocchis dorés à la poêle, enrobés de beurre mousseux parfumé à la sauge.",
+    "prep_time_minutes": 10,
+    "cook_time_minutes": 15,
+    "instructions": "1. Cuire les gnocchis dans l’eau bouillante salée jusqu’à ce qu’ils remontent.\n2. Égoutter et réserver.\n3. Faire fondre le beurre dans une poêle.\n4. Ajouter les feuilles de sauge et faire frémir.\n5. Ajouter les gnocchis et les faire dorer.\n6. Servir immédiatement avec du parmesan râpé si souhaité.",
+    "servings": 2,
+    "season": "spring",
+    "ingredients": [
+      { "name": "Gnocchis frais", "quantity": 400, "unit": "g", "type": "féculent", "season": "null" },
+      { "name": "Beurre", "quantity": 50, "unit": "g", "type": "matière grasse", "season": "null" },
+      { "name": "Feuilles de sauge", "quantity": 10, "unit": "pcs", "type": "herbe", "season": "spring" },
+      { "name": "Sel", "quantity": 2, "unit": "g", "type": "condiment", "season": "null" },
+      { "name": "Parmesan râpé", "quantity": 30, "unit": "g", "type": "fromage", "season": "null" }
+    ],
+    "kitchen_tools": [
+      { "name": "Casserole" },
+      { "name": "Écumoire" },
+      { "name": "Poêle" },
+      { "name": "Spatule" }
+    ]
+  }
+]

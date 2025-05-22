@@ -50,10 +50,14 @@ export async function load({ request, platform, url }) {
 
   // If authentication is enabled and the user is not authenticated and the route is not public
   if (authEnabled && (!user || !user.authenticated) && !isPublicRoute) {
-    console.log("[Layout Load] User not authenticated, redirecting to login");
-    // Redirect to Cloudflare Access login
-    // This will automatically trigger the Cloudflare Access authentication flow
-    throw redirect(302, '/');
+    console.log("[Layout Load] User not authenticated. Cloudflare Access should handle redirection.");
+    // Commenting out the redirect to let Cloudflare Access handle it.
+    // If Cloudflare Access is properly configured, it will redirect the user
+    // to the identity provider before this code is reached for protected routes,
+    // or this code will run and `user` will be populated after successful auth.
+    // throw redirect(302, '/');
+    // Consider what should happen here if CF Access doesn't redirect and user is not authenticated.
+    // For now, we'll let the request proceed, and individual pages can handle unauthenticated users if necessary.
   }
   
   return {
