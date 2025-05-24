@@ -6,7 +6,8 @@
 </script>
 
 <main>
-  <h1>Bienvenue !</h1>
+  <h1>Bienvenue sur Organisateur de Séjour !</h1>
+  <p>Planifiez vos séjours, organisez vos menus et obtenez votre liste de courses en un clin d'œil.</p>
 
   {#if data.message}
     <p>Message from DB: {data.message}</p>
