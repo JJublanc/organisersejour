@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../.env') }); // Charge .env depuis la racine de frontend/ (ex: frontend/.env)
 
 const RECIPES_FILE_PATH = path.join(__dirname, 'sample-data/recipes.json');
-const USER_ID_FOR_IMPORT = 'system_import';
+const USER_ID_FOR_IMPORT = 'system';
 
 async function getOrCreateIngredient(db, ingredientData) {
   const { name, unit, type, season: rawSeason } = ingredientData;

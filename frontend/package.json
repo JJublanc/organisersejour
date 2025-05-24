@@ -12,7 +12,7 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"db:migrate:dev": "node ./scripts/apply-neon-migrations.js NEON_DEV_URL",
+		"db:migrate:dev": "node -r dotenv/config ./scripts/apply-neon-migrations.js NEON_DEV_URL",
 		"db:migrate:preprod": "node ./scripts/apply-neon-migrations.js NEON_PREPROD_URL",
 		"db:migrate:prod": "node ./scripts/apply-neon-migrations.js NEON_PROD_URL"
 	},

@@ -148,42 +148,64 @@ Create a new database
 wrangler d1 create <db_name>
 ```
 
-## Migration
+## Database Migrations
 
-Create a new migration
-```
-npx wrangler d1 migrations create <db_name> <migration_name> 
-```
+This project uses a custom script to manage database migrations, located at `frontend/scripts/apply-neon-migrations.js`.
+Migration files are SQL files located in the `frontend/migrations/` directory.
 
-Write the logic fo the migration in the new file `./migrations/<migration_id>_<migration_name>.sql`
-Exemple :
+### Creating a New Migration
 
-```sql
--- Migration number: 0003 	 2025-04-13T07:17:41.951Z
--- Si la table existe déjà, la supprimer
-DROP TABLE IF EXISTS messages;
+1.  Create a new SQL file in the `frontend/migrations/` directory.
+    The filename should follow the pattern `XXXX_description.sql`, where `XXXX` is the sequential migration number.
+    Example: `frontend/migrations/0025_add_new_feature.sql`
 
--- Créer la table "messages" sans contrainte NOT NULL sur la colonne content
-CREATE TABLE IF NOT EXISTS messages (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  text TEXT
-);
+2.  Write your SQL DDL statements in this file. Example:
+    ```sql
+    -- frontend/migrations/0025_add_new_feature.sql
+    CREATE TABLE new_feature (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL
+    );
 
--- Insérer des données par défaut dans la table "messages"
-INSERT INTO messages (text) VALUES ('Hello from D1 🎉');
-```
+    ALTER TABLE existing_table ADD COLUMN new_column TEXT;
+    ```
 
-Apply the migration locally
+### Applying Migrations
 
-```bash
-npx wrangler d1 migrations apply <db_name> 
-```
+Ensure your environment variables are correctly set up in `frontend/.env` for local development (especially `NEON_DEV_URL` and `NEON_PASSWORD`).
+For CI/CD or other environments, ensure the corresponding `NEON_PREPROD_URL` or `NEON_PROD_URL` (and `NEON_PASSWORD` if not in the URL) are set as environment variables.
 
-Apply the migration remotely
+The following npm scripts (defined in `frontend/package.json`) are used to apply migrations:
 
-```bash
-npx wrangler d1 migrations apply <db_name> --remote
-```
+*   **Development:**
+    Navigate to the `frontend` directory first.
+    ```bash
+    cd frontend
+    npm run db:migrate:dev
+    ```
+    This command uses the `NEON_DEV_URL` environment variable, loaded via `dotenv` from `frontend/.env`.
+
+*   **Pre-production:**
+    Navigate to the `frontend` directory first.
+    ```bash
+    cd frontend
+    npm run db:migrate:preprod
+    ```
+    This command uses the `NEON_PREPROD_URL` environment variable.
+
+*   **Production:**
+    Navigate to the `frontend` directory first.
+    ```bash
+    cd frontend
+    npm run db:migrate:prod
+    ```
+    This command uses the `NEON_PROD_URL` environment variable.
+
+The script `frontend/scripts/apply-neon-migrations.js` handles:
+- Creating the `applied_migrations` table if it doesn't exist.
+- Checking which migrations have already been applied.
+- Applying pending schema-altering migrations in sequence.
+- Recording applied migrations in the `applied_migrations` table.
 
 📊 Monitoring
 
