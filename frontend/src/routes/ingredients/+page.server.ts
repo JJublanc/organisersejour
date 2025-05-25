@@ -30,7 +30,7 @@ export const load: ServerLoad = async ({ platform, locals, parent }) => {
 
         const ingredients = await sql<Ingredient[]>`
             SELECT
-                id, COALESCE(french_name, name) as name, unit, type, season, user_id
+                id, name, unit, type, season, user_id
             FROM ingredients
             WHERE user_id = ${user.id} OR user_id = 'system'
             ORDER BY type ASC, name ASC

@@ -110,8 +110,8 @@ export const load: ServerLoad = async (event: ServerLoadEvent): Promise<TripDeta
                                 mc.id, mc.course_type, mc.recipe_id, mc.ingredient_id,
                                 mc.total_quantity, mc.unit, mc.quantity_per_person,
                                 mc.notes, mc.display_order,
-                                COALESCE(r.french_name, r.name) AS recipe_name,
-                                COALESCE(i.french_name, i.name) AS ingredient_name,
+                                r.name AS recipe_name,
+                                i.name AS ingredient_name,
                                 mc.unit AS ingredient_unit
                             FROM meal_components mc
                             LEFT JOIN recipes r ON mc.recipe_id = r.id

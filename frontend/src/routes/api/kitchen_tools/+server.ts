@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ platform }: { platform: App.Platform
     try {
         console.log("[API /api/kitchen_tools GET] Fetching all kitchen tools...");
         const kitchenTools = await sql<KitchenTool[]>`
-            SELECT id, COALESCE(french_name, name) as name FROM kitchen_tools ORDER BY name ASC
+            SELECT id, name FROM kitchen_tools ORDER BY name ASC
         `;
         console.log(`[API /api/kitchen_tools GET] Successfully fetched ${kitchenTools?.length ?? 0} kitchen tools.`);
         return json({ kitchen_tools: kitchenTools || [] });
