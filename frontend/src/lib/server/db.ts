@@ -94,25 +94,3 @@ export function getDbClient(dbUrl: string): PostgresSqlType {
         throw error;
     }
 }
-
-export async function getShoppingList(tripId: string): Promise<{ name: string; quantity: number }[]> {
-    const dbUrl = getNeonDbUrl(process.env);
-    const sql = getDbClient(dbUrl);
-
-    try {
-        const result = await sql`
-            SELECT i.name, SUM(mc.quantity) as quantity
-            FROM meal_components mc
-            JOIN ingredients i ON mc.ingredient_id = i.id
-            WHERE mc.trip_id = ${tripId}
-            GROUP BY i.name
-        `;
-        return result.map((row: any) => ({
-            name: row.name,
-            quantity: row.quantity
-        }));
-    } catch (error) {
-        console.error('[DB] Error fetching shopping list:', error);
-        throw error;
-    }
-}

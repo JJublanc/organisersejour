@@ -38,7 +38,9 @@
           }
           const result = await response.json();
           shoppingList = result.shoppingList || [];
+          pdfData = result.pdfData || null; // Store PDF data for download button
           console.log(`Fetched ${shoppingList.length} items for shopping list.`);
+          console.log(`PDF data available: ${!!pdfData}`);
           if (shoppingList.length === 0) {
               shoppingListError = "Aucun ingrédient requis pour les repas planifiés."; // Informative message if empty
           }
@@ -51,18 +53,21 @@
   }
 
 async function downloadShoppingListPdf() {
+    console.log("Download PDF button clicked");
     try {
-        const response = await fetch(`/api/trips/${data.trip.id}/shopping-list`);
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `Failed to fetch PDF: ${response.statusText}`);
+        if (!pdfData) {
+            throw new Error("No PDF data available. Please generate the shopping list first.");
         }
-        const result = await response.json();
-        pdfData = result.pdfData;
+        
+        console.log("Creating download link...");
         const link = document.createElement('a');
         link.href = `data:application/pdf;base64,${pdfData}`;
         link.download = `Liste_de_courses_${data.trip.name}.pdf`;
+        document.body.appendChild(link); // Add to DOM
         link.click();
+        document.body.removeChild(link); // Remove from DOM
+        
+        console.log("PDF download triggered successfully");
     } catch (err: any) {
         console.error("Error downloading PDF:", err);
         shoppingListError = err.message || "Could not download PDF.";
