@@ -32,7 +32,7 @@ export const load: ServerLoad = async ({ platform, locals, parent }) => {
 
         const recipesList = await sql<Omit<Recipe, 'ingredients' | 'kitchen_tools'>[]>`
             SELECT
-                id, COALESCE(french_name, name) as name, description,
+                id, name, description,
                 prep_time_minutes, cook_time_minutes, instructions,
                 servings, season, user_id
             FROM recipes
@@ -57,7 +57,7 @@ export const load: ServerLoad = async ({ platform, locals, parent }) => {
             type: 'boisson' | 'pain' | 'condiment' | 'légume' | 'fruit' | 'viande' | 'poisson' | 'autre';
             quantity: number;
         }[]>`
-            SELECT ri.recipe_id, ri.ingredient_id, COALESCE(i.french_name, i.name) as name, i.unit, i.type, ri.quantity
+            SELECT ri.recipe_id, ri.ingredient_id, i.name, i.unit, i.type, ri.quantity
             FROM recipe_ingredients ri JOIN ingredients i ON ri.ingredient_id = i.id
             WHERE ri.recipe_id IN ${sql(recipeIds)}
         `;
@@ -68,7 +68,7 @@ export const load: ServerLoad = async ({ platform, locals, parent }) => {
             id: number;
             name: string;
         }[]>`
-            SELECT rkt.recipe_id, kt.id, COALESCE(kt.french_name, kt.name) as name
+            SELECT rkt.recipe_id, kt.id, kt.name
             FROM recipe_kitchen_tools rkt JOIN kitchen_tools kt ON rkt.tool_id = kt.id
             WHERE rkt.recipe_id IN ${sql(recipeIds)}
         `;

@@ -25,7 +25,7 @@ export const GET: RequestHandler = async ({ platform, locals }) => {
         console.log(`[API /api/ingredients GET] Fetching ingredients for user: ${user.id} and system ingredients`);
         // Using tagged template literal for the query
         const ingredients = await sql<Ingredient[]>`
-            SELECT id, COALESCE(french_name, name) as name, unit, type, season, user_id
+            SELECT id, name, unit, type, season, user_id
             FROM ingredients
             WHERE user_id = ${user.id} OR user_id = 'system'
             ORDER BY type ASC, name ASC

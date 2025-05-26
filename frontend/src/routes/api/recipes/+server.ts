@@ -71,7 +71,7 @@ export const GET: RequestHandler = async ({ platform, locals, url }) => {
     try {
         console.log(`[API /api/recipes GET] Fetching recipes for user: ${user.id} and system recipes`);
         const recipesList = await sql<Omit<Recipe, 'ingredients' | 'kitchen_tools'>[]>`
-            SELECT id, COALESCE(french_name, name) as name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id
+            SELECT id, name, description, prep_time_minutes, cook_time_minutes, instructions, servings, season, user_id
             FROM recipes
             WHERE user_id = ${user.id} OR user_id = 'system'
             ORDER BY name ASC
@@ -84,12 +84,12 @@ export const GET: RequestHandler = async ({ platform, locals, url }) => {
         const recipesWithDetails: Recipe[] = [];
         for (const recipe of recipesList) {
             const ingredientsList = await sql<RecipeIngredient[]>`
-                SELECT ri.ingredient_id, COALESCE(i.french_name, i.name) as name, i.unit, i.type, ri.quantity
+                SELECT ri.ingredient_id, i.name, i.unit, i.type, ri.quantity
                 FROM recipe_ingredients ri JOIN ingredients i ON ri.ingredient_id = i.id
                 WHERE ri.recipe_id = ${recipe.id}
             `;
             const toolsList = await sql<KitchenTool[]>`
-                SELECT kt.id, COALESCE(kt.french_name, kt.name) as name
+                SELECT kt.id, kt.name
                 FROM recipe_kitchen_tools rkt JOIN kitchen_tools kt ON rkt.tool_id = kt.id
                 WHERE rkt.recipe_id = ${recipe.id}
             `;
@@ -175,12 +175,12 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 
         // Fetch the complete recipe with ingredients and tools to return
         const ingredientsList = await sql<RecipeIngredient[]>`
-            SELECT ri.ingredient_id, COALESCE(i.french_name, i.name) as name, i.unit, i.type, ri.quantity
+            SELECT ri.ingredient_id, i.name, i.unit, i.type, ri.quantity
             FROM recipe_ingredients ri JOIN ingredients i ON ri.ingredient_id = i.id
             WHERE ri.recipe_id = ${newRecipeId}
         `;
         const toolsList = await sql<KitchenTool[]>`
-            SELECT kt.id, COALESCE(kt.french_name, kt.name) as name
+            SELECT kt.id, kt.name
             FROM recipe_kitchen_tools rkt JOIN kitchen_tools kt ON rkt.tool_id = kt.id
             WHERE rkt.recipe_id = ${newRecipeId}
         `;
