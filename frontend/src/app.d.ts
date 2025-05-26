@@ -1,7 +1,7 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 import type { D1Database } from '@cloudflare/workers-types'; // Import D1 type
-import type { User } from '$lib/auth'; // Import the User type
+import type { User } from '$lib/clerk-auth'; // Import the User type from Clerk auth
 
 // Define the Env interface for Cloudflare bindings
 interface Env {
@@ -12,6 +12,9 @@ interface Env {
   AUTH_ENABLED?: string; // Keep existing optional vars
   ENVIRONMENT?: string; // Keep existing optional vars
   DB_PREPROD?: D1Database; // Keep existing optional vars
+  // Clerk environment variables
+  CLERK_PUBLISHABLE_KEY?: string;
+  CLERK_SECRET_KEY?: string;
 }
 
 declare global {
