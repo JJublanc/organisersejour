@@ -1,5 +1,6 @@
-import { getUserFromRequest, type User } from '$lib/auth';
+import { initializeClerk, getUserFromClerk, type User } from '$lib/clerk-auth';
 import { redirect } from '@sveltejs/kit';
+import type { LayoutServerLoad } from './$types';
 
 export const prerender = false;
 
@@ -10,22 +11,21 @@ const PUBLIC_ROUTES: string[] = [
 ];
 
 /**
- * Server-side load function to check authentication
- * This runs on every request to extract user information from Cloudflare Access JWT
+ * Server-side load function to check authentication with Clerk
+ * This runs on every request to extract user information from Clerk
  */
-export async function load({ request, platform, url }) {
+export const load: LayoutServerLoad = async ({ request, platform, url }) => {
   // Check if the current route is public
   const isPublicRoute = PUBLIC_ROUTES.some(route => url.pathname === route);
+  
   // Check if authentication is enabled (based on environment variable)
-  // Try to get from Vite env first (development), then from platform.env (production)
-  // Use only platform.env for auth check when running via Wrangler
   const platformAuthEnabled = platform?.env?.AUTH_ENABLED;
-  console.log(`[Layout Load] platform.env.AUTH_ENABLED: ${platformAuthEnabled}`); // Log raw value
+  console.log(`[Layout Load] platform.env.AUTH_ENABLED: ${platformAuthEnabled}`);
   const authEnabled = platformAuthEnabled === 'true';
-  console.log(`[Layout Load] authEnabled evaluated to: ${authEnabled}`); // Log evaluated value
+  console.log(`[Layout Load] authEnabled evaluated to: ${authEnabled}`);
   
   if (!authEnabled) {
-      console.log("[Layout Load] Auth disabled, creating mock user."); // Log mock user creation
+    console.log("[Layout Load] Auth disabled, creating mock user.");
     // If auth is disabled (e.g., in development), return a mock user
     const mockUser: User = {
       email: 'dev@example.com',
@@ -34,34 +34,50 @@ export async function load({ request, platform, url }) {
       authenticated: true
     };
     
-    console.log("[Layout Load] Returning mock user:", mockUser); // Log returned mock user
+    console.log("[Layout Load] Returning mock user:", mockUser);
     return {
       user: mockUser,
-      authEnabled
+      authEnabled,
+      clerkPublishableKey: null
     };
   }
   
-  // Get user from Cloudflare Access JWT
-  console.log(`[Layout Load] CF-Access-JWT-Assertion: ${request.headers.get('CF-Access-JWT-Assertion')}`); // Log JWT header
-  const user = getUserFromRequest(request);
-
-  console.log("[Layout Load] User object after getUserFromRequest:", user); // Log the user object
-  console.log("[Layout Load] Auth enabled, returning user from request:", user); // Log returned real user
+  // Get Clerk publishable key from environment
+  const clerkPublishableKey = platform?.env?.CLERK_PUBLISHABLE_KEY;
+  
+  if (!clerkPublishableKey) {
+    console.error("[Layout Load] CLERK_PUBLISHABLE_KEY not found in environment");
+    return {
+      user: null,
+      authEnabled,
+      clerkPublishableKey: null
+    };
+  }
+  
+  let user: User | null = null;
+  
+  try {
+    // Initialize Clerk
+    await initializeClerk(clerkPublishableKey);
+    
+    // Get user from Clerk
+    user = getUserFromClerk();
+    
+    console.log("[Layout Load] User object from Clerk:", user);
+  } catch (error) {
+    console.error("[Layout Load] Error with Clerk authentication:", error);
+  }
 
   // If authentication is enabled and the user is not authenticated and the route is not public
   if (authEnabled && (!user || !user.authenticated) && !isPublicRoute) {
-    console.log("[Layout Load] User not authenticated. Cloudflare Access should handle redirection.");
-    // Commenting out the redirect to let Cloudflare Access handle it.
-    // If Cloudflare Access is properly configured, it will redirect the user
-    // to the identity provider before this code is reached for protected routes,
-    // or this code will run and `user` will be populated after successful auth.
-    // throw redirect(302, '/');
-    // Consider what should happen here if CF Access doesn't redirect and user is not authenticated.
-    // For now, we'll let the request proceed, and individual pages can handle unauthenticated users if necessary.
+    console.log("[Layout Load] User not authenticated. Clerk should handle redirection.");
+    // Let Clerk handle the authentication flow
+    // Individual pages can redirect to sign-in if needed
   }
   
   return {
     user,
-    authEnabled
+    authEnabled,
+    clerkPublishableKey
   };
 }

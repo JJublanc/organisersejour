@@ -1,10 +1,12 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import TripFormModal from '$lib/components/TripFormModal.svelte'; // Import the modal component
+  import ProtectedPage from '$lib/components/ProtectedPage.svelte';
   import { invalidateAll } from '$app/navigation'; // To refresh data after creation
   import { fade } from 'svelte/transition';
 
   export let data: PageData; // Data loaded from +page.server.ts
+  const { trips, authEnabled, clerkPublishableKey, user } = data;
 
   let showCreateModal = false; // State to control modal visibility
 
@@ -62,15 +64,16 @@
   }
 </script>
 
+<ProtectedPage {clerkPublishableKey} {authEnabled} {user} let:user={currentUser}>
 <h1>My Trips</h1>
 
 <div class="page-actions">
   <button on:click={openCreateModal} class="create-button">Créer un nouveau séjour</button>
 </div>
 
-{#if data.trips.length > 0}
+{#if trips.length > 0}
   <ul class="trip-list">
-    {#each data.trips as trip (trip.id)}
+    {#each trips as trip (trip.id)}
       <li class="trip-item" transition:fade>
         <div class="trip-header">
           <h2>{trip.name}</h2>
@@ -191,3 +194,4 @@
       text-decoration: underline;
   }
 </style>
+</ProtectedPage>

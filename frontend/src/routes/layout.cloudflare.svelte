@@ -1,182 +1,146 @@
 <script lang="ts">
-  import type { LayoutData } from './$types';
-  // Import our global CSS
-  import '$lib/styles/index.css';
+  import ClerkProvider from '$lib/components/ClerkProvider.svelte';
+  import ClerkAuth from '$lib/components/ClerkAuth.svelte';
 
-  export let data: LayoutData;
-  const { user, authEnabled } = data;
+  export let data: any;
+
+  $: ({ user, authEnabled, clerkPublishableKey } = data);
 </script>
 
-<div class="app-container">
-  <aside class="sidebar">
-    <nav>
-      {#if user}
-        <a href="/trips" class="sidebar-link" data-sveltekit-reload>
-           <span class="link-icon">🗺️</span>
-           <span class="link-text">Mes Séjours</span>
-        </a>
-        <a href="/recipes" class="sidebar-link" data-sveltekit-reload>
-           <span class="link-icon">📝</span>
-           <span class="link-text">Mes Recettes</span>
-        </a>
-        <a href="/ingredients" class="sidebar-link" data-sveltekit-reload>
-           <span class="link-icon">🥕</span>
-           <span class="link-text">Mes Ingrédients</span>
-        </a>
-      {/if}
-    </nav>
-  </aside>
+<svelte:head>
+  <title>Organisateur de Séjour</title>
+  <meta name="description" content="Application pour organiser vos séjours et repas" />
+</svelte:head>
 
-  <div class="main-content">
-    <header>
-      <div class="auth-status">
+<div class="app">
+  {#if authEnabled && clerkPublishableKey}
+    <ClerkProvider publishableKey={clerkPublishableKey} {user} let:user={currentUser}>
+      <header class="app-header">
+        <div class="header-content">
+          <h1><a href="/">Organisateur de Séjour</a></h1>
+          <nav class="main-nav">
+            <a href="/trips">Séjours</a>
+            <a href="/recipes">Recettes</a>
+            <a href="/ingredients">Ingrédients</a>
+          </nav>
+          <ClerkAuth user={currentUser} />
+        </div>
+      </header>
+
+      <main class="app-main">
+        <slot />
+      </main>
+    </ClerkProvider>
+  {:else}
+    <!-- Fallback for when auth is disabled or no publishable key -->
+    <header class="app-header">
+      <div class="header-content">
+        <h1><a href="/">Organisateur de Séjour</a></h1>
+        <nav class="main-nav">
+          <a href="/trips">Séjours</a>
+          <a href="/recipes">Recettes</a>
+          <a href="/ingredients">Ingrédients</a>
+        </nav>
         {#if user}
-          <span>Logged in as: {user.name} ({user.email})</span>
-      {#if authEnabled}
-        <!-- Cloudflare Access handles logout via a specific path -->
-        <a href="/cdn-cgi/access/logout">Logout</a>
-      {/if}
-    {:else if authEnabled}
-      <span>Please log in to access protected content.</span>
-      <!-- Cloudflare Access handles login automatically -->
-    {:else}
-      <span>Authentication is disabled (dev mode).</span>
-    {/if}
-  </div>
+          <div class="user-info">
+            <span>Bonjour, {user.name}</span>
+          </div>
+        {/if}
+      </div>
     </header>
 
-    <main>
+    <main class="app-main">
       <slot />
     </main>
-  </div>
+  {/if}
 </div>
 
 <style>
-  .app-container {
-    display: flex;
+  :global(body) {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f8f9fa;
+  }
+
+  .app {
     min-height: 100vh;
-  }
-
-  .sidebar {
-    width: 50px;
-    background-color: var(--color-success-800); /* Changement de couleur pour un vert */
-    padding: var(--spacing-3) 0;
-    transition: width var(--transition-normal) var(--transition-timing);
-    overflow: hidden;
-    white-space: nowrap;
-    position: fixed;
-    left: 0;
-    top: 0;
-    height: 100%;
-    z-index: 10;
-  }
-
-  .sidebar:hover {
-    width: 220px;
-  }
-
-  .sidebar nav {
     display: flex;
     flex-direction: column;
   }
 
-  .sidebar nav a {
+  .app-header {
+    background-color: #fff;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
     display: flex;
     align-items: center;
-    margin-bottom: var(--spacing-2);
-    padding: var(--spacing-3) var(--spacing-4);
+    justify-content: space-between;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  h1 a {
+    color: #333;
     text-decoration: none;
-    color: white;
-    overflow: hidden;
-    white-space: nowrap;
   }
 
-  .sidebar nav a .link-icon {
-    display: inline-block;
-    min-width: 20px;
-    text-align: center;
-    margin-right: var(--spacing-2);
-    font-size: 1.2em;
+  h1 a:hover {
+    color: #007bff;
   }
 
-  .sidebar nav a .link-text {
-    display: none;
-    opacity: 0;
-    transition: opacity var(--transition-fast) var(--transition-timing);
-  }
-
-  .sidebar:hover nav a .link-text {
-    display: inline;
-    opacity: 1;
-  }
-
-  .sidebar nav a:hover {
-    color: white;
-    background-color: var(--color-success-700); /* Changement de couleur pour une nuance de vert */
-  }
-  
-  .sidebar-link {
+  .main-nav {
     display: flex;
-    align-items: center;
+    gap: 2rem;
+  }
+
+  .main-nav a {
+    color: #666;
     text-decoration: none;
-    color: white;
-    background: none;
-    border: none;
-    padding: var(--spacing-3) var(--spacing-4);
-    font: inherit;
-    cursor: pointer;
-    text-align: left;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+
+  .main-nav a:hover {
+    color: #007bff;
+  }
+
+  .app-main {
+    flex: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
     width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-  }
-  
-  .sidebar-link:hover {
-    color: white;
-    background-color: var(--color-success-700); /* Changement de couleur pour une nuance de vert */
+    box-sizing: border-box;
   }
 
-  .main-content {
-    flex-grow: 1;
-    margin-left: 50px;
-    transition: margin-left var(--transition-normal) var(--transition-timing);
-    display: flex;
-    flex-direction: column;
-  }
-
-  .sidebar:hover + .main-content {
-     margin-left: 220px;
-  }
-
-  header {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    padding: var(--spacing-4);
-    background-color: var(--color-primary-50);
-    border-bottom: 1px solid var(--color-primary-200);
-  }
-
-  .auth-status span {
-    margin-right: var(--spacing-2);
-  }
-
-  main {
-    padding: var(--spacing-4);
-    flex-grow: 1;
+  .user-info {
+    color: #666;
+    font-weight: 500;
   }
 
   @media (max-width: 768px) {
-    .sidebar {
-      display: none;
+    .header-content {
+      flex-direction: column;
+      gap: 1rem;
     }
 
-    .main-content {
-      margin-left: 0;
+    .main-nav {
+      gap: 1rem;
     }
 
-    header {
-      justify-content: space-between;
+    .app-main {
+      padding: 1rem;
     }
   }
 </style>

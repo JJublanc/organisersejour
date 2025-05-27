@@ -6,8 +6,11 @@ export const prerender = false;
 
 // Define public routes that don't require authentication
 const PUBLIC_ROUTES: string[] = [
-  // You can add public routes here if needed
-  // Example: '/login', '/about', '/terms'
+  '/',
+  '/trips',
+  '/recipes',
+  '/ingredients',
+  '/protected' // Temporairement public pour tester Clerk
 ];
 
 /**
@@ -54,29 +57,11 @@ export const load: LayoutServerLoad = async ({ request, platform, url }) => {
     };
   }
   
-  let user: User | null = null;
-  
-  try {
-    // Initialize Clerk
-    await initializeClerk(clerkPublishableKey);
-    
-    // Get user from Clerk
-    user = getUserFromClerk();
-    
-    console.log("[Layout Load] User object from Clerk:", user);
-  } catch (error) {
-    console.error("[Layout Load] Error with Clerk authentication:", error);
-  }
-
-  // If authentication is enabled and the user is not authenticated and the route is not public
-  if (authEnabled && (!user || !user.authenticated) && !isPublicRoute) {
-    console.log("[Layout Load] User not authenticated. Clerk should handle redirection.");
-    // Let Clerk handle the authentication flow
-    // Individual pages can redirect to sign-in if needed
-  }
+  // Pour Clerk, l'authentification se fait côté client
+  console.log("[Layout Load] Returning Clerk configuration");
   
   return {
-    user,
+    user: null, // L'utilisateur sera géré par Clerk côté client
     authEnabled,
     clerkPublishableKey
   };

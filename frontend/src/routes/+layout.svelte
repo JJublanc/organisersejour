@@ -14,6 +14,7 @@
 
 <div class="app">
   {#if authEnabled && clerkPublishableKey}
+    <!-- Mode Clerk activé -->
     <ClerkProvider publishableKey={clerkPublishableKey} {user} let:user={currentUser}>
       <header class="app-header">
         <div class="header-content">
@@ -32,7 +33,7 @@
       </main>
     </ClerkProvider>
   {:else}
-    <!-- Fallback for when auth is disabled or no publishable key -->
+    <!-- Mode sans authentification -->
     <header class="app-header">
       <div class="header-content">
         <h1><a href="/">Organisateur de Séjour</a></h1>
@@ -41,11 +42,9 @@
           <a href="/recipes">Recettes</a>
           <a href="/ingredients">Ingrédients</a>
         </nav>
-        {#if user}
-          <div class="user-info">
-            <span>Bonjour, {user.name}</span>
-          </div>
-        {/if}
+        <div class="user-info">
+          <span>Mode développement</span>
+        </div>
       </div>
     </header>
 

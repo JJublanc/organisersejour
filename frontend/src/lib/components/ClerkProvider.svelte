@@ -5,12 +5,14 @@
 
   export let publishableKey: string;
   export let user: User | null = null;
+  export let requireAuth: boolean = false;
 
   // Create a reactive store for the user
   export const userStore = writable<User | null>(user);
 
   let clerkLoaded = false;
   let clerkError: string | null = null;
+  let currentUser: User | null = null;
 
   onMount(async () => {
     if (!publishableKey) {
@@ -23,10 +25,10 @@
       clerkLoaded = true;
       
       // Update user store with current user
-      const currentUser = getUserFromClerk();
+      currentUser = getUserFromClerk();
       userStore.set(currentUser);
       
-      console.log('Clerk initialized successfully');
+      console.log('Clerk initialized successfully', currentUser);
     } catch (error) {
       console.error('Failed to initialize Clerk:', error);
       clerkError = 'Failed to initialize authentication';
@@ -35,8 +37,11 @@
 
   // Update user prop when store changes
   userStore.subscribe(value => {
+    currentUser = value;
     user = value;
   });
+
+  $: isAuthenticated = currentUser && currentUser.authenticated;
 </script>
 
 {#if clerkError}
@@ -45,10 +50,15 @@
   </div>
 {:else if !clerkLoaded}
   <div class="clerk-loading">
-    <p>Loading authentication...</p>
+    <p>Chargement de l'authentification...</p>
+  </div>
+{:else if requireAuth && !isAuthenticated}
+  <div class="auth-required">
+    <h2>Authentification requise</h2>
+    <p>Vous devez vous connecter pour accéder à cette page.</p>
   </div>
 {:else}
-  <slot {user} />
+  <slot user={currentUser} />
 {/if}
 
 <style>

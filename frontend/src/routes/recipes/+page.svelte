@@ -3,10 +3,11 @@
   import type { PageData } from './$types';
   import type { Recipe } from '$lib/types';
   import RecipeCreateModal from '$lib/components/RecipeCreateModal.svelte';
+  import ProtectedPage from '$lib/components/ProtectedPage.svelte';
   import { fade } from 'svelte/transition';
 
   export let data: PageData;
-  const { recipes } = data;
+  const { recipes, authEnabled, clerkPublishableKey, user } = data;
   
   // State for recipe creation modal
   let showRecipeModal = false;
@@ -143,107 +144,109 @@
   }
 </script>
 
-<div class="recipes-container">
-  <h1>Mes Recettes</h1>
-  
-  <div class="actions">
-    <button class="add-recipe-btn" on:click={() => showRecipeModal = true}>
-      + Ajouter une recette
-    </button>
-  </div>
-  
-  {#if isLoading}
-    <p class="loading">Chargement des recettes...</p>
-  {:else if loadError}
-    <p class="error">Erreur: {loadError}</p>
-    <button class="retry-btn" on:click={fetchRecipes}>Réessayer</button>
-  {:else if recipesList.length === 0}
-    <p class="no-recipes">Aucune recette trouvée. Créez votre première recette !</p>
-  {:else}
-    <div class="recipes-grid">
-      {#each recipesList as recipe (recipe.id)}
-        <div class="recipe-card" transition:fade>
-          <div class="card-header">
-            <h2>{recipe.name}</h2>
-            <button
-              class="delete-btn"
-              title="Supprimer cette recette"
-              on:click|stopPropagation={() => deleteRecipe(recipe.id, recipe.name)}
-            >
-              &times;
-            </button>
-          </div>
-          
-          {#if recipe.description}
-            <p class="recipe-description">{recipe.description}</p>
-          {/if}
-          
-          <div class="recipe-meta">
-            <span><strong>Portions:</strong> {recipe.servings}</span>
-            {#if recipe.prep_time_minutes}
-              <span><strong>Préparation:</strong> {formatTime(recipe.prep_time_minutes)}</span>
-            {/if}
-            {#if recipe.cook_time_minutes}
-              <span><strong>Cuisson:</strong> {formatTime(recipe.cook_time_minutes)}</span>
-            {/if}
-            {#if recipe.season}
-              <span><strong>Saison:</strong> {getSeasonLabel(recipe.season)}</span>
-            {/if}
-          </div>
-          
-          <div class="recipe-ingredients">
-            <h3>Ingrédients</h3>
-            {#if recipe.ingredients && Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0}
-              {@const groupedIngredients = groupIngredientsByType(recipe.ingredients)}
-              
-              {#each Object.entries(groupedIngredients) as [type, ingredients]}
-                <div class="ingredient-group">
-                  <h4>{getTypeLabel(type)}</h4>
-                  <ul>
-                    {#each ingredients as ingredient}
-                      <li>
-                        <span class="quantity">{ingredient.quantity}</span>
-                        <span class="unit">{ingredient.unit}</span>
-                        <span class="name">{ingredient.name}</span>
-                      </li>
-                    {/each}
-                  </ul>
-                </div>
-              {/each}
-            {:else}
-              <p>Aucun ingrédient spécifié</p>
-            {/if}
-          </div>
-          
-          {#if recipe.instructions}
-            <div class="recipe-instructions">
-              <h3>Instructions</h3>
-              <p>{recipe.instructions}</p>
-            </div>
-          {/if}
-          
-          {#if recipe.kitchen_tools && Array.isArray(recipe.kitchen_tools) && recipe.kitchen_tools.length > 0}
-            <div class="recipe-tools">
-              <h3>Ustensiles</h3>
-              <ul>
-                {#each recipe.kitchen_tools as tool}
-                  <li>{tool.name}</li>
-                {/each}
-              </ul>
-            </div>
-          {/if}
-        </div>
-      {/each}
+<ProtectedPage {clerkPublishableKey} {authEnabled} {user} let:user={currentUser}>
+  <div class="recipes-container">
+    <h1>Mes Recettes</h1>
+    
+    <div class="actions">
+      <button class="add-recipe-btn" on:click={() => showRecipeModal = true}>
+        + Ajouter une recette
+      </button>
     </div>
-  {/if}
-  
-  <!-- Recipe creation modal - déplacé en dehors de la boucle each -->
-  <RecipeCreateModal
-    showModal={showRecipeModal}
-    on:close={() => showRecipeModal = false}
-    on:recipeCreated={handleRecipeCreated}
-  />
-</div>
+    
+    {#if isLoading}
+      <p class="loading">Chargement des recettes...</p>
+    {:else if loadError}
+      <p class="error">Erreur: {loadError}</p>
+      <button class="retry-btn" on:click={fetchRecipes}>Réessayer</button>
+    {:else if recipesList.length === 0}
+      <p class="no-recipes">Aucune recette trouvée. Créez votre première recette !</p>
+    {:else}
+      <div class="recipes-grid">
+        {#each recipesList as recipe (recipe.id)}
+          <div class="recipe-card" transition:fade>
+            <div class="card-header">
+              <h2>{recipe.name}</h2>
+              <button
+                class="delete-btn"
+                title="Supprimer cette recette"
+                on:click|stopPropagation={() => deleteRecipe(recipe.id, recipe.name)}
+              >
+                &times;
+              </button>
+            </div>
+            
+            {#if recipe.description}
+              <p class="recipe-description">{recipe.description}</p>
+            {/if}
+            
+            <div class="recipe-meta">
+              <span><strong>Portions:</strong> {recipe.servings}</span>
+              {#if recipe.prep_time_minutes}
+                <span><strong>Préparation:</strong> {formatTime(recipe.prep_time_minutes)}</span>
+              {/if}
+              {#if recipe.cook_time_minutes}
+                <span><strong>Cuisson:</strong> {formatTime(recipe.cook_time_minutes)}</span>
+              {/if}
+              {#if recipe.season}
+                <span><strong>Saison:</strong> {getSeasonLabel(recipe.season)}</span>
+              {/if}
+            </div>
+            
+            <div class="recipe-ingredients">
+              <h3>Ingrédients</h3>
+              {#if recipe.ingredients && Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0}
+                {@const groupedIngredients = groupIngredientsByType(recipe.ingredients)}
+                
+                {#each Object.entries(groupedIngredients) as [type, ingredients]}
+                  <div class="ingredient-group">
+                    <h4>{getTypeLabel(type)}</h4>
+                    <ul>
+                      {#each ingredients as ingredient}
+                        <li>
+                          <span class="quantity">{ingredient.quantity}</span>
+                          <span class="unit">{ingredient.unit}</span>
+                          <span class="name">{ingredient.name}</span>
+                        </li>
+                      {/each}
+                    </ul>
+                  </div>
+                {/each}
+              {:else}
+                <p>Aucun ingrédient spécifié</p>
+              {/if}
+            </div>
+            
+            {#if recipe.instructions}
+              <div class="recipe-instructions">
+                <h3>Instructions</h3>
+                <p>{recipe.instructions}</p>
+              </div>
+            {/if}
+            
+            {#if recipe.kitchen_tools && Array.isArray(recipe.kitchen_tools) && recipe.kitchen_tools.length > 0}
+              <div class="recipe-tools">
+                <h3>Ustensiles</h3>
+                <ul>
+                  {#each recipe.kitchen_tools as tool}
+                    <li>{tool.name}</li>
+                  {/each}
+                </ul>
+              </div>
+            {/if}
+          </div>
+        {/each}
+      </div>
+    {/if}
+    
+    <!-- Recipe creation modal - déplacé en dehors de la boucle each -->
+    <RecipeCreateModal
+      showModal={showRecipeModal}
+      on:close={() => showRecipeModal = false}
+      on:recipeCreated={handleRecipeCreated}
+    />
+  </div>
+</ProtectedPage>
 
 <style>
   .recipes-container {
