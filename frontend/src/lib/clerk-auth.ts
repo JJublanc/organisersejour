@@ -13,9 +13,10 @@ export interface User {
 }
 
 /**
- * Initialize Clerk with publishable key
+ * Initialize Clerk with publishable key - Optimized version
  */
 let clerk: any = null;
+let clerkPromise: Promise<any> | null = null;
 
 export async function initializeClerk(publishableKey: string, options?: any): Promise<any> {
   if (typeof window === 'undefined') {
@@ -23,13 +24,86 @@ export async function initializeClerk(publishableKey: string, options?: any): Pr
     return null;
   }
   
-  if (!clerk) {
-    // Dynamic import to avoid SSR issues
-    const { Clerk } = await import('@clerk/clerk-js');
-    clerk = new Clerk(publishableKey, options);
-    await clerk.load();
+  // Return existing instance if already initialized
+  if (clerk) {
+    return clerk;
   }
-  return clerk;
+  
+  // Return existing promise if initialization is in progress
+  if (clerkPromise) {
+    return clerkPromise;
+  }
+  
+  // Start initialization
+  clerkPromise = (async () => {
+    try {
+      // Preload Clerk script for faster loading
+      await preloadClerkScript();
+      
+      // Dynamic import with timeout
+      const { Clerk } = await Promise.race([
+        import('@clerk/clerk-js'),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Clerk import timeout')), 10000)
+        )
+      ]) as any;
+      
+      clerk = new Clerk(publishableKey, {
+        ...options,
+        // Optimize loading options
+        appearance: {
+          ...options?.appearance,
+          layout: {
+            ...options?.appearance?.layout,
+            logoImageUrl: undefined, // Remove logo for faster loading
+          }
+        }
+      });
+      
+      // Load with timeout
+      await Promise.race([
+        clerk.load(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Clerk load timeout')), 15000)
+        )
+      ]);
+      
+      console.log('✅ Clerk initialized successfully');
+      return clerk;
+    } catch (error) {
+      console.error('❌ Clerk initialization failed:', error);
+      clerkPromise = null; // Reset promise to allow retry
+      throw error;
+    }
+  })();
+  
+  return clerkPromise;
+}
+
+/**
+ * Preload Clerk script for faster initialization
+ */
+async function preloadClerkScript(): Promise<void> {
+  return new Promise((resolve) => {
+    // Check if script is already loaded
+    if (document.querySelector('script[src*="clerk"]')) {
+      resolve();
+      return;
+    }
+    
+    // Create preload link
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'script';
+    link.href = 'https://js.clerk.com/v4/clerk.js';
+    link.onload = () => resolve();
+    link.onerror = () => resolve(); // Continue even if preload fails
+    
+    document.head.appendChild(link);
+    
+    // Fallback timeout
+    setTimeout(resolve, 2000);
+  });
 }
 
 /**

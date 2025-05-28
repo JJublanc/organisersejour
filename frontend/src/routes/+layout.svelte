@@ -1,11 +1,15 @@
 <script lang="ts">
   import ClerkProvider from '$lib/components/ClerkProvider.svelte';
+  import ClerkPreloader from '$lib/components/ClerkPreloader.svelte';
   import ClerkAuth from '$lib/components/ClerkAuth.svelte';
 
   export let data: any;
 
   $: ({ user, authEnabled, clerkPublishableKey } = data);
 </script>
+
+<!-- Preload Clerk resources as early as possible -->
+<ClerkPreloader publishableKey={clerkPublishableKey} />
 
 <svelte:head>
   <title>Organisateur de Séjour</title>

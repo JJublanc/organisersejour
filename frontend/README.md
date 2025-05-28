@@ -2,6 +2,30 @@
 
 This directory contains the SvelteKit frontend application for the "Organiser des Séjours" project.
 
+## 🔐 Authentication with Clerk
+
+This application uses **Clerk** for authentication, replacing the previous CloudFlare Zero Trust implementation.
+
+### Quick Start
+- **Development**: `npm run dev` (uses test keys from `.dev.vars`)
+- **Production Deployment**: See [QUICK_START_DEPLOYMENT.md](./QUICK_START_DEPLOYMENT.md)
+- **Migration Guide**: See [DEPLOYMENT_CLERK.md](./DEPLOYMENT_CLERK.md)
+- **Performance Guide**: See [PERFORMANCE_OPTIMIZATION.md](./PERFORMANCE_OPTIMIZATION.md)
+
+### Authentication Scripts
+- `./setup-production.sh` - Configure production deployment
+- `./verify-deployment.sh` - Verify deployment health
+- `./test-performance.sh` - Test authentication performance
+- `./migrate-to-clerk.sh` - Migrate from CloudFlare Zero Trust
+- `./rollback-clerk.sh` - Emergency rollback
+
+### Performance Features
+- ⚡ **Preload optimization** - Clerk resources loaded early
+- 🔄 **Async loading** - Non-blocking authentication initialization
+- ⏱️ **Timeout handling** - Graceful fallback on slow connections
+- 📊 **Progress feedback** - Visual loading indicators
+- 🚀 **Cache optimization** - Reuse of Clerk instances
+
 ## Based on SvelteKit
 
 Everything you need to build a Svelte project, powered by SvelteKit.
