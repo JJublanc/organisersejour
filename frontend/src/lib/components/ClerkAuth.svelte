@@ -1,24 +1,79 @@
 <script lang="ts">
-  import { redirectToSignIn, redirectToSignUp, signOut, type User } from '$lib/clerk-auth';
+  import { redirectToSignIn, redirectToSignUp, openSignIn, openSignUp, signOut, getClerk, type User } from '$lib/clerk-auth';
 
   export let user: User | null = null;
 
+  let isLoading = false;
+
   async function handleSignOut() {
+    if (isLoading) return;
+    
+    isLoading = true;
     try {
+      console.log('🔐 Signing out...');
       await signOut();
       // Reload the page to update the user state
       window.location.reload();
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('❌ Error signing out:', error);
+      alert('Erreur lors de la déconnexion. Veuillez réessayer.');
+    } finally {
+      isLoading = false;
     }
   }
 
   function handleSignIn() {
-    redirectToSignIn();
+    if (isLoading) return;
+    
+    console.log('🔐 Sign in button clicked');
+    isLoading = true;
+    
+    try {
+      const clerk = getClerk();
+      if (clerk && clerk.loaded) {
+        // Préférer le modal si Clerk est chargé
+        openSignIn();
+      } else {
+        // Fallback vers la redirection
+        redirectToSignIn();
+      }
+    } catch (error) {
+      console.error('❌ Error opening sign in:', error);
+      // Fallback final
+      window.location.href = '/sign-in';
+    } finally {
+      // Reset loading after a delay to prevent rapid clicks
+      setTimeout(() => {
+        isLoading = false;
+      }, 1000);
+    }
   }
 
   function handleSignUp() {
-    redirectToSignUp();
+    if (isLoading) return;
+    
+    console.log('🔐 Sign up button clicked');
+    isLoading = true;
+    
+    try {
+      const clerk = getClerk();
+      if (clerk && clerk.loaded) {
+        // Préférer le modal si Clerk est chargé
+        openSignUp();
+      } else {
+        // Fallback vers la redirection
+        redirectToSignUp();
+      }
+    } catch (error) {
+      console.error('❌ Error opening sign up:', error);
+      // Fallback final
+      window.location.href = '/sign-up';
+    } finally {
+      // Reset loading after a delay to prevent rapid clicks
+      setTimeout(() => {
+        isLoading = false;
+      }, 1000);
+    }
   }
 </script>
 
@@ -27,17 +82,47 @@
     <div class="user-info">
       <span class="user-name">Bonjour, {user.name}</span>
       <span class="user-email">({user.email})</span>
-      <button class="sign-out-btn" on:click={handleSignOut}>
-        Se déconnecter
+      <button
+        class="sign-out-btn"
+        class:loading={isLoading}
+        disabled={isLoading}
+        on:click={handleSignOut}
+      >
+        {#if isLoading}
+          <span class="spinner"></span>
+          Déconnexion...
+        {:else}
+          Se déconnecter
+        {/if}
       </button>
     </div>
   {:else}
     <div class="auth-buttons">
-      <button class="sign-in-btn" on:click={handleSignIn}>
-        Se connecter
+      <button
+        class="sign-in-btn"
+        class:loading={isLoading}
+        disabled={isLoading}
+        on:click={handleSignIn}
+      >
+        {#if isLoading}
+          <span class="spinner"></span>
+          Connexion...
+        {:else}
+          Se connecter
+        {/if}
       </button>
-      <button class="sign-up-btn" on:click={handleSignUp}>
-        S'inscrire
+      <button
+        class="sign-up-btn"
+        class:loading={isLoading}
+        disabled={isLoading}
+        on:click={handleSignUp}
+      >
+        {#if isLoading}
+          <span class="spinner"></span>
+          Inscription...
+        {:else}
+          S'inscrire
+        {/if}
       </button>
     </div>
   {/if}
@@ -105,5 +190,30 @@
 
   .sign-out-btn:hover {
     background-color: #c82333;
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  button.loading {
+    position: relative;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 0.5rem;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 </style>

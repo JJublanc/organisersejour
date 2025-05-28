@@ -16,6 +16,7 @@ This application uses **Clerk** for authentication, replacing the previous Cloud
 - `./setup-production.sh` - Configure production deployment
 - `./verify-deployment.sh` - Verify deployment health
 - `./test-performance.sh` - Test authentication performance
+- `./debug-clerk.sh` - Debug authentication issues
 - `./migrate-to-clerk.sh` - Migrate from CloudFlare Zero Trust
 - `./rollback-clerk.sh` - Emergency rollback
 

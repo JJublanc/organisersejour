@@ -154,8 +154,17 @@ export async function signOut(): Promise<void> {
  * Redirect to sign in
  */
 export function redirectToSignIn(): void {
-  if (clerk) {
+  console.log('🔐 Attempting to redirect to sign in...');
+  if (clerk && clerk.loaded) {
+    console.log('✅ Clerk loaded, redirecting...');
     clerk.redirectToSignIn();
+  } else if (clerk) {
+    console.log('⏳ Clerk not fully loaded, opening sign in...');
+    clerk.openSignIn();
+  } else {
+    console.warn('❌ Clerk not initialized, using fallback');
+    // Fallback: redirect to a sign-in page or show modal
+    window.location.href = '/sign-in';
   }
 }
 
@@ -163,7 +172,42 @@ export function redirectToSignIn(): void {
  * Redirect to sign up
  */
 export function redirectToSignUp(): void {
-  if (clerk) {
+  console.log('🔐 Attempting to redirect to sign up...');
+  if (clerk && clerk.loaded) {
+    console.log('✅ Clerk loaded, redirecting...');
     clerk.redirectToSignUp();
+  } else if (clerk) {
+    console.log('⏳ Clerk not fully loaded, opening sign up...');
+    clerk.openSignUp();
+  } else {
+    console.warn('❌ Clerk not initialized, using fallback');
+    // Fallback: redirect to a sign-up page or show modal
+    window.location.href = '/sign-up';
+  }
+}
+
+/**
+ * Open sign in modal
+ */
+export function openSignIn(): void {
+  console.log('🔐 Opening sign in modal...');
+  if (clerk) {
+    clerk.openSignIn();
+  } else {
+    console.warn('❌ Clerk not initialized, using redirect fallback');
+    redirectToSignIn();
+  }
+}
+
+/**
+ * Open sign up modal
+ */
+export function openSignUp(): void {
+  console.log('🔐 Opening sign up modal...');
+  if (clerk) {
+    clerk.openSignUp();
+  } else {
+    console.warn('❌ Clerk not initialized, using redirect fallback');
+    redirectToSignUp();
   }
 }
