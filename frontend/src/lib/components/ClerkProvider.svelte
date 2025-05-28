@@ -13,6 +13,7 @@
   let clerkLoaded = false;
   let clerkError: string | null = null;
   let currentUser: User | null = null;
+  let isInitializing = false;
 
   onMount(async () => {
     if (!publishableKey) {
@@ -27,7 +28,16 @@
     isInitializing = true;
 
     try {
-      await initializeClerk(publishableKey);
+      // Initialize Clerk with a timeout to avoid hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Clerk initialization timeout')), 10000)
+      );
+      
+      await Promise.race([
+        initializeClerk(publishableKey),
+        timeoutPromise
+      ]);
+      
       clerkLoaded = true;
       
       // Update user store with current user
@@ -38,6 +48,10 @@
     } catch (error) {
       console.error('Failed to initialize Clerk:', error);
       clerkError = 'Failed to initialize authentication';
+      // Don't block the UI completely on auth failure
+      clerkLoaded = true;
+    } finally {
+      isInitializing = false;
     }
   });
 
@@ -53,10 +67,16 @@
 {#if clerkError}
   <div class="clerk-error">
     <p>Authentication Error: {clerkError}</p>
+    <!-- Still render content even with auth error -->
+    <slot user={null} />
   </div>
 {:else if !clerkLoaded}
-  <div class="clerk-loading">
-    <p>Chargement de l'authentification...</p>
+  <!-- Show a minimal loading state that doesn't block the UI -->
+  <div class="clerk-loading-minimal">
+    <slot user={null} />
+    <div class="loading-indicator">
+      <span>Chargement de l'authentification...</span>
+    </div>
   </div>
 {:else if requireAuth && !isAuthenticated}
   <div class="auth-required">
@@ -77,12 +97,29 @@
     margin: 1rem 0;
   }
 
-  .clerk-loading {
+  .clerk-loading-minimal {
+    position: relative;
+  }
+
+  .loading-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
     background-color: #f0f8ff;
     border: 1px solid #cce;
     color: #336;
-    padding: 1rem;
+    padding: 0.5rem 1rem;
     border-radius: 4px;
-    margin: 1rem 0;
+    font-size: 0.875rem;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .auth-required {
+    text-align: center;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 2rem 0;
   }
 </style>
