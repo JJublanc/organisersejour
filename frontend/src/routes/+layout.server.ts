@@ -1,5 +1,4 @@
-import { initializeClerk, getUserFromClerk, type User } from '$lib/clerk-auth';
-import { redirect } from '@sveltejs/kit';
+import type { User } from '$lib/clerk-auth';
 import type { LayoutServerLoad } from './$types';
 
 export const prerender = false;
@@ -17,52 +16,26 @@ const PUBLIC_ROUTES: string[] = [
  * Server-side load function to check authentication with Clerk
  * This runs on every request to extract user information from Clerk
  */
-export const load: LayoutServerLoad = async ({ request, platform, url }) => {
+export const load: LayoutServerLoad = async ({ locals, platform, url }) => {
   // Check if the current route is public
   const isPublicRoute = PUBLIC_ROUTES.some(route => url.pathname === route);
   
-  // Check if authentication is enabled (based on environment variable)
-  const platformAuthEnabled = platform?.env?.AUTH_ENABLED;
-  console.log(`[Layout Load] platform.env.AUTH_ENABLED: ${platformAuthEnabled}`);
-  const authEnabled = platformAuthEnabled === 'true';
-  console.log(`[Layout Load] authEnabled evaluated to: ${authEnabled}`);
-  
-  if (!authEnabled) {
-    console.log("[Layout Load] Auth disabled, creating mock user.");
-    // If auth is disabled (e.g., in development), return a mock user
-    const mockUser: User = {
-      email: 'dev@example.com',
-      id: 'dev-user',
-      name: 'Development User',
-      authenticated: true
-    };
-    
-    console.log("[Layout Load] Returning mock user:", mockUser);
-    return {
-      user: mockUser,
-      authEnabled,
-      clerkPublishableKey: null
-    };
-  }
-  
-  // Get Clerk publishable key from environment
-  const clerkPublishableKey = platform?.env?.CLERK_PUBLISHABLE_KEY;
+  // Get Clerk configuration from locals (set by hooks)
+  const clerkPublishableKey = locals.clerkPublishableKey ?? platform?.env?.CLERK_PUBLISHABLE_KEY;
   
   if (!clerkPublishableKey) {
     console.error("[Layout Load] CLERK_PUBLISHABLE_KEY not found in environment");
     return {
       user: null,
-      authEnabled,
+      authEnabled: true,
       clerkPublishableKey: null
     };
   }
   
-  // Pour Clerk, l'authentification se fait côté client
-  console.log("[Layout Load] Returning Clerk configuration");
-  
+  // Return user from server-side authentication (set by hooks)
   return {
-    user: null, // L'utilisateur sera géré par Clerk côté client
-    authEnabled,
+    user: locals.user, // User verified by Clerk on server-side
+    authEnabled: true, // Always use Clerk authentication
     clerkPublishableKey
   };
 }

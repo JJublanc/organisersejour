@@ -22,6 +22,8 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			user: User | null; // Add the user property
+			clerkPublishableKey?: string;
+			authEnabled?: boolean;
 		}
 		// interface PageData {}
 		// interface PageState {}
