@@ -1,5 +1,4 @@
-import { initializeClerk, getUserFromClerk, type User } from '$lib/clerk-auth';
-import { redirect } from '@sveltejs/kit';
+import type { User } from '$lib/clerk-auth';
 import type { LayoutServerLoad } from './$types';
 
 export const prerender = false;
@@ -21,39 +20,22 @@ export const load: LayoutServerLoad = async ({ locals, platform, url }) => {
   // Check if the current route is public
   const isPublicRoute = PUBLIC_ROUTES.some(route => url.pathname === route);
   
-  // Get auth configuration from locals (set by hooks)
-  const authEnabled = locals.authEnabled ?? (platform?.env?.AUTH_ENABLED === 'true');
+  // Get Clerk configuration from locals (set by hooks)
   const clerkPublishableKey = locals.clerkPublishableKey ?? platform?.env?.CLERK_PUBLISHABLE_KEY;
-  
-  if (!authEnabled) {
-    // If auth is disabled (e.g., in development), return a mock user
-    const mockUser: User = {
-      email: 'dev@example.com',
-      id: 'dev-user',
-      name: 'Development User',
-      authenticated: true
-    };
-    
-    return {
-      user: mockUser,
-      authEnabled,
-      clerkPublishableKey: null
-    };
-  }
   
   if (!clerkPublishableKey) {
     console.error("[Layout Load] CLERK_PUBLISHABLE_KEY not found in environment");
     return {
       user: null,
-      authEnabled,
+      authEnabled: true,
       clerkPublishableKey: null
     };
   }
   
-  // Pour Clerk, l'authentification se fait côté client
+  // Return user from server-side authentication (set by hooks)
   return {
-    user: null, // L'utilisateur sera géré par Clerk côté client
-    authEnabled,
+    user: locals.user, // User verified by Clerk on server-side
+    authEnabled: true, // Always use Clerk authentication
     clerkPublishableKey
   };
 }
