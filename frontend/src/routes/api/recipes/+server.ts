@@ -52,14 +52,22 @@ export const GET: RequestHandler = async ({ platform, locals, url }) => {
     }
     const sql = getDbClient(dbUrl);
     
-    let user = locals.user;
-    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-    
-    // Pour Clerk, on utilise un utilisateur par défaut côté serveur
-    // L'authentification réelle se fait côté client
-    if (!user) {
-        user = { email: 'clerk-user@example.com', id: 'clerk-user', name: 'Clerk User', authenticated: true };
+    // For Clerk authentication, we'll use a default user ID
+    // TODO: Implement proper Clerk session verification
+    const clerkPublishableKey = platform?.env?.CLERK_PUBLISHABLE_KEY;
+    if (!clerkPublishableKey) {
+        throw error(500, 'Authentication not configured');
     }
+    
+    // Use a default user ID for Clerk-authenticated requests
+    const user = {
+        id: 'clerk-user',
+        email: 'clerk-user@example.com',
+        name: 'Clerk User',
+        authenticated: true
+    };
+    
+    
     
     const page = parseInt(url.searchParams.get('page') || '1');
     const limit = parseInt(url.searchParams.get('limit') || '20');
@@ -116,13 +124,22 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
     }
     const sql = getDbClient(dbUrl);
 
-    let user = locals.user;
-    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-    
-    // Pour Clerk, on utilise un utilisateur par défaut côté serveur
-    if (!user) {
-        user = { email: 'clerk-user@example.com', id: 'clerk-user', name: 'Clerk User', authenticated: true };
+    // For Clerk authentication, we'll use a default user ID
+    // TODO: Implement proper Clerk session verification
+    const clerkPublishableKey = platform?.env?.CLERK_PUBLISHABLE_KEY;
+    if (!clerkPublishableKey) {
+        throw error(500, 'Authentication not configured');
     }
+    
+    // Use a default user ID for Clerk-authenticated requests
+    const user = {
+        id: 'clerk-user',
+        email: 'clerk-user@example.com',
+        name: 'Clerk User',
+        authenticated: true
+    };
+    
+    
 
     try {
         const body: CreateRecipePayload = await request.json();
@@ -220,13 +237,22 @@ export const DELETE: RequestHandler = async ({ request, platform, locals, url })
     }
     const sql = getDbClient(dbUrl);
 
-    let user = locals.user;
-    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-    
-    // Pour Clerk, on utilise un utilisateur par défaut côté serveur
-    if (!user) {
-        user = { email: 'clerk-user@example.com', id: 'clerk-user', name: 'Clerk User', authenticated: true };
+    // For Clerk authentication, we'll use a default user ID
+    // TODO: Implement proper Clerk session verification
+    const clerkPublishableKey = platform?.env?.CLERK_PUBLISHABLE_KEY;
+    if (!clerkPublishableKey) {
+        throw error(500, 'Authentication not configured');
     }
+    
+    // Use a default user ID for Clerk-authenticated requests
+    const user = {
+        id: 'clerk-user',
+        email: 'clerk-user@example.com',
+        name: 'Clerk User',
+        authenticated: true
+    };
+    
+    
 
     try {
         const recipeIdParam = url.searchParams.get('id');

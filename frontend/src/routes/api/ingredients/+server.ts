@@ -3,7 +3,7 @@ import type { Ingredient } from '$lib/types';
 import { getNeonDbUrl, getDbClient } from '$lib/server/db';
 
 // --- GET Handler (Updated) ---
-export const GET: RequestHandler = async ({ platform, locals }) => {
+export const GET: RequestHandler = async ({ platform, locals, request }) => {
     const dbUrl = getNeonDbUrl(platform?.env);
     if (!dbUrl) {
         console.error("[API /api/ingredients GET] Neon Database URL not found for environment.");
@@ -11,13 +11,20 @@ export const GET: RequestHandler = async ({ platform, locals }) => {
     }
     const sql = getDbClient(dbUrl);
 
-    let user = locals.user;
-    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-    
-    // Pour Clerk, on utilise un utilisateur par défaut côté serveur
-    if (!user) {
-        user = { email: 'clerk-user@example.com', id: 'clerk-user', name: 'Clerk User', authenticated: true };
+    // For Clerk authentication, we'll use a default user ID
+    // TODO: Implement proper Clerk session verification
+    const clerkPublishableKey = platform?.env?.CLERK_PUBLISHABLE_KEY;
+    if (!clerkPublishableKey) {
+        throw error(500, 'Authentication not configured');
     }
+    
+    // Use a default user ID for Clerk-authenticated requests
+    const user = {
+        id: 'clerk-user',
+        email: 'clerk-user@example.com',
+        name: 'Clerk User',
+        authenticated: true
+    };
 
     try {
         console.log(`[API /api/ingredients GET] Fetching ingredients for user: ${user.id} and system ingredients`);
@@ -54,13 +61,20 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
     }
     const sql = getDbClient(dbUrl);
 
-    let user = locals.user;
-    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-    
-    // Pour Clerk, on utilise un utilisateur par défaut côté serveur
-    if (!user) {
-        user = { email: 'clerk-user@example.com', id: 'clerk-user', name: 'Clerk User', authenticated: true };
+    // For Clerk authentication, we'll use a default user ID
+    // TODO: Implement proper Clerk session verification
+    const clerkPublishableKey = platform?.env?.CLERK_PUBLISHABLE_KEY;
+    if (!clerkPublishableKey) {
+        throw error(500, 'Authentication not configured');
     }
+    
+    // Use a default user ID for Clerk-authenticated requests
+    const user = {
+        id: 'clerk-user',
+        email: 'clerk-user@example.com',
+        name: 'Clerk User',
+        authenticated: true
+    };
 
     try {
         const body = await request.json();
@@ -122,13 +136,20 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
      }
      const sql = getDbClient(dbUrl);
 
-     let user = locals.user;
-     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-     
-     // Pour Clerk, on utilise un utilisateur par défaut côté serveur
-     if (!user) {
-         user = { email: 'clerk-user@example.com', id: 'clerk-user', name: 'Clerk User', authenticated: true };
+     // For Clerk authentication, we'll use a default user ID
+     // TODO: Implement proper Clerk session verification
+     const clerkPublishableKey = platform?.env?.CLERK_PUBLISHABLE_KEY;
+     if (!clerkPublishableKey) {
+         throw error(500, 'Authentication not configured');
      }
+     
+     // Use a default user ID for Clerk-authenticated requests
+     const user = {
+         id: 'clerk-user',
+         email: 'clerk-user@example.com',
+         name: 'Clerk User',
+         authenticated: true
+     };
 
      try {
          const ingredientIdParam = url.searchParams.get('id');
