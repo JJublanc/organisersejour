@@ -1,29 +1,15 @@
-import { initializeClerk, getUserFromClerk, type User } from '$lib/clerk-auth';
 import type { Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
-  // Get Clerk publishable key from environment
-  const clerkPublishableKey = event.platform?.env?.CLERK_PUBLISHABLE_KEY || 
-                              process.env.CLERK_PUBLISHABLE_KEY;
+  // Ne pas initialiser Clerk côté serveur - cela se fait côté client
+  // Juste passer les variables d'environnement nécessaires
+  
+  // Attach environment info to locals for client-side use
+  event.locals.clerkPublishableKey = event.platform?.env?.CLERK_PUBLISHABLE_KEY || 
+                                     process.env.CLERK_PUBLISHABLE_KEY;
+  event.locals.authEnabled = event.platform?.env?.AUTH_ENABLED === 'true';
 
-  let user: User | null = null;
-
-  if (clerkPublishableKey) {
-    try {
-      // Initialize Clerk if we have a publishable key
-      await initializeClerk(clerkPublishableKey);
-      
-      // Get user from Clerk
-      user = getUserFromClerk();
-    } catch (error) {
-      console.error('Error initializing Clerk:', error);
-    }
-  }
-
-  // Attach user to locals
-  event.locals.user = user;
-
-  // Resolve the request
+  // Resolve the request without blocking
   const response = await resolve(event);
 
   return response;

@@ -23,6 +23,12 @@
       return;
     }
 
+    if (isInitializing) {
+      return; // Prevent multiple initializations
+    }
+
+    isInitializing = true;
+
     try {
       // Show immediate feedback
       loadingMessage = 'Chargement de l\'authentification...';
