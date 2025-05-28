@@ -3,10 +3,11 @@
   import type { PageData } from './$types';
   import type { Ingredient } from '$lib/types';
   import IngredientCreateModal from '$lib/components/IngredientCreateModal.svelte';
+  import ProtectedPage from '$lib/components/ProtectedPage.svelte';
   import { fade } from 'svelte/transition';
 
   export let data: PageData;
-  const { ingredients } = data;
+  const { ingredients, authEnabled, clerkPublishableKey, user } = data;
   
   // State for ingredient creation modal
   let showIngredientModal = false;
@@ -136,6 +137,7 @@
   }
 </script>
 
+<ProtectedPage {clerkPublishableKey} {authEnabled} {user} let:user={currentUser}>
 <div class="ingredients-container">
   <h1>Mes Ingrédients</h1>
   
@@ -185,6 +187,7 @@
     </div>
   {/if}
 </div>
+</ProtectedPage>
 
 <!-- Ingredient creation modal -->
 <IngredientCreateModal

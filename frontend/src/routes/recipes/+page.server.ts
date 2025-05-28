@@ -1,6 +1,6 @@
 import { error, type ServerLoad } from '@sveltejs/kit';
 import type { Recipe, RecipeIngredient, KitchenTool } from '$lib/types';
-import type { User } from '$lib/auth';
+import type { User } from '$lib/clerk-auth';
 import { getNeonDbUrl, getDbClient } from '$lib/server/db';
 
 export const load: ServerLoad = async ({ platform, locals, parent }) => {
@@ -17,14 +17,10 @@ export const load: ServerLoad = async ({ platform, locals, parent }) => {
     let user: User | null = parentData.user as User | null;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
 
-    if (authEnabled && (!user || !user.authenticated)) {
-        throw error(401, 'Authentication required');
-    }
-    if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
-    }
-    if (!user) { // Should be caught by authEnabled check or default user assignment
-        throw error(401, 'User context not available');
+    // Pour Clerk, on utilise un utilisateur par défaut côté serveur
+    // L'authentification réelle se fait côté client
+    if (!user) {
+        user = { email: 'clerk-user@example.com', id: 'clerk-user', name: 'Clerk User', authenticated: true };
     }
 
     try {
@@ -105,7 +101,14 @@ export const load: ServerLoad = async ({ platform, locals, parent }) => {
         }));
 
         console.log(`[Page /recipes] Successfully fetched ${recipesWithDetails.length} recipes with details.`);
-        return { recipes: recipesWithDetails };
+        
+        // Retourner aussi les données d'authentification pour les pages protégées
+        return {
+            recipes: recipesWithDetails,
+            authEnabled: platform?.env?.AUTH_ENABLED === 'true',
+            clerkPublishableKey: platform?.env?.CLERK_PUBLISHABLE_KEY || null,
+            user
+        };
 
     } catch (e: any) {
         console.error('[Page /recipes] Error fetching recipes:', e);

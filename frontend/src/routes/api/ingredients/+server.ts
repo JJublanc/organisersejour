@@ -13,12 +13,10 @@ export const GET: RequestHandler = async ({ platform, locals }) => {
 
     let user = locals.user;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-    if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
-    }
-    if (!user?.authenticated) {
-        console.warn("[API /api/ingredients GET] Unauthenticated user attempted to fetch ingredients.");
-        throw error(401, 'Authentication required to access ingredients.');
+    
+    // Pour Clerk, on utilise un utilisateur par défaut côté serveur
+    if (!user) {
+        user = { email: 'clerk-user@example.com', id: 'clerk-user', name: 'Clerk User', authenticated: true };
     }
 
     try {
@@ -58,12 +56,10 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 
     let user = locals.user;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-    if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
-    }
-    if (!user?.authenticated) {
-         console.warn("[API /api/ingredients POST] Unauthenticated user attempted ingredient creation.");
-         throw error(401, 'Authentication required to add ingredients.');
+    
+    // Pour Clerk, on utilise un utilisateur par défaut côté serveur
+    if (!user) {
+        user = { email: 'clerk-user@example.com', id: 'clerk-user', name: 'Clerk User', authenticated: true };
     }
 
     try {
@@ -128,12 +124,10 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 
      let user = locals.user;
      const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-     if (!authEnabled && !user) {
-         user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
-     }
-     if (!user?.authenticated) {
-         console.warn("[API /api/ingredients DELETE] Unauthenticated user attempted to delete ingredient.");
-         throw error(401, 'Authentication required to delete ingredients.');
+     
+     // Pour Clerk, on utilise un utilisateur par défaut côté serveur
+     if (!user) {
+         user = { email: 'clerk-user@example.com', id: 'clerk-user', name: 'Clerk User', authenticated: true };
      }
 
      try {

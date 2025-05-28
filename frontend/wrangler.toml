@@ -18,6 +18,10 @@ NEON_DEV_URL = ""
 NEON_PREPROD_URL = ""
 NEON_PROD_URL = ""
 NEON_PASSWORD = ""
+# Clerk Authentication - Ces clés seront définies dans .dev.vars pour le développement
+# et comme secrets dans le dashboard Cloudflare pour la production
+CLERK_PUBLISHABLE_KEY = ""
+CLERK_SECRET_KEY = ""
 
 # === ENVIRONNEMENT PREVIEW (PRÉPROD) ===
 [env.preview]
