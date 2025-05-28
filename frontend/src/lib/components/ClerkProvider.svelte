@@ -20,6 +20,12 @@
       return;
     }
 
+    if (isInitializing) {
+      return; // Prevent multiple initializations
+    }
+
+    isInitializing = true;
+
     try {
       await initializeClerk(publishableKey);
       clerkLoaded = true;
