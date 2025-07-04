@@ -16,8 +16,12 @@
   let isInitializing = false;
 
   onMount(async () => {
+    console.log('[ClerkProvider] Initializing with publishableKey:', publishableKey);
+    console.log('[ClerkProvider] Current URL:', window.location.href);
+    
     if (!publishableKey) {
       clerkError = 'Clerk publishable key is required';
+      console.error('[ClerkProvider] No publishable key provided');
       return;
     }
 
@@ -29,10 +33,11 @@
 
     try {
       // Initialize Clerk with a timeout to avoid hanging
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Clerk initialization timeout')), 10000)
       );
       
+      console.log('[ClerkProvider] Starting Clerk initialization...');
       await Promise.race([
         initializeClerk(publishableKey),
         timeoutPromise

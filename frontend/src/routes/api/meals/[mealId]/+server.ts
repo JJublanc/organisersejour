@@ -1,5 +1,6 @@
 import { json, error, type RequestHandler } from '@sveltejs/kit';
 import { getNeonDbUrl, getDbClient } from '$lib/server/db';
+import { getAuthenticatedUser } from '$lib/server/clerk-auth';
 import type { TransactionSql, PendingQuery } from 'postgres';
 
 // Define the expected structure for a component in the request body
@@ -31,23 +32,17 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
     }
     const sql = getDbClient(dbUrl);
 
-    // For Clerk authentication, we'll use a default user ID
-    // TODO: Implement proper Clerk session verification
-    const clerkPublishableKey = platform?.env?.CLERK_PUBLISHABLE_KEY;
-    if (!clerkPublishableKey) {
-        throw error(500, 'Authentication not configured');
+    // Get authenticated user from locals (set by hooks) or try to authenticate from request
+    let user = locals.user;
+    
+    if (!user) {
+        user = await getAuthenticatedUser(request, platform?.env);
     }
     
-    // Use a default user ID for Clerk-authenticated requests
-    const user = {
-        id: 'clerk-user',
-        email: 'clerk-user@example.com',
-        name: 'Clerk User',
-        authenticated: true
-    };
-    if (!user?.authenticated || !user.id) {
-        throw error(401, 'User not authenticated');
+    if (!user) {
+        throw error(401, 'Authentication required');
     }
+    
     const userId = user.id;
 
     if (!mealId || isNaN(parseInt(mealId))) {

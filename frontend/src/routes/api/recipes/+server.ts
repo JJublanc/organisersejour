@@ -1,6 +1,7 @@
 import { json, error, type RequestHandler } from '@sveltejs/kit';
 import type { Ingredient, KitchenTool } from '$lib/types'; // Import shared types
 import { getNeonDbUrl, getDbClient } from '$lib/server/db'; // Import Neon DB functions
+import { getAuthenticatedUser } from '$lib/server/clerk-auth';
 import type { Sql as PostgresSql, TransactionSql } from 'postgres'; // For typing sqltrx
 
 // Define the structure for a Recipe, including related data
@@ -42,7 +43,7 @@ interface CreateRecipePayload {
 
 
 // --- GET Handler (Updated for Pagination) ---
-export const GET: RequestHandler = async ({ platform, locals, url }) => {
+export const GET: RequestHandler = async ({ platform, locals, url, request }) => {
     console.log("[API /api/recipes GET] locals.user:", locals.user);
     
     const dbUrl = getNeonDbUrl(platform?.env);
@@ -52,20 +53,16 @@ export const GET: RequestHandler = async ({ platform, locals, url }) => {
     }
     const sql = getDbClient(dbUrl);
     
-    // For Clerk authentication, we'll use a default user ID
-    // TODO: Implement proper Clerk session verification
-    const clerkPublishableKey = platform?.env?.CLERK_PUBLISHABLE_KEY;
-    if (!clerkPublishableKey) {
-        throw error(500, 'Authentication not configured');
+    // Get authenticated user from locals (set by hooks) or try to authenticate from request
+    let user = locals.user;
+    
+    if (!user) {
+        user = await getAuthenticatedUser(request, platform?.env);
     }
     
-    // Use a default user ID for Clerk-authenticated requests
-    const user = {
-        id: 'clerk-user',
-        email: 'clerk-user@example.com',
-        name: 'Clerk User',
-        authenticated: true
-    };
+    if (!user) {
+        throw error(401, 'Authentication required');
+    }
     
     
     
@@ -124,20 +121,16 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
     }
     const sql = getDbClient(dbUrl);
 
-    // For Clerk authentication, we'll use a default user ID
-    // TODO: Implement proper Clerk session verification
-    const clerkPublishableKey = platform?.env?.CLERK_PUBLISHABLE_KEY;
-    if (!clerkPublishableKey) {
-        throw error(500, 'Authentication not configured');
+    // Get authenticated user from locals (set by hooks) or try to authenticate from request
+    let user = locals.user;
+    
+    if (!user) {
+        user = await getAuthenticatedUser(request, platform?.env);
     }
     
-    // Use a default user ID for Clerk-authenticated requests
-    const user = {
-        id: 'clerk-user',
-        email: 'clerk-user@example.com',
-        name: 'Clerk User',
-        authenticated: true
-    };
+    if (!user) {
+        throw error(401, 'Authentication required');
+    }
     
     
 
@@ -237,20 +230,16 @@ export const DELETE: RequestHandler = async ({ request, platform, locals, url })
     }
     const sql = getDbClient(dbUrl);
 
-    // For Clerk authentication, we'll use a default user ID
-    // TODO: Implement proper Clerk session verification
-    const clerkPublishableKey = platform?.env?.CLERK_PUBLISHABLE_KEY;
-    if (!clerkPublishableKey) {
-        throw error(500, 'Authentication not configured');
+    // Get authenticated user from locals (set by hooks) or try to authenticate from request
+    let user = locals.user;
+    
+    if (!user) {
+        user = await getAuthenticatedUser(request, platform?.env);
     }
     
-    // Use a default user ID for Clerk-authenticated requests
-    const user = {
-        id: 'clerk-user',
-        email: 'clerk-user@example.com',
-        name: 'Clerk User',
-        authenticated: true
-    };
+    if (!user) {
+        throw error(401, 'Authentication required');
+    }
     
     
 

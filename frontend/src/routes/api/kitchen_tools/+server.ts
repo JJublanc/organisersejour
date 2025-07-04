@@ -1,15 +1,27 @@
 import { json, error, type RequestHandler } from '@sveltejs/kit';
 import type { KitchenTool } from '$lib/types';
 import { getNeonDbUrl, getDbClient } from '$lib/server/db';
+import { getAuthenticatedUser } from '$lib/server/clerk-auth';
 
 // --- GET Handler ---
-export const GET: RequestHandler = async ({ platform }: { platform: App.Platform | undefined }) => {
+export const GET: RequestHandler = async ({ platform, request, locals }) => {
     const dbUrl = getNeonDbUrl(platform?.env);
     if (!dbUrl) {
         console.error("[API /api/kitchen_tools GET] Neon Database URL not found.");
         throw error(500, "Database connection information not found.");
     }
     const sql = getDbClient(dbUrl);
+
+    // Get authenticated user from locals (set by hooks) or try to authenticate from request
+    let user = locals.user;
+    
+    if (!user) {
+        user = await getAuthenticatedUser(request, platform?.env);
+    }
+    
+    if (!user) {
+        throw error(401, 'Authentication required');
+    }
 
     try {
         console.log("[API /api/kitchen_tools GET] Fetching all kitchen tools...");
@@ -33,22 +45,15 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
     }
     const sql = getDbClient(dbUrl);
 
-    // For Clerk authentication, we'll use a default user ID
-    // TODO: Implement proper Clerk session verification
-    const clerkPublishableKey = platform?.env?.CLERK_PUBLISHABLE_KEY;
-    if (!clerkPublishableKey) {
-        throw error(500, 'Authentication not configured');
+    // Get authenticated user from locals (set by hooks) or try to authenticate from request
+    let user = locals.user;
+    
+    if (!user) {
+        user = await getAuthenticatedUser(request, platform?.env);
     }
     
-    // Use a default user ID for Clerk-authenticated requests
-    const user = {
-        id: 'clerk-user',
-        email: 'clerk-user@example.com',
-        name: 'Clerk User',
-        authenticated: true
-    };
-    if (!user?.authenticated) {
-         throw error(401, 'Authentication required to add kitchen tools.');
+    if (!user) {
+        throw error(401, 'Authentication required');
     }
 
     try {
@@ -91,20 +96,16 @@ export const DELETE: RequestHandler = async ({ request, platform, locals, url })
     }
     const sql = getDbClient(dbUrl);
     
-    // For Clerk authentication, we'll use a default user ID
-    // TODO: Implement proper Clerk session verification
-    const clerkPublishableKey = platform?.env?.CLERK_PUBLISHABLE_KEY;
-    if (!clerkPublishableKey) {
-        throw error(500, 'Authentication not configured');
+    // Get authenticated user from locals (set by hooks) or try to authenticate from request
+    let user = locals.user;
+    
+    if (!user) {
+        user = await getAuthenticatedUser(request, platform?.env);
     }
     
-    // Use a default user ID for Clerk-authenticated requests
-    const user = {
-        id: 'clerk-user',
-        email: 'clerk-user@example.com',
-        name: 'Clerk User',
-        authenticated: true
-    };
+    if (!user) {
+        throw error(401, 'Authentication required');
+    }
     
     try {
         const toolIdParam = url.searchParams.get('id');
