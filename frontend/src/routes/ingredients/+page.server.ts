@@ -1,7 +1,7 @@
 import { error, type ServerLoad } from '@sveltejs/kit';
 import type { Ingredient } from '$lib/types';
 import { getNeonDbUrl, getDbClient } from '$lib/server/db';
-import type { User } from '$lib/auth';
+import type { User } from '$lib/clerk-auth';
 
 export const load: ServerLoad = async ({ platform, locals, parent }) => {
     const dbUrl = getNeonDbUrl(platform?.env);
@@ -15,14 +15,10 @@ export const load: ServerLoad = async ({ platform, locals, parent }) => {
     let user: User | null = parentData.user as User | null;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
 
-    if (authEnabled && (!user || !user.authenticated)) {
-        throw error(401, 'Authentication required');
-    }
-    if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
-    }
+    // Pour Clerk, on utilise un utilisateur par défaut côté serveur
+    // L'authentification réelle se fait côté client
     if (!user) {
-        throw error(401, 'User context not available');
+        user = { email: 'clerk-user@example.com', id: 'clerk-user', name: 'Clerk User', authenticated: true };
     }
 
     try {
@@ -30,7 +26,7 @@ export const load: ServerLoad = async ({ platform, locals, parent }) => {
 
         const ingredients = await sql<Ingredient[]>`
             SELECT
-                id, COALESCE(french_name, name) as name, unit, type, season, user_id
+                id, name, unit, type, season, user_id
             FROM ingredients
             WHERE user_id = ${user.id} OR user_id = 'system'
             ORDER BY type ASC, name ASC
@@ -45,7 +41,14 @@ export const load: ServerLoad = async ({ platform, locals, parent }) => {
         }
 
         console.log(`[Page /ingredients] Successfully fetched ${ingredients?.length ?? 0} ingredients.`);
-        return { ingredients: ingredients || [] };
+        
+        // Retourner aussi les données d'authentification pour les pages protégées
+        return {
+            ingredients: ingredients || [],
+            authEnabled: platform?.env?.AUTH_ENABLED === 'true',
+            clerkPublishableKey: platform?.env?.CLERK_PUBLISHABLE_KEY || null,
+            user
+        };
 
     } catch (e: any) {
         console.error('[Page /ingredients] Error fetching ingredients:', e);

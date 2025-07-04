@@ -1,11 +1,13 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import type { TripDay } from '$lib/types';
   import MealPlanner from '$lib/components/MealPlanner.svelte'; // Import the MealPlanner component
   import type { ShoppingListItem } from '$lib/types'; // Import ShoppingListItem from $lib/types
 
   export let data: PageData; // Data loaded from +page.server.ts
 
   let shoppingList: ShoppingListItem[] = [];
+  let pdfData: string | null = null;
   let isLoadingShoppingList = false;
   let shoppingListError: string | null = null;
 
@@ -36,7 +38,9 @@
           }
           const result = await response.json();
           shoppingList = result.shoppingList || [];
+          pdfData = result.pdfData || null; // Store PDF data for download button
           console.log(`Fetched ${shoppingList.length} items for shopping list.`);
+          console.log(`PDF data available: ${!!pdfData}`);
           if (shoppingList.length === 0) {
               shoppingListError = "Aucun ingrédient requis pour les repas planifiés."; // Informative message if empty
           }
@@ -48,6 +52,27 @@
       }
   }
 
+async function downloadShoppingListPdf() {
+    console.log("Download PDF button clicked");
+    try {
+        if (!pdfData) {
+            throw new Error("No PDF data available. Please generate the shopping list first.");
+        }
+        
+        console.log("Creating download link...");
+        const link = document.createElement('a');
+        link.href = `data:application/pdf;base64,${pdfData}`;
+        link.download = `Liste_de_courses_${data.trip.name}.pdf`;
+        document.body.appendChild(link); // Add to DOM
+        link.click();
+        document.body.removeChild(link); // Remove from DOM
+        
+        console.log("PDF download triggered successfully");
+    } catch (err: any) {
+        console.error("Error downloading PDF:", err);
+        shoppingListError = err.message || "Could not download PDF.";
+    }
+}
 </script>
 
 <div class="trip-detail-container">
@@ -67,7 +92,7 @@
     <h2>Planificateur de Repas</h2>
     {#if data.days && data.days.length > 0}
        <!-- Render the MealPlanner component -->
-       <MealPlanner days={data.days} />
+       <MealPlanner days={data.days as TripDay[]} />
     {:else}
       <p>Les jours et repas pour ce séjour n'ont pas pu être chargés ou générés.</p>
       <!-- This might indicate an issue during trip creation -->
@@ -80,6 +105,9 @@
       <h2>Liste de Courses</h2>
       <button class="generate-button" on:click={generateShoppingList} disabled={isLoadingShoppingList}>
           {isLoadingShoppingList ? 'Génération...' : 'Générer la Liste de Courses'}
+      </button>
+      <button class="download-button" on:click={downloadShoppingListPdf} disabled={!pdfData}>
+          Télécharger la Liste de Courses (PDF)
       </button>
 
       {#if isLoadingShoppingList}
@@ -209,4 +237,22 @@
    }
 
   /* Add more specific styles as components are added */
+.download-button {
+    padding: 0.75rem 1.5rem;
+    background-color: #28a745; /* Green color */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    margin-left: 1rem;
+}
+.download-button:hover {
+    background-color: #218838;
+}
+.download-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
 </style>

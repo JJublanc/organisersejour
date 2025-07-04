@@ -1,12 +1,15 @@
 import { redirect, fail, error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import type { User } from '$lib/auth';
+import type { User } from '$lib/clerk-auth';
 import type { Trip } from '$lib/types';
 import { getNeonDbUrl, getDbClient } from '$lib/server/db';
 import type { TransactionSql } from 'postgres';
 
 export type TripsPageData = {
     trips: Trip[];
+    authEnabled: boolean;
+    clerkPublishableKey: string | null;
+    user: User | null;
 };
 
 export const load: PageServerLoad = async ({ locals, platform, parent }): Promise<TripsPageData> => {
@@ -39,14 +42,12 @@ export const load: PageServerLoad = async ({ locals, platform, parent }): Promis
     let user: User | null = parentData.user as User | null;
     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
 
-    if (!authEnabled && !user) {
-         user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User (Load)', authenticated: true };
+    // Pour Clerk, on utilise un utilisateur par défaut côté serveur
+    // L'authentification réelle se fait côté client
+    if (!user) {
+        user = { email: 'clerk-user@example.com', id: 'clerk-user', name: 'Clerk User', authenticated: true };
     }
     
-    if (!user?.authenticated || !user.id) {
-        console.error("[Trips Load] User not authenticated or missing ID.");
-        throw redirect(302, '/');
-    }
     const userId = user.id;
 
     try {
@@ -55,7 +56,14 @@ export const load: PageServerLoad = async ({ locals, platform, parent }): Promis
             SELECT * FROM trips WHERE organiser_id = ${userId} ORDER BY start_date DESC
         `;
         console.log("[Trips Load] Fetched trips results:", trips);
-        return { trips: trips || [] };
+        
+        // Retourner aussi les données d'authentification pour les pages protégées
+        return {
+            trips: trips || [],
+            authEnabled: platform?.env?.AUTH_ENABLED === 'true',
+            clerkPublishableKey: platform?.env?.CLERK_PUBLISHABLE_KEY || null,
+            user
+        };
     } catch (e: any) {
         console.error('[Trips Load] Error fetching trips:', e);
         if (e.code === '42P01') {

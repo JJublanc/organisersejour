@@ -1,9 +1,10 @@
 import { json, error, type RequestHandler } from '@sveltejs/kit';
 import type { KitchenTool } from '$lib/types';
 import { getNeonDbUrl, getDbClient } from '$lib/server/db';
+import { getAuthenticatedUser } from '$lib/server/clerk-auth';
 
 // --- GET Handler ---
-export const GET: RequestHandler = async ({ platform }: { platform: App.Platform | undefined }) => {
+export const GET: RequestHandler = async ({ platform, request, locals }) => {
     const dbUrl = getNeonDbUrl(platform?.env);
     if (!dbUrl) {
         console.error("[API /api/kitchen_tools GET] Neon Database URL not found.");
@@ -11,10 +12,21 @@ export const GET: RequestHandler = async ({ platform }: { platform: App.Platform
     }
     const sql = getDbClient(dbUrl);
 
+    // Get authenticated user from locals (set by hooks) or try to authenticate from request
+    let user = locals.user;
+    
+    if (!user) {
+        user = await getAuthenticatedUser(request, platform?.env);
+    }
+    
+    if (!user) {
+        throw error(401, 'Authentication required');
+    }
+
     try {
         console.log("[API /api/kitchen_tools GET] Fetching all kitchen tools...");
         const kitchenTools = await sql<KitchenTool[]>`
-            SELECT id, COALESCE(french_name, name) as name FROM kitchen_tools ORDER BY name ASC
+            SELECT id, name FROM kitchen_tools ORDER BY name ASC
         `;
         console.log(`[API /api/kitchen_tools GET] Successfully fetched ${kitchenTools?.length ?? 0} kitchen tools.`);
         return json({ kitchen_tools: kitchenTools || [] });
@@ -33,13 +45,15 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
     }
     const sql = getDbClient(dbUrl);
 
+    // Get authenticated user from locals (set by hooks) or try to authenticate from request
     let user = locals.user;
-    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-    if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+    
+    if (!user) {
+        user = await getAuthenticatedUser(request, platform?.env);
     }
-    if (!user?.authenticated) {
-         throw error(401, 'Authentication required to add kitchen tools.');
+    
+    if (!user) {
+        throw error(401, 'Authentication required');
     }
 
     try {
@@ -82,13 +96,15 @@ export const DELETE: RequestHandler = async ({ request, platform, locals, url })
     }
     const sql = getDbClient(dbUrl);
     
+    // Get authenticated user from locals (set by hooks) or try to authenticate from request
     let user = locals.user;
-    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-    if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+    
+    if (!user) {
+        user = await getAuthenticatedUser(request, platform?.env);
     }
-    if (!user?.authenticated) {
-        throw error(401, 'Authentication required to delete kitchen tools.');
+    
+    if (!user) {
+        throw error(401, 'Authentication required');
     }
     
     try {

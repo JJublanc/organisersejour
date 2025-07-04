@@ -1,5 +1,6 @@
 import { json, error, type RequestHandler } from '@sveltejs/kit';
 import { getNeonDbUrl, getDbClient } from '$lib/server/db';
+import { getAuthenticatedUser } from '$lib/server/clerk-auth';
 import type { TransactionSql } from 'postgres';
 
 // --- DELETE Handler ---
@@ -11,14 +12,15 @@ export const DELETE: RequestHandler = async ({ request, platform, locals, url })
     }
     const sql = getDbClient(dbUrl);
     
+    // Get authenticated user from locals (set by hooks) or try to authenticate from request
     let user = locals.user;
-    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-    if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+    
+    if (!user) {
+        user = await getAuthenticatedUser(request, platform?.env);
     }
-    if (!user?.authenticated || !user.id) { // Ensure user.id exists
-        console.warn("[API /api/trips DELETE] Unauthenticated user or missing user ID.");
-        throw error(401, 'Authentication required to delete trips.');
+    
+    if (!user) {
+        throw error(401, 'Authentication required');
     }
     
     try {

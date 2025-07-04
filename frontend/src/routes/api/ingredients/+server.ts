@@ -1,9 +1,10 @@
 import { json, error, type RequestHandler } from '@sveltejs/kit';
 import type { Ingredient } from '$lib/types';
 import { getNeonDbUrl, getDbClient } from '$lib/server/db';
+import { getAuthenticatedUser } from '$lib/server/clerk-auth';
 
 // --- GET Handler (Updated) ---
-export const GET: RequestHandler = async ({ platform, locals }) => {
+export const GET: RequestHandler = async ({ platform, locals, request }) => {
     const dbUrl = getNeonDbUrl(platform?.env);
     if (!dbUrl) {
         console.error("[API /api/ingredients GET] Neon Database URL not found for environment.");
@@ -11,21 +12,22 @@ export const GET: RequestHandler = async ({ platform, locals }) => {
     }
     const sql = getDbClient(dbUrl);
 
+    // Get authenticated user from locals (set by hooks) or try to authenticate from request
     let user = locals.user;
-    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-    if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+    
+    if (!user) {
+        user = await getAuthenticatedUser(request, platform?.env);
     }
-    if (!user?.authenticated) {
-        console.warn("[API /api/ingredients GET] Unauthenticated user attempted to fetch ingredients.");
-        throw error(401, 'Authentication required to access ingredients.');
+    
+    if (!user) {
+        throw error(401, 'Authentication required');
     }
 
     try {
         console.log(`[API /api/ingredients GET] Fetching ingredients for user: ${user.id} and system ingredients`);
         // Using tagged template literal for the query
         const ingredients = await sql<Ingredient[]>`
-            SELECT id, COALESCE(french_name, name) as name, unit, type, season, user_id
+            SELECT id, name, unit, type, season, user_id
             FROM ingredients
             WHERE user_id = ${user.id} OR user_id = 'system'
             ORDER BY type ASC, name ASC
@@ -56,14 +58,15 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
     }
     const sql = getDbClient(dbUrl);
 
+    // Get authenticated user from locals (set by hooks) or try to authenticate from request
     let user = locals.user;
-    const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-    if (!authEnabled && !user) {
-        user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+    
+    if (!user) {
+        user = await getAuthenticatedUser(request, platform?.env);
     }
-    if (!user?.authenticated) {
-         console.warn("[API /api/ingredients POST] Unauthenticated user attempted ingredient creation.");
-         throw error(401, 'Authentication required to add ingredients.');
+    
+    if (!user) {
+        throw error(401, 'Authentication required');
     }
 
     try {
@@ -126,14 +129,15 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
      }
      const sql = getDbClient(dbUrl);
 
+     // Get authenticated user from locals (set by hooks) or try to authenticate from request
      let user = locals.user;
-     const authEnabled = platform?.env?.AUTH_ENABLED === 'true';
-     if (!authEnabled && !user) {
-         user = { email: 'dev@example.com', id: 'dev-user', name: 'Development User', authenticated: true };
+     
+     if (!user) {
+         user = await getAuthenticatedUser(request, platform?.env);
      }
-     if (!user?.authenticated) {
-         console.warn("[API /api/ingredients DELETE] Unauthenticated user attempted to delete ingredient.");
-         throw error(401, 'Authentication required to delete ingredients.');
+     
+     if (!user) {
+         throw error(401, 'Authentication required');
      }
 
      try {
