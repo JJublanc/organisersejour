@@ -26,7 +26,22 @@ export async function initializeClerk(publishableKey: string, options?: any): Pr
   if (!clerk) {
     // Dynamic import to avoid SSR issues
     const { Clerk } = await import('@clerk/clerk-js');
-    clerk = new Clerk(publishableKey, options);
+    
+    // SOLUTION PROXY : Utilise notre proxy partout car le custom domain cause des CORS
+    const isLocalhost = window.location.hostname === 'localhost';
+    const proxyUrl = isLocalhost
+      ? 'http://localhost:8788/api/clerk-proxy'
+      : 'https://organisersejour.pages.dev/api/clerk-proxy';
+      
+    const clerkOptions = {
+      ...options,
+      proxyUrl
+    };
+    
+    console.log('[Clerk] PROXY: Utilisation du proxy pour contourner le custom domain');
+    console.log('[Clerk] Proxy URL:', proxyUrl);
+    
+    clerk = new Clerk(publishableKey, clerkOptions);
     await clerk.load();
   }
   return clerk;
