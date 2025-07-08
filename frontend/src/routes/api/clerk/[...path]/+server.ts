@@ -1,24 +1,23 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
 
-export const GET: RequestHandler = async ({ params, url, request }) => {
-	return handleClerkProxy(params, url, request, 'GET');
+export const GET: RequestHandler = async ({ params, url, request, platform }) => {
+	return handleClerkProxy(params, url, request, 'GET', platform);
 };
 
-export const POST: RequestHandler = async ({ params, url, request }) => {
-	return handleClerkProxy(params, url, request, 'POST');
+export const POST: RequestHandler = async ({ params, url, request, platform }) => {
+	return handleClerkProxy(params, url, request, 'POST', platform);
 };
 
-export const PUT: RequestHandler = async ({ params, url, request }) => {
-	return handleClerkProxy(params, url, request, 'PUT');
+export const PUT: RequestHandler = async ({ params, url, request, platform }) => {
+	return handleClerkProxy(params, url, request, 'PUT', platform);
 };
 
-export const DELETE: RequestHandler = async ({ params, url, request }) => {
-	return handleClerkProxy(params, url, request, 'DELETE');
+export const DELETE: RequestHandler = async ({ params, url, request, platform }) => {
+	return handleClerkProxy(params, url, request, 'DELETE', platform);
 };
 
-export const PATCH: RequestHandler = async ({ params, url, request }) => {
-	return handleClerkProxy(params, url, request, 'PATCH');
+export const PATCH: RequestHandler = async ({ params, url, request, platform }) => {
+	return handleClerkProxy(params, url, request, 'PATCH', platform);
 };
 
 export const OPTIONS: RequestHandler = async () => {
@@ -36,7 +35,8 @@ async function handleClerkProxy(
 	params: any,
 	url: URL,
 	request: Request,
-	method: string
+	method: string,
+	platform: any
 ): Promise<Response> {
 	try {
 		// Construire le path vers l'API Clerk
@@ -54,7 +54,7 @@ async function handleClerkProxy(
 		
 		// Ajouter les headers requis par Clerk
 		headers.set('Clerk-Proxy-Url', 'https://organisersejour.pages.dev/api/clerk');
-		headers.set('Clerk-Secret-Key', env.CLERK_SECRET_KEY || '');
+		headers.set('Clerk-Secret-Key', platform?.env?.CLERK_SECRET_KEY || '');
 		
 		// Ajouter X-Forwarded-For avec l'IP du client
 		const clientIP = request.headers.get('cf-connecting-ip') || 
