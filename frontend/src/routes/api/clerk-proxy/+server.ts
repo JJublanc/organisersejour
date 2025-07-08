@@ -50,9 +50,10 @@ async function handleClerkProxy(
     // Récupérer la configuration depuis les variables d'environnement
     const env = platform?.env;
     const useClerkProxy = env?.USE_CLERK_PROXY === 'true';
-    const clerkApiUrl = env?.CLERK_API_URL || 'https://api.clerk.com';
+    const clerkApiUrl = 'https://frontend-api.clerk.dev'; // URL correcte selon la doc
     const clerkSecretKey = env?.CLERK_SECRET_KEY;
     const environment = env?.ENVIRONMENT || 'dev';
+    const proxyUrl = env?.CLERK_PROXY_URL;
     
     // Récupérer l'origine pour CORS
     const origin = request.headers.get('origin') || 'http://localhost:8788';
@@ -77,7 +78,7 @@ async function handleClerkProxy(
 
     // Extraire le path depuis l'URL (tout après /api/clerk-proxy/)
     const pathMatch = url.pathname.match(/\/api\/clerk-proxy\/(.*)$/);
-    const path = pathMatch ? pathMatch[1] : 'v1/client';
+    const path = pathMatch ? pathMatch[1] : 'v1/environment';
     
     // Construire l'URL de destination
     const targetUrl = new URL(`/${path}`, clerkApiUrl);
@@ -92,24 +93,18 @@ async function handleClerkProxy(
     // Préparer les headers pour la requête vers Clerk
     const headers = new Headers();
     
-    // Copier les headers importants de la requête originale
-    const importantHeaders = [
-      'content-type',
-      'user-agent',
-      'accept',
-      'accept-language',
-      'cache-control'
-    ];
-    
-    importantHeaders.forEach(headerName => {
-      const value = request.headers.get(headerName);
-      if (value) {
-        headers.set(headerName, value);
-      }
-    });
+    // Copier TOUS les headers de la requête originale (selon la doc Clerk)
+    for (const [key, value] of request.headers.entries()) {
+      headers.set(key, value);
+    }
 
-    // Ajouter l'authentification Clerk
-    headers.set('Authorization', `Bearer ${clerkSecretKey}`);
+    // Ajouter les 3 headers requis par Clerk
+    headers.set('Clerk-Secret-Key', clerkSecretKey);
+    headers.set('Clerk-Proxy-Url', proxyUrl || url.origin + '/api/clerk-proxy');
+    headers.set('X-Forwarded-For', request.headers.get('cf-connecting-ip') ||
+                                   request.headers.get('x-forwarded-for') ||
+                                   request.headers.get('x-real-ip') ||
+                                   '127.0.0.1');
 
     // Préparer le body de la requête si nécessaire
     let body: string | FormData | null = null;
