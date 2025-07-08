@@ -30,8 +30,8 @@ export async function initializeClerk(publishableKey: string, options?: any): Pr
     // SOLUTION PROXY : Utilise notre proxy partout car le custom domain cause des CORS
     const isLocalhost = window.location.hostname === 'localhost';
     const proxyUrl = isLocalhost
-      ? 'http://localhost:8788/api/clerk-proxy'
-      : 'https://organisersejour.pages.dev/api/clerk-proxy';
+      ? 'http://localhost:8788/api/clerk'
+      : 'https://organisersejour.pages.dev/api/clerk';
       
     const clerkOptions = {
       ...options,
