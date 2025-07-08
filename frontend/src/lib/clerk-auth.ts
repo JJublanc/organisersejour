@@ -13,21 +13,66 @@ export interface User {
 }
 
 /**
- * Initialize Clerk with publishable key
+ * Clerk configuration options
+ */
+export interface ClerkOptions {
+  useProxy?: boolean;
+  proxyUrl?: string;
+  apiUrl?: string;
+  environment?: string;
+}
+
+/**
+ * Initialize Clerk with publishable key and proxy support
  */
 let clerk: any = null;
 
-export async function initializeClerk(publishableKey: string, options?: any): Promise<any> {
+export async function initializeClerk(publishableKey: string, options?: ClerkOptions): Promise<any> {
   if (typeof window === 'undefined') {
     // Server-side: return mock for now
     return null;
   }
   
+  // 🔍 DIAGNOSTIC LOGS
+  console.log('🔍 [DIAGNOSTIC] Clerk publishableKey:', publishableKey);
+  console.log('🔍 [DIAGNOSTIC] Current origin:', window.location.origin);
+  console.log('🔍 [DIAGNOSTIC] Current URL:', window.location.href);
+  console.log('🔍 [DIAGNOSTIC] Clerk options:', options);
+  
+  // Vérifier le format de la clé
+  if (publishableKey.includes('organisersejour.pages.dev')) {
+    console.error('❌ [DIAGNOSTIC] PROBLÈME DÉTECTÉ: Clé Clerk configurée pour domaine personnalisé!');
+    console.error('❌ [DIAGNOSTIC] Cette clé ne fonctionnera qu\'en production sur organisersejour.pages.dev');
+    console.error('❌ [DIAGNOSTIC] Pour le développement local, utilisez une clé pk_test_... standard');
+  }
+  
   if (!clerk) {
     // Dynamic import to avoid SSR issues
     const { Clerk } = await import('@clerk/clerk-js');
-    clerk = new Clerk(publishableKey, options);
+    
+    // Préparer les options Clerk avec support du proxy
+    const clerkOptions: any = { ...options };
+    
+    // Si le proxy est activé ET que l'URL est fournie, configurer le proxy
+    if (options?.useProxy && options?.proxyUrl) {
+      console.log('🔍 [DIAGNOSTIC] Proxy Clerk activé:', options.proxyUrl);
+      clerkOptions.proxyUrl = options.proxyUrl;
+    } else {
+      console.log('🔍 [DIAGNOSTIC] Proxy Clerk désactivé - utilisation directe de l\'API Clerk');
+      // Ne pas configurer proxyUrl du tout pour que Clerk utilise l'API directement
+    }
+    
+    // Configurer l'URL de l'API si spécifiée
+    if (options?.apiUrl) {
+      clerkOptions.apiUrl = options.apiUrl;
+    }
+    
+    console.log('🔍 [DIAGNOSTIC] Initializing Clerk with options:', clerkOptions);
+    clerk = new Clerk(publishableKey, clerkOptions);
+    
+    console.log('🔍 [DIAGNOSTIC] Clerk instance created, loading...');
     await clerk.load();
+    console.log('🔍 [DIAGNOSTIC] Clerk loaded successfully');
   }
   return clerk;
 }
@@ -80,8 +125,12 @@ export async function signOut(): Promise<void> {
  * Redirect to sign in
  */
 export function redirectToSignIn(): void {
+  console.log('[Clerk] redirectToSignIn called, clerk instance:', !!clerk);
   if (clerk) {
+    console.log('[Clerk] Calling clerk.redirectToSignIn()');
     clerk.redirectToSignIn();
+  } else {
+    console.error('[Clerk] Clerk instance not available for redirectToSignIn');
   }
 }
 
@@ -89,7 +138,11 @@ export function redirectToSignIn(): void {
  * Redirect to sign up
  */
 export function redirectToSignUp(): void {
+  console.log('[Clerk] redirectToSignUp called, clerk instance:', !!clerk);
   if (clerk) {
+    console.log('[Clerk] Calling clerk.redirectToSignUp()');
     clerk.redirectToSignUp();
+  } else {
+    console.error('[Clerk] Clerk instance not available for redirectToSignUp');
   }
 }

@@ -1,0 +1,19 @@
+# Clerk Authentication - Development Keys
+# Remplacez par vos vraies clés de développement Clerk
+CLERK_PUBLISHABLE_KEY=pk_test_your_dev_key_here
+CLERK_SECRET_KEY=sk_test_your_dev_secret_here
+
+# Clerk Proxy Configuration
+# En développement, le proxy est désactivé par défaut pour simplifier le debug
+USE_CLERK_PROXY=false
+CLERK_PROXY_URL=http://localhost:5173/api/__clerk
+CLERK_API_URL=https://api.clerk.com
+
+# Database Configuration - Neon PostgreSQL
+# Remplacez par votre vraie URL de base de données Neon
+NEON_DEV_URL=postgresql://username:password@host/database
+NEON_PASSWORD=your_neon_password_here
+
+# Environment
+ENVIRONMENT=dev
+AUTH_ENABLED=true
