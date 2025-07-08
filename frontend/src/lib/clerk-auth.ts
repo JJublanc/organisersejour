@@ -30,7 +30,7 @@ export async function initializeClerk(publishableKey: string, options?: any): Pr
     // SOLUTION PROXY : Utilise notre proxy partout car le custom domain cause des CORS
     const isLocalhost = window.location.hostname === 'localhost';
     const proxyUrl = isLocalhost
-      ? 'http://localhost:8788/api/clerk'
+      ? `${window.location.protocol}//${window.location.host}/api/clerk`
       : 'https://organisersejour.pages.dev/api/clerk';
       
     const clerkOptions = {
@@ -95,8 +95,12 @@ export async function signOut(): Promise<void> {
  * Redirect to sign in
  */
 export function redirectToSignIn(): void {
+  console.log('[Clerk] redirectToSignIn called, clerk instance:', !!clerk);
   if (clerk) {
+    console.log('[Clerk] Calling clerk.redirectToSignIn()');
     clerk.redirectToSignIn();
+  } else {
+    console.error('[Clerk] Clerk instance not available for redirectToSignIn');
   }
 }
 
@@ -104,7 +108,11 @@ export function redirectToSignIn(): void {
  * Redirect to sign up
  */
 export function redirectToSignUp(): void {
+  console.log('[Clerk] redirectToSignUp called, clerk instance:', !!clerk);
   if (clerk) {
+    console.log('[Clerk] Calling clerk.redirectToSignUp()');
     clerk.redirectToSignUp();
+  } else {
+    console.error('[Clerk] Clerk instance not available for redirectToSignUp');
   }
 }

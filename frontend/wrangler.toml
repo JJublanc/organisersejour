@@ -22,6 +22,9 @@ NEON_PASSWORD = ""
 # et comme secrets dans le dashboard Cloudflare pour la production
 CLERK_PUBLISHABLE_KEY = ""
 CLERK_SECRET_KEY = ""
+# Variables pour le proxy Clerk (Cloudflare Function)
+CLERK_PROXY_URL = "https://organisersejour.pages.dev/api/clerk"
+CLERK_FAPI = "https://frontend-api.clerk.dev"
 
 # === ENVIRONNEMENT PREVIEW (PRÉPROD) ===
 [env.preview]
