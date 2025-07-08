@@ -4,7 +4,7 @@
 
   export let data: any;
 
-  $: ({ user, authEnabled, clerkPublishableKey } = data);
+  $: ({ user, authEnabled, clerkPublishableKey, clerkConfig } = data);
 </script>
 
 <svelte:head>
@@ -15,7 +15,7 @@
 <div class="app">
   {#if authEnabled && clerkPublishableKey}
     <!-- Mode Clerk activé -->
-    <ClerkProvider publishableKey={clerkPublishableKey} {user} let:user={currentUser}>
+    <ClerkProvider publishableKey={clerkPublishableKey} {user} {clerkConfig} let:user={currentUser}>
       <header class="app-header">
         <div class="header-content">
           <h1><a href="/">Organisateur de Séjour</a></h1>

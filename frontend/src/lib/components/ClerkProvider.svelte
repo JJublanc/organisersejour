@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { initializeClerk, getUserFromClerk, type User } from '$lib/clerk-auth';
+  import { initializeClerk, getUserFromClerk, type User, type ClerkOptions } from '$lib/clerk-auth';
   import { writable } from 'svelte/store';
 
   export let publishableKey: string;
   export let user: User | null = null;
   export let requireAuth: boolean = false;
+  export let clerkConfig: ClerkOptions | null = null;
 
   // Create a reactive store for the user
   export const userStore = writable<User | null>(user);
@@ -17,6 +18,7 @@
 
   onMount(async () => {
     console.log('[ClerkProvider] Initializing with publishableKey:', publishableKey);
+    console.log('[ClerkProvider] Clerk config:', clerkConfig);
     console.log('[ClerkProvider] Current URL:', window.location.href);
     
     if (!publishableKey) {
@@ -38,8 +40,11 @@
       );
       
       console.log('[ClerkProvider] Starting Clerk initialization...');
+      console.log('[ClerkProvider] Using proxy:', clerkConfig?.useProxy);
+      console.log('[ClerkProvider] Proxy URL:', clerkConfig?.proxyUrl);
+      
       await Promise.race([
-        initializeClerk(publishableKey),
+        initializeClerk(publishableKey, clerkConfig || {}),
         timeoutPromise
       ]);
       

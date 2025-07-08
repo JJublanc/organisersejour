@@ -17,6 +17,10 @@ interface Env {
   // Clerk environment variables
   CLERK_PUBLISHABLE_KEY?: string;
   CLERK_SECRET_KEY?: string;
+  // Clerk Proxy configuration
+  USE_CLERK_PROXY?: string;
+  CLERK_PROXY_URL?: string;
+  CLERK_API_URL?: string;
 }
 
 declare global {
