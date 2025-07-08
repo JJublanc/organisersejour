@@ -125,8 +125,12 @@ export async function signOut(): Promise<void> {
  * Redirect to sign in
  */
 export function redirectToSignIn(): void {
+  console.log('[Clerk] redirectToSignIn called, clerk instance:', !!clerk);
   if (clerk) {
+    console.log('[Clerk] Calling clerk.redirectToSignIn()');
     clerk.redirectToSignIn();
+  } else {
+    console.error('[Clerk] Clerk instance not available for redirectToSignIn');
   }
 }
 
@@ -134,7 +138,11 @@ export function redirectToSignIn(): void {
  * Redirect to sign up
  */
 export function redirectToSignUp(): void {
+  console.log('[Clerk] redirectToSignUp called, clerk instance:', !!clerk);
   if (clerk) {
+    console.log('[Clerk] Calling clerk.redirectToSignUp()');
     clerk.redirectToSignUp();
+  } else {
+    console.error('[Clerk] Clerk instance not available for redirectToSignUp');
   }
 }
