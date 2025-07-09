@@ -1,6 +1,21 @@
 import type { RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ platform, url, request, params }) => {
+	// Récupérer l'origine pour CORS avec support des domaines autorisés
+	const requestOrigin = request.headers.get('origin');
+	const allowedOrigins = [
+		'https://organisersejour.com',
+		'https://www.organisersejour.com',
+		'https://organisersejour.pages.dev',
+		'https://ce2d8dc8.organisersejour.pages.dev',
+		'http://localhost:8788',
+		'http://localhost:5173'
+	];
+	
+	const origin = allowedOrigins.includes(requestOrigin || '')
+		? (requestOrigin || 'https://organisersejour.com')
+		: 'https://organisersejour.com';
+
 	// Récupérer le chemin depuis les paramètres de route
 	const path = `/${params.path || ''}`;
 	
@@ -35,19 +50,30 @@ export const GET: RequestHandler = async ({ platform, url, request, params }) =>
 		
 		console.log('[Clerk Proxy] Response status:', response.status);
 		
-		// Copier les headers de la réponse
+		// Copier UNIQUEMENT les headers de réponse non-CORS
 		const responseHeaders = new Headers();
-		for (const [key, value] of response.headers.entries()) {
-			// Ajouter les headers CORS
-			if (!['content-encoding', 'content-length'].includes(key.toLowerCase())) {
-				responseHeaders.set(key, value);
+		const responseHeadersToCopy = [
+			'content-type',
+			'cache-control',
+			'expires',
+			'last-modified',
+			'etag',
+			'content-length',
+			'content-encoding'
+		];
+
+		responseHeadersToCopy.forEach(headerName => {
+			const value = response.headers.get(headerName);
+			if (value) {
+				responseHeaders.set(headerName, value);
 			}
-		}
+		});
 		
-		// Ajouter les headers CORS
-		responseHeaders.set('Access-Control-Allow-Origin', '*');
+		// Ajouter NOS headers CORS (ne pas copier ceux de Clerk)
+		responseHeaders.set('Access-Control-Allow-Origin', origin);
 		responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 		responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+		responseHeaders.set('Access-Control-Allow-Credentials', 'true');
 		
 		// Retourner la réponse
 		return new Response(await response.text(), {
@@ -62,13 +88,29 @@ export const GET: RequestHandler = async ({ platform, url, request, params }) =>
 			status: 500,
 			headers: {
 				'Content-Type': 'application/json',
-				'Access-Control-Allow-Origin': '*'
+				'Access-Control-Allow-Origin': origin,
+				'Access-Control-Allow-Credentials': 'true'
 			}
 		});
 	}
 };
 
 export const POST: RequestHandler = async ({ platform, url, request, params }) => {
+	// Récupérer l'origine pour CORS avec support des domaines autorisés
+	const requestOrigin = request.headers.get('origin');
+	const allowedOrigins = [
+		'https://organisersejour.com',
+		'https://www.organisersejour.com',
+		'https://organisersejour.pages.dev',
+		'https://ce2d8dc8.organisersejour.pages.dev',
+		'http://localhost:8788',
+		'http://localhost:5173'
+	];
+	
+	const origin = allowedOrigins.includes(requestOrigin || '')
+		? (requestOrigin || 'https://organisersejour.com')
+		: 'https://organisersejour.com';
+
 	const path = `/${params.path || ''}`;
 	const clerkApiUrl = 'https://frontend-api.clerk.dev';
 	const targetUrl = `${clerkApiUrl}${path}${url.search}`;
@@ -96,16 +138,30 @@ export const POST: RequestHandler = async ({ platform, url, request, params }) =
 		
 		console.log('[Clerk Proxy] POST Response status:', response.status);
 		
+		// Copier UNIQUEMENT les headers de réponse non-CORS
 		const responseHeaders = new Headers();
-		for (const [key, value] of response.headers.entries()) {
-			if (!['content-encoding', 'content-length'].includes(key.toLowerCase())) {
-				responseHeaders.set(key, value);
+		const responseHeadersToCopy = [
+			'content-type',
+			'cache-control',
+			'expires',
+			'last-modified',
+			'etag',
+			'content-length',
+			'content-encoding'
+		];
+
+		responseHeadersToCopy.forEach(headerName => {
+			const value = response.headers.get(headerName);
+			if (value) {
+				responseHeaders.set(headerName, value);
 			}
-		}
+		});
 		
-		responseHeaders.set('Access-Control-Allow-Origin', '*');
+		// Ajouter NOS headers CORS (ne pas copier ceux de Clerk)
+		responseHeaders.set('Access-Control-Allow-Origin', origin);
 		responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 		responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+		responseHeaders.set('Access-Control-Allow-Credentials', 'true');
 		
 		return new Response(await response.text(), {
 			status: response.status,
@@ -119,19 +175,37 @@ export const POST: RequestHandler = async ({ platform, url, request, params }) =
 			status: 500,
 			headers: {
 				'Content-Type': 'application/json',
-				'Access-Control-Allow-Origin': '*'
+				'Access-Control-Allow-Origin': origin,
+				'Access-Control-Allow-Credentials': 'true'
 			}
 		});
 	}
 };
 
-export const OPTIONS: RequestHandler = async () => {
+export const OPTIONS: RequestHandler = async ({ request }) => {
+	// Récupérer l'origine pour CORS avec support des domaines autorisés
+	const requestOrigin = request.headers.get('origin');
+	const allowedOrigins = [
+		'https://organisersejour.com',
+		'https://www.organisersejour.com',
+		'https://organisersejour.pages.dev',
+		'https://ce2d8dc8.organisersejour.pages.dev',
+		'http://localhost:8788',
+		'http://localhost:5173'
+	];
+	
+	const origin = allowedOrigins.includes(requestOrigin || '')
+		? (requestOrigin || 'https://organisersejour.com')
+		: 'https://organisersejour.com';
+
 	return new Response(null, {
 		status: 200,
 		headers: {
-			'Access-Control-Allow-Origin': '*',
+			'Access-Control-Allow-Origin': origin,
 			'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-			'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+			'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+			'Access-Control-Allow-Credentials': 'true',
+			'Access-Control-Max-Age': '86400'
 		}
 	});
 };
