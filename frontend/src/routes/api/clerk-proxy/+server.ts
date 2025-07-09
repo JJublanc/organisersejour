@@ -157,13 +157,15 @@ async function handleClerkProxy(
     const responseBody = await clerkResponse.text();
     const responseHeaders = new Headers();
 
-    // Copier les headers de réponse importants
+    // Copier UNIQUEMENT les headers de réponse non-CORS
     const responseHeadersToCopy = [
       'content-type',
       'cache-control',
       'expires',
       'last-modified',
-      'etag'
+      'etag',
+      'content-length',
+      'content-encoding'
     ];
 
     responseHeadersToCopy.forEach(headerName => {
@@ -173,7 +175,7 @@ async function handleClerkProxy(
       }
     });
 
-    // Ajouter les headers CORS
+    // Ajouter NOS headers CORS (ne pas copier ceux de Clerk)
     responseHeaders.set('Access-Control-Allow-Origin', origin);
     responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
