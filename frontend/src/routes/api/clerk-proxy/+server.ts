@@ -26,7 +26,20 @@ export const PATCH: RequestHandler = async ({ url, request, platform }) => {
 };
 
 export const OPTIONS: RequestHandler = async ({ request }) => {
-  const origin = request.headers.get('origin') || 'http://localhost:8788';
+  // Récupérer l'origine pour CORS avec support des domaines autorisés
+  const requestOrigin = request.headers.get('origin');
+  const allowedOrigins = [
+    'https://organisersejour.com',
+    'https://www.organisersejour.com',
+    'https://organisersejour.pages.dev',
+    'https://ce2d8dc8.organisersejour.pages.dev',
+    'http://localhost:8788',
+    'http://localhost:5173'
+  ];
+  
+  const origin = allowedOrigins.includes(requestOrigin || '')
+    ? (requestOrigin || 'https://organisersejour.com')
+    : 'https://organisersejour.com';
   
   return new Response(null, {
     status: 200,
@@ -55,8 +68,20 @@ async function handleClerkProxy(
     const environment = env?.ENVIRONMENT || 'dev';
     const proxyUrl = env?.CLERK_PROXY_URL;
     
-    // Récupérer l'origine pour CORS
-    const origin = request.headers.get('origin') || 'http://localhost:8788';
+    // Récupérer l'origine pour CORS avec support des domaines autorisés
+    const requestOrigin = request.headers.get('origin');
+    const allowedOrigins = [
+      'https://organisersejour.com',
+      'https://www.organisersejour.com',
+      'https://organisersejour.pages.dev',
+      'https://ce2d8dc8.organisersejour.pages.dev',
+      'http://localhost:8788',
+      'http://localhost:5173'
+    ];
+    
+    const origin = allowedOrigins.includes(requestOrigin || '')
+      ? (requestOrigin || 'https://organisersejour.com')
+      : 'https://organisersejour.com';
 
     console.log(`🔍 [Clerk Proxy] ${method} request to:`, url.pathname);
     console.log('🔍 [Clerk Proxy] Environment:', environment);
@@ -163,7 +188,20 @@ async function handleClerkProxy(
   } catch (error) {
     console.error('❌ [Clerk Proxy] Error:', error);
     
-    const origin = request.headers.get('origin') || 'http://localhost:8788';
+    // Récupérer l'origine pour CORS avec support des domaines autorisés
+    const requestOrigin = request.headers.get('origin');
+    const allowedOrigins = [
+      'https://organisersejour.com',
+      'https://www.organisersejour.com',
+      'https://organisersejour.pages.dev',
+      'https://ce2d8dc8.organisersejour.pages.dev',
+      'http://localhost:8788',
+      'http://localhost:5173'
+    ];
+    
+    const origin = allowedOrigins.includes(requestOrigin || '')
+      ? (requestOrigin || 'https://organisersejour.com')
+      : 'https://organisersejour.com';
     
     return new Response(JSON.stringify({
       error: 'Proxy error',
