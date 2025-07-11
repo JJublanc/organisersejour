@@ -1,32 +1,43 @@
 <script>
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
-  import { initializeClerk } from '$lib/clerk-auth';
+  import { getClerk } from '$lib/clerk-auth';
 
   let signUpElement;
-  let clerk;
   let loading = true;
   let error = null;
 
   onMount(async () => {
     try {
-      // Initialiser Clerk avec le proxy
-      clerk = await initializeClerk('pk_live_Y2xlcmsub3JnYW5pc2Vyc2Vqb3VyLmNvbSQ', {
-        useProxy: true,
-        proxyUrl: 'https://organisersejour.com/api/clerk-proxy'
-      });
-
-      if (clerk && signUpElement) {
-        // Monter le composant d'inscription Clerk
-        clerk.mountSignUp(signUpElement, {
-          afterSignUpUrl: '/',
-          redirectUrl: '/'
-        });
+      // Utiliser l'instance Clerk déjà initialisée dans le layout
+      const clerk = getClerk();
+      
+      if (!clerk) {
+        throw new Error('Clerk n\'est pas initialisé. Veuillez recharger la page.');
       }
+
+      // Attendre que Clerk soit complètement chargé
+      await clerk.load();
+
+      if (signUpElement) {
+        // Monter le composant d'inscription Clerk avec la bonne méthode
+        const signUpComponent = clerk.mountSignUp(signUpElement, {
+          afterSignUpUrl: '/',
+          redirectUrl: '/',
+          appearance: {
+            elements: {
+              rootBox: 'w-full',
+              card: 'shadow-none border-0'
+            }
+          }
+        });
+        
+        console.log('Composant d\'inscription monté:', signUpComponent);
+      }
+      
       loading = false;
     } catch (err) {
-      console.error('Erreur lors de l\'initialisation de Clerk:', err);
+      console.error('Erreur lors du montage du composant d\'inscription:', err);
       error = err.message;
       loading = false;
     }
