@@ -67,6 +67,13 @@ export async function initializeClerk(publishableKey: string, options?: ClerkOpt
       clerkOptions.apiUrl = options.apiUrl;
     }
     
+    // Configuration pour éviter les redirections vers accounts.organisersejour.com
+    // Utiliser des pages intégrées au lieu de redirections externes
+    clerkOptions.signInUrl = '/sign-in';
+    clerkOptions.signUpUrl = '/sign-up';
+    clerkOptions.afterSignInUrl = '/';
+    clerkOptions.afterSignUpUrl = '/';
+    
     console.log('🔍 [DIAGNOSTIC] Initializing Clerk with options:', clerkOptions);
     clerk = new Clerk(publishableKey, clerkOptions);
     
