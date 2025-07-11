@@ -35,7 +35,7 @@ compatibility_flags = ["nodejs_compat"] # Ajouté ici
 ENVIRONMENT = "preprod"
 AUTH_ENABLED = "true"
 USE_CLERK_PROXY = "true"
-CLERK_PROXY_URL = "https://organisersejour.pages.dev/api/clerk-proxy"
+CLERK_PROXY_URL = "https://organisersejour.com/api/clerk-proxy"
 
 # D1 databases have been removed as we've migrated to Neon PostgreSQL
 # Neon database URLs are set as secrets in the Cloudflare dashboard
@@ -48,7 +48,7 @@ compatibility_flags = ["nodejs_compat"] # Ajouté ici
 ENVIRONMENT = "prod"
 AUTH_ENABLED = "true"
 USE_CLERK_PROXY = "true"
-CLERK_PROXY_URL = "https://organisersejour.pages.dev/api/clerk-proxy"
+CLERK_PROXY_URL = "https://organisersejour.com/api/clerk-proxy"
 
 # D1 databases have been removed as we've migrated to Neon PostgreSQL
 # Neon database URLs are set as secrets in the Cloudflare dashboard
