@@ -133,27 +133,21 @@ export async function signOut(): Promise<void> {
 }
 
 /**
- * Redirect to sign in
+ * Redirect to sign in - utilise nos pages intégrées au lieu du Dashboard Clerk
  */
 export function redirectToSignIn(): void {
-  console.log('[Clerk] redirectToSignIn called, clerk instance:', !!clerk);
-  if (clerk) {
-    console.log('[Clerk] Calling clerk.redirectToSignIn()');
-    clerk.redirectToSignIn();
-  } else {
-    console.error('[Clerk] Clerk instance not available for redirectToSignIn');
+  console.log('[Clerk] redirectToSignIn called - redirecting to /sign-in');
+  if (typeof window !== 'undefined') {
+    window.location.href = '/sign-in';
   }
 }
 
 /**
- * Redirect to sign up
+ * Redirect to sign up - utilise nos pages intégrées au lieu du Dashboard Clerk
  */
 export function redirectToSignUp(): void {
-  console.log('[Clerk] redirectToSignUp called, clerk instance:', !!clerk);
-  if (clerk) {
-    console.log('[Clerk] Calling clerk.redirectToSignUp()');
-    clerk.redirectToSignUp();
-  } else {
-    console.error('[Clerk] Clerk instance not available for redirectToSignUp');
+  console.log('[Clerk] redirectToSignUp called - redirecting to /sign-up');
+  if (typeof window !== 'undefined') {
+    window.location.href = '/sign-up';
   }
 }
