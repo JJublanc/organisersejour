@@ -38,12 +38,12 @@ export const GET: RequestHandler = async ({ platform, url, request, params }) =>
 		}
 		
 		// Ajouter les headers requis par Clerk
-		headers.set('Clerk-Proxy-Url', 'https://organisersejour.pages.dev/api/clerk-proxy');
+		headers.set('Clerk-Proxy-Url', 'https://organisersejour.com/api/clerk-proxy');
 		headers.set('Clerk-Secret-Key', platform?.env?.CLERK_SECRET_KEY || '');
 		headers.set('X-Forwarded-For', request.headers.get('cf-connecting-ip') || '127.0.0.1');
 		
 		// Ajouter le header Host pour que Clerk reconnaisse le domaine
-		headers.set('Host', 'frontend-api.clerk.dev');
+		headers.set('Host', 'clerk.organisersejour.com');
 		
 		// Transmettre l'origine réelle pour que Clerk puisse valider le domaine
 		const originalOrigin = request.headers.get('origin') || 'https://organisersejour.com';
@@ -133,12 +133,12 @@ export const POST: RequestHandler = async ({ platform, url, request, params }) =
 		}
 		
 		// Ajouter les headers requis par Clerk
-		headers.set('Clerk-Proxy-Url', 'https://organisersejour.pages.dev/api/clerk-proxy');
+		headers.set('Clerk-Proxy-Url', 'https://organisersejour.com/api/clerk-proxy');
 		headers.set('Clerk-Secret-Key', platform?.env?.CLERK_SECRET_KEY || '');
 		headers.set('X-Forwarded-For', request.headers.get('cf-connecting-ip') || '127.0.0.1');
 		
 		// Ajouter le header Host pour que Clerk reconnaisse le domaine
-		headers.set('Host', 'frontend-api.clerk.dev');
+		headers.set('Host', 'clerk.organisersejour.com');
 		
 		// Transmettre l'origine réelle pour que Clerk puisse valider le domaine
 		const originalOrigin = request.headers.get('origin') || 'https://organisersejour.com';
