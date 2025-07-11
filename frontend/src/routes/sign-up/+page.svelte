@@ -1,7 +1,6 @@
 <script>
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { getClerk } from '$lib/clerk-auth';
 
   let signUpElement;
   let loading = true;
@@ -9,19 +8,29 @@
 
   onMount(async () => {
     try {
-      // Utiliser l'instance Clerk déjà initialisée dans le layout
-      const clerk = getClerk();
+      // Attendre que Clerk soit disponible globalement
+      let attempts = 0;
+      const maxAttempts = 50; // 5 secondes max
       
-      if (!clerk) {
-        throw new Error('Clerk n\'est pas initialisé. Veuillez recharger la page.');
+      while (!window.Clerk && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+      
+      if (!window.Clerk) {
+        throw new Error('Clerk n\'est pas disponible. Veuillez recharger la page.');
       }
 
+      const clerk = window.Clerk;
+      
       // Attendre que Clerk soit complètement chargé
-      await clerk.load();
+      if (!clerk.loaded) {
+        await clerk.load();
+      }
 
       if (signUpElement) {
-        // Monter le composant d'inscription Clerk avec la bonne méthode
-        const signUpComponent = clerk.mountSignUp(signUpElement, {
+        // Monter le composant d'inscription Clerk
+        clerk.mountSignUp(signUpElement, {
           afterSignUpUrl: '/',
           redirectUrl: '/',
           appearance: {
@@ -32,13 +41,13 @@
           }
         });
         
-        console.log('Composant d\'inscription monté:', signUpComponent);
+        console.log('Composant d\'inscription monté avec succès');
       }
       
       loading = false;
     } catch (err) {
       console.error('Erreur lors du montage du composant d\'inscription:', err);
-      error = err.message;
+      error = err.message || 'Erreur inconnue';
       loading = false;
     }
   });

@@ -84,6 +84,12 @@ export async function initializeClerk(publishableKey: string, options?: ClerkOpt
     console.log('🔍 [DIAGNOSTIC] Clerk instance created, loading...');
     await clerk.load();
     console.log('🔍 [DIAGNOSTIC] Clerk loaded successfully');
+    
+    // Exposer Clerk globalement pour les pages de connexion/inscription
+    if (typeof window !== 'undefined') {
+      (window as any).Clerk = clerk;
+      console.log('🔍 [DIAGNOSTIC] Clerk exposé globalement sur window.Clerk');
+    }
   }
   return clerk;
 }
