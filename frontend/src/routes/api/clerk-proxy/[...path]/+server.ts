@@ -28,11 +28,21 @@ export const GET: RequestHandler = async ({ platform, url, request, params }) =>
 	console.log('[Clerk Proxy] GET:', targetUrl);
 	
 	try {
-		// Copier les headers de la requête originale
+		// Copier UNIQUEMENT les headers nécessaires (éviter les headers Cloudflare)
 		const headers = new Headers();
+		const allowedHeaders = [
+			'accept',
+			'accept-encoding',
+			'accept-language',
+			'authorization',
+			'content-type',
+			'content-length',
+			'user-agent',
+			'cookie'
+		];
+		
 		for (const [key, value] of request.headers.entries()) {
-			// Exclure les headers qui peuvent causer des problèmes
-			if (!['host', 'origin', 'referer'].includes(key.toLowerCase())) {
+			if (allowedHeaders.includes(key.toLowerCase())) {
 				headers.set(key, value);
 			}
 		}
@@ -40,7 +50,11 @@ export const GET: RequestHandler = async ({ platform, url, request, params }) =>
 		// Ajouter les headers requis par Clerk
 		headers.set('Clerk-Proxy-Url', 'https://organisersejour.com/api/clerk-proxy');
 		headers.set('Clerk-Secret-Key', platform?.env?.CLERK_SECRET_KEY || '');
-		headers.set('X-Forwarded-For', request.headers.get('cf-connecting-ip') || '127.0.0.1');
+		// Utiliser l'IP du client sans référencer cf-connecting-ip pour éviter les conflits Cloudflare
+		const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+						 request.headers.get('x-real-ip') ||
+						 '127.0.0.1';
+		headers.set('X-Forwarded-For', clientIP);
 		
 		// Ajouter le header Host pour que Clerk reconnaisse le domaine
 		headers.set('Host', 'clerk.organisersejour.com');
@@ -125,9 +139,21 @@ export const POST: RequestHandler = async ({ platform, url, request, params }) =
 	console.log('[Clerk Proxy] POST:', targetUrl);
 	
 	try {
+		// Copier UNIQUEMENT les headers nécessaires (éviter les headers Cloudflare)
 		const headers = new Headers();
+		const allowedHeaders = [
+			'accept',
+			'accept-encoding',
+			'accept-language',
+			'authorization',
+			'content-type',
+			'content-length',
+			'user-agent',
+			'cookie'
+		];
+		
 		for (const [key, value] of request.headers.entries()) {
-			if (!['host', 'origin', 'referer'].includes(key.toLowerCase())) {
+			if (allowedHeaders.includes(key.toLowerCase())) {
 				headers.set(key, value);
 			}
 		}
@@ -135,7 +161,11 @@ export const POST: RequestHandler = async ({ platform, url, request, params }) =
 		// Ajouter les headers requis par Clerk
 		headers.set('Clerk-Proxy-Url', 'https://organisersejour.com/api/clerk-proxy');
 		headers.set('Clerk-Secret-Key', platform?.env?.CLERK_SECRET_KEY || '');
-		headers.set('X-Forwarded-For', request.headers.get('cf-connecting-ip') || '127.0.0.1');
+		// Utiliser l'IP du client sans référencer cf-connecting-ip pour éviter les conflits Cloudflare
+		const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+						 request.headers.get('x-real-ip') ||
+						 '127.0.0.1';
+		headers.set('X-Forwarded-For', clientIP);
 		
 		// Ajouter le header Host pour que Clerk reconnaisse le domaine
 		headers.set('Host', 'clerk.organisersejour.com');
