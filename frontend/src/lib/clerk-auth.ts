@@ -74,6 +74,10 @@ export async function initializeClerk(publishableKey: string, options?: ClerkOpt
     clerkOptions.afterSignInUrl = '/';
     clerkOptions.afterSignUpUrl = '/';
     
+    // Forcer l'utilisation du domaine principal sans sous-domaine
+    clerkOptions.isSatellite = false;
+    clerkOptions.domain = window.location.hostname;
+    
     console.log('🔍 [DIAGNOSTIC] Initializing Clerk with options:', clerkOptions);
     clerk = new Clerk(publishableKey, clerkOptions);
     
